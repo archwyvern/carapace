@@ -1,0 +1,30 @@
+/* Carapace design tokens. Tokens only — the consumer imports `tailwindcss`
+   itself (every Carapace consumer already runs Tailwind v4). Import this after
+   `@import "tailwindcss"`. */
+@theme {
+  /* Surfaces (dark workbench) */
+  --color-surface: #1e1e20;
+  --color-surface-raised: #252528;
+  --color-surface-sunken: #161618;
+  --color-border: #34343a;
+
+  /* Foreground: near-white readable; -mid is the greyest allowed for labels */
+  --color-fg: #f4f4f5;
+  --color-fg-mid: #d8d8da;
+
+  /* Accent */
+  --color-accent: #4f8cff;
+  --color-accent-fg: #ffffff;
+
+  /* Semantic status palette */
+  --color-info: #4cb5e0;
+  --color-success: #89d185;
+  --color-warning: #e2c08d;
+  --color-error: #f48771;
+
+  /* Chip micro-text (sanctioned 10px exception for tag-style chips). */
+  --text-2xs: 0.625rem;
+
+  /* Radii + control sizing */
+  --radius-control: 4px;
+}
