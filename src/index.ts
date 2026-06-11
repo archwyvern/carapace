@@ -110,6 +110,9 @@ export type {
 export { isAction, isSeparator, isSubmenu, isCommandRef } from "./menu/model";
 export { parseMnemonic } from "./menu/mnemonic";
 export type { ParsedMnemonic } from "./menu/mnemonic";
+export { MenuList } from "./menu/MenuList";
+export { ContextMenu, useContextMenu } from "./menu/ContextMenu";
+export type { ContextMenuProps, ContextMenuState } from "./menu/ContextMenu";
 
 // Commands
 export type { Command, CommandRegistry } from "./command/registry";

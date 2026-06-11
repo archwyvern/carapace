@@ -5,6 +5,7 @@ import {
   Button,
   CommandPalette,
   CommandProvider,
+  ContextMenu,
   EditorTabs,
   FileExplorer,
   HostProvider,
@@ -16,8 +17,9 @@ import {
   createCommandRegistry,
   createMemoryHost,
   useCommandKeybindings,
+  useContextMenu,
 } from "@archwyvern/carapace";
-import type { MenuModel, OutputLine } from "@archwyvern/carapace";
+import type { MenuItem, MenuModel, OutputLine } from "@archwyvern/carapace";
 import "./app.css";
 
 const host = createMemoryHost({
@@ -67,6 +69,16 @@ function App() {
 
   useCommandKeybindings(registry);
 
+  const ctx = useContextMenu();
+  const CTX_ITEMS: MenuItem[] = [
+    { id: "cut", label: "Cut", shortcut: "Ctrl+X", run: () => void host.dialog.message("Cut") },
+    { id: "copy", label: "Copy", shortcut: "Ctrl+C", run: () => void host.dialog.message("Copy") },
+    { id: "paste", label: "Paste", shortcut: "Ctrl+V", run: () => void host.dialog.message("Paste") },
+    { separator: true },
+    { id: "rename", label: "Rename", run: () => void host.dialog.message("Rename") },
+    { id: "del", label: "Delete", enabled: false, run: () => {} },
+  ];
+
   const MENU: MenuModel = [
     {
       label: "&&File",
@@ -114,7 +126,7 @@ function App() {
               }}
             />
             <SplitView orientation="vertical" primary="end" size={consoleH} onResize={setConsoleH} min={60} max={320}>
-              <div className="min-h-0 overflow-auto p-4">
+              <div className="min-h-0 overflow-auto p-4" onContextMenu={ctx.open}>
                 {activeFile ? (
                   <div className="font-mono text-sm text-fg">{activeFile}</div>
                 ) : (
@@ -138,6 +150,9 @@ function App() {
         </SplitView>
       </Workbench>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      {ctx.state && (
+        <ContextMenu items={CTX_ITEMS} x={ctx.state.x} y={ctx.state.y} onClose={ctx.close} />
+      )}
     </CommandProvider>
   );
 }
