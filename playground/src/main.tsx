@@ -2,7 +2,6 @@ import { StrictMode, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ActivityBar,
-  Button,
   CommandPalette,
   CommandProvider,
   ContextMenu,
@@ -10,9 +9,9 @@ import {
   FileExplorer,
   HostProvider,
   OutputPanel,
-  SpinSlider,
   SplitView,
   StatusBar,
+  ToastProvider,
   Workbench,
   createCommandRegistry,
   createMemoryHost,
@@ -20,6 +19,7 @@ import {
   useContextMenu,
 } from "@archwyvern/carapace";
 import type { MenuItem, MenuModel, OutputLine } from "@archwyvern/carapace";
+import { Gallery } from "./Gallery";
 import "./app.css";
 
 const host = createMemoryHost({
@@ -40,8 +40,6 @@ const LOG: OutputLine[] = [
 
 function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [n, setN] = useState(42);
-  const [r, setR] = useState(0.5);
   const [view, setView] = useState("files");
   const [sideW, setSideW] = useState(200);
   const [consoleH, setConsoleH] = useState(120);
@@ -98,6 +96,7 @@ function App() {
 
   return (
     <CommandProvider registry={registry}>
+      <ToastProvider>
       <Workbench
         logo={<span className="px-1 font-bold text-accent">◆</span>}
         menu={MENU}
@@ -130,18 +129,7 @@ function App() {
                 {activeFile ? (
                   <div className="font-mono text-sm text-fg">{activeFile}</div>
                 ) : (
-                  <div className="max-w-sm space-y-3">
-                    <p className="text-sm text-fg">
-                      Workbench + commands + SplitView + FileExplorer + EditorTabs +
-                      OutputPanel. Double-click files in the tree to open tabs; try the
-                      menu, Ctrl+P, Ctrl+N; drag the dividers.
-                    </p>
-                    <Button variant="accent" onClick={() => setPaletteOpen(true)}>
-                      Open command palette
-                    </Button>
-                    <SpinSlider value={n} onChange={setN} integer suffix="px" />
-                    <SpinSlider value={r} onChange={setR} min={0} max={1} suffix="ratio" />
-                  </div>
+                  <Gallery />
                 )}
               </div>
               <OutputPanel lines={LOG} ariaLabel="Output" />
@@ -153,6 +141,7 @@ function App() {
       {ctx.state && (
         <ContextMenu items={CTX_ITEMS} x={ctx.state.x} y={ctx.state.y} onClose={ctx.close} />
       )}
+      </ToastProvider>
     </CommandProvider>
   );
 }
