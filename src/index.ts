@@ -66,6 +66,9 @@ export type { ClassValue } from "./cx";
 export { TreeView } from "./tree/TreeView";
 export { FileExplorer } from "./tree/FileExplorer";
 export type { FileExplorerProps } from "./tree/FileExplorer";
+export { TreeFind } from "./tree/TreeFind";
+export type { TreeFindProps } from "./tree/TreeFind";
+export { treeFilter } from "./tree/treeFilter";
 
 // Editor
 export { EditorTabs } from "./editor/EditorTabs";
@@ -125,6 +128,8 @@ export {
 } from "./command/context";
 export { CommandPalette } from "./command/CommandPalette";
 export type { CommandPaletteProps } from "./command/CommandPalette";
+export { ShortcutOverlay } from "./command/ShortcutOverlay";
+export type { ShortcutOverlayProps } from "./command/ShortcutOverlay";
 export { parseChord, matchEvent } from "./command/keybinding";
 export type { Chord } from "./command/keybinding";
 
