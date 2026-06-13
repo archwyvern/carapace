@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react(), tailwind()],
   resolve: {
     alias: {
-      "@archwyvern/carapace": fileURLToPath(new URL("../src/index.ts", import.meta.url)),
+      "@carapace/shell": fileURLToPath(new URL("../packages/shell/src/index.ts", import.meta.url)),
     },
   },
 });

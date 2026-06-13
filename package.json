@@ -1,41 +1,13 @@
 {
-  "name": "@archwyvern/carapace",
-  "version": "0.0.1",
-  "description": "Batteries-included React editor-shell: theme, primitives, workbench shell, and a platform host seam.",
+  "name": "carapace",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Carapace — an open-source toolkit for building editors: UI shell, resource model, and the VLSL shader language.",
   "type": "module",
   "license": "MIT",
-  "files": ["dist", "src/theme.css"],
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./theme.css": "./src/theme.css"
-  },
   "scripts": {
-    "build": "tsup",
-    "prepare": "tsup",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
-  },
-  "peerDependencies": {
-    "react": ">=19",
-    "react-dom": ">=19"
-  },
-  "devDependencies": {
-    "@testing-library/jest-dom": "6.6.3",
-    "@testing-library/react": "16.1.0",
-    "@testing-library/user-event": "14.5.2",
-    "@types/node": "22.15.17",
-    "@types/react": "19.0.0",
-    "@types/react-dom": "19.0.0",
-    "@vscode/codicons": "0.0.36",
-    "jsdom": "25.0.1",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "tsup": "8.3.5",
-    "typescript": "5.9.3",
-    "vitest": "3.0.0"
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck"
   }
 }

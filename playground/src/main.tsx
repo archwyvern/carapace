@@ -17,8 +17,8 @@ import {
   createMemoryHost,
   useCommandKeybindings,
   useContextMenu,
-} from "@archwyvern/carapace";
-import type { MenuItem, MenuModel, OutputLine } from "@archwyvern/carapace";
+} from "@carapace/shell";
+import type { MenuItem, MenuModel, OutputLine } from "@carapace/shell";
 import { Gallery } from "./Gallery";
 import "./app.css";
 
