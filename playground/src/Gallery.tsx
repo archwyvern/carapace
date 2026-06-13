@@ -26,8 +26,8 @@ import {
   TypedConfirmDialog,
   treeFilter,
   useToast,
-} from "@archwyvern/carapace";
-import type { BadgeTone, TreeNode } from "@archwyvern/carapace";
+} from "@carapace/shell";
+import type { BadgeTone, TreeNode } from "@carapace/shell";
 
 const TONES: BadgeTone[] = ["accent", "info", "success", "warning", "error", "neutral"];
 

@@ -1,0 +1,30 @@
+export { Vector2 } from "./Vector2";
+export { Vector2I } from "./Vector2I";
+export { Vector3 } from "./Vector3";
+export { Vector3I } from "./Vector3I";
+export { Vector4 } from "./Vector4";
+export { Vector4I } from "./Vector4I";
+export { ColorF } from "./ColorF";
+export { Color8 } from "./Color8";
+export { Colors, namedColors } from "./Colors";
+export type { ColorName } from "./Colors";
+export { Rect2 } from "./Rect2";
+export { Rect2I } from "./Rect2I";
+
+// Geometry / transform primitives.
+export { EulerOrder } from "./EulerOrder";
+export { Rotation2D } from "./Rotation2D";
+export { Matrix2x2 } from "./Matrix2x2";
+export { Matrix3x3 } from "./Matrix3x3";
+export { Matrix4x4 } from "./Matrix4x4";
+export { Quaternion } from "./Quaternion";
+export { Transform2D } from "./Transform2D";
+export { Aabb2D } from "./Aabb2D";
+export { Aabb3D } from "./Aabb3D";
+export { Plane2D } from "./Plane2D";
+export { Plane3D } from "./Plane3D";
+export { Circle } from "./Circle";
+export { Arc } from "./Arc";
+export { Segment2D } from "./Segment2D";
+export { Capsule2D } from "./Capsule2D";
+export { Capsule3D } from "./Capsule3D";

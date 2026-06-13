@@ -1,0 +1,22 @@
+{
+  "name": "@carapace/vlsl",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./backends/wgsl": "./src/backends/wgsl/index.ts",
+    "./backends/webgl": "./src/backends/webgl/index.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:libs": "node scripts/generate-glsl-libs.mjs",
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
+    "test:watch": "node --import tsx --test --watch \"src/**/*.test.ts\""
+  },
+  "devDependencies": {
+    "tsx": "4.21.0",
+    "typescript": "5.9.3"
+  }
+}
