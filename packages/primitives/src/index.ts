@@ -19,6 +19,7 @@ export { Matrix3x3 } from "./Matrix3x3";
 export { Matrix4x4 } from "./Matrix4x4";
 export { Quaternion } from "./Quaternion";
 export { Transform2D } from "./Transform2D";
+export { Transform3D } from "./Transform3D";
 export { Aabb2D } from "./Aabb2D";
 export { Aabb3D } from "./Aabb3D";
 export { Plane2D } from "./Plane2D";
