@@ -1,3 +1,4 @@
+import { SpinSlider } from "../primitives/SpinSlider";
 import { FieldLayout, type FieldLayoutMode } from "./FieldLayout";
 
 // Gizmo axis colours: X=red, Y=green, Z=blue, W=accent gold (axis identity — not
@@ -11,32 +12,45 @@ export interface FormVecProps {
   value: number[];
   size: 2 | 3 | 4;
   step?: number;
+  min?: number;
+  max?: number;
+  integer?: boolean;
+  /** Drag-scrub speed multiplier passed to each axis SpinSlider (1 = default). */
+  dragScale?: number;
   onChange: (value: number[]) => void;
+  /** Fired on per-axis commit (drag-release / Enter / blur) with the full updated array. */
+  onCommit?: (value: number[]) => void;
 }
 
-/** Labelled multi-axis number field (vec2/3/4). */
-export function FormVec({ label, layout, value, size, step = 0.01, onChange }: FormVecProps) {
-  function handleChange(index: number, v: number) {
+/** Labelled multi-axis number field (vec2/3/4). Each axis is a full SpinSlider (drag-scrub,
+ *  click-to-type, expression eval) — consistent with every other scalar field in the inspector. */
+export function FormVec({ label, layout, value, size, step, min, max, integer, dragScale, onChange, onCommit }: FormVecProps) {
+  const withAxis = (index: number, v: number): number[] => {
     const next = [...value];
     next[index] = v;
-    onChange(next);
-  }
+    return next;
+  };
 
   return (
     <FieldLayout label={label} layout={layout}>
       <div className="flex gap-1">
         {Array.from({ length: size }, (_, i) => (
-          <div key={i} className="flex flex-1 items-center gap-1">
-            <span className="w-2.5 text-sm font-semibold" style={{ color: AXIS_COLORS[i] }}>
+          <div key={i} className="flex min-w-0 flex-1 items-center gap-1">
+            <span className="w-2.5 shrink-0 text-sm font-semibold" style={{ color: AXIS_COLORS[i] }}>
               {AXIS_LABELS[i]}
             </span>
-            <input
-              type="number"
-              value={value[i] ?? 0}
-              step={step}
-              onChange={(e) => handleChange(i, parseFloat(e.target.value) || 0)}
-              className="h-[22px] min-w-0 flex-1 border border-border bg-surface px-1 text-sm text-fg outline-none focus:border-accent"
-            />
+            <div className="min-w-0 flex-1">
+              <SpinSlider
+                value={value[i] ?? 0}
+                onChange={(v) => onChange(withAxis(i, v))}
+                onCommit={onCommit ? (v) => onCommit(withAxis(i, v)) : undefined}
+                step={step}
+                min={min}
+                max={max}
+                integer={integer}
+                dragScale={dragScale}
+              />
+            </div>
           </div>
         ))}
       </div>

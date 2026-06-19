@@ -146,6 +146,7 @@ function renderControl(field: InspectorField): ReactNode {
             max={field.max}
             step={field.step}
             integer={field.integer}
+            dragScale={field.dragScale}
             hideSlider={field.min === undefined || field.max === undefined}
           />
         </FieldLayout>
@@ -166,7 +167,12 @@ function renderControl(field: InspectorField): ReactNode {
           value={field.value}
           size={field.size}
           step={field.step}
+          min={field.min}
+          max={field.max}
+          integer={field.integer}
+          dragScale={field.dragScale}
           onChange={field.onChange}
+          onCommit={field.onCommit}
         />
       );
     case "object":

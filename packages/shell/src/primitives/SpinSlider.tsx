@@ -16,6 +16,9 @@ export interface SpinSliderProps {
   orLess?: boolean;
   /** Logarithmic drag mapping (requires min > 0). */
   exp?: boolean;
+  /** Multiplier on drag-scrub speed (1 = default). <1 makes scrubbing less twitchy; useful for
+   *  unbounded fields, which otherwise move a fixed 2·step per pixel. Keyboard/wheel are unaffected. */
+  dragScale?: number;
   /** Suppress the fill bar. */
   hideSlider?: boolean;
   /** Unit suffix shown as dim micro-text. */
@@ -49,7 +52,7 @@ function evaluate(text: string): number | null {
 export function SpinSlider({
   value, onChange, onCommit,
   min, max, step, integer,
-  orGreater, orLess, exp, hideSlider, suffix, wheel, readOnly,
+  orGreater, orLess, exp, hideSlider, suffix, wheel, readOnly, dragScale,
 }: SpinSliderProps) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState("");
@@ -93,7 +96,7 @@ export function SpinSlider({
     d.acc += e.movementX;
     if (!d.moved && Math.abs(d.acc) < 3) return;
     d.moved = true;
-    const fine = e.shiftKey ? 0.1 : 1;
+    const fine = (e.shiftKey ? 0.1 : 1) * (dragScale ?? 1);
     if (expOk && d.startVal > 0) {
       onChange(clampRound(d.startVal * Math.exp((d.acc / 300) * logSpan * fine)));
     } else {

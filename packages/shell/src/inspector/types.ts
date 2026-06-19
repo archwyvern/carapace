@@ -33,6 +33,8 @@ export interface NumberField extends InspectorFieldBase {
   max?: number;
   step?: number;
   integer?: boolean;
+  /** Drag-scrub speed multiplier (1 = default). <1 tames twitchy unbounded fields. */
+  dragScale?: number;
 }
 
 export interface BoolField extends InspectorFieldBase {
@@ -69,7 +71,14 @@ export interface VecField extends InspectorFieldBase {
   value: number[];
   size: 2 | 3 | 4;
   step?: number;
+  min?: number;
+  max?: number;
+  integer?: boolean;
+  /** Drag-scrub speed multiplier for each axis (1 = default). */
+  dragScale?: number;
   onChange: (v: number[]) => void;
+  /** Fired on per-axis commit (drag-release / Enter / blur) with the full array. */
+  onCommit?: (v: number[]) => void;
 }
 
 export interface ObjectField extends InspectorFieldBase {
