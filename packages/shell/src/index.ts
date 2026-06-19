@@ -143,6 +143,8 @@ export type { ModalProps } from "./overlay/Modal";
 export { ConfirmDialog } from "./overlay/ConfirmDialog";
 export type { ConfirmDialogProps } from "./overlay/ConfirmDialog";
 export { ConfirmProvider, useConfirm, useOptionalConfirm } from "./overlay/confirm";
+export { PromptProvider, usePrompt, useOptionalPrompt } from "./overlay/prompt";
+export type { PromptOptions } from "./overlay/prompt";
 
 // Scheme-aware virtual path (carapace's URI; powers fs mount resolution).
 export { VirtualPath } from "./path/VirtualPath";
