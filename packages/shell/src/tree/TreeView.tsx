@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent, KeyboardEvent } from "react";
-import type { TreeItemContext, TreeNode, TreeViewProps } from "./treeTypes";
+import type { DropPosition, TreeItemContext, TreeNode, TreeViewProps } from "./treeTypes";
 import {
   findFirstChildIndex,
   findNextFocusable,
@@ -22,10 +22,12 @@ export function TreeView<T>({
   rowHeight = 22,
   indent = 12,
   onActivate,
+  selectedIds,
   onSelectionChange,
   onSelectedChange,
   canDrop,
   onDrop,
+  reorder = false,
   onDelete,
   onRename,
   onExternalDrop,
@@ -45,10 +47,13 @@ export function TreeView<T>({
   );
   const expanded = isControlled ? controlledExpanded : internalExpanded;
 
-  const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const isSelControlled = selectedIds !== undefined;
+  const [internalSelected, setInternalSelected] = useState<Set<string>>(() => new Set());
+  const selected = isSelControlled ? selectedIds : internalSelected;
   const [anchor, setAnchor] = useState<number | null>(null);
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const [dropPosition, setDropPosition] = useState<DropPosition>("into");
   const [rootDrop, setRootDrop] = useState(false);
   const [treeFocused, setTreeFocused] = useState(false);
   const dragIds = useRef<string[]>([]);
@@ -76,7 +81,7 @@ export function TreeView<T>({
 
   // Commit a selection: update state, move focus, and notify (primary + full set).
   const commitSelection = (ids: Set<string>, activeIndex: number, anchorIndex: number | null) => {
-    setSelected(ids);
+    if (!isSelControlled) setInternalSelected(ids);
     setFocusedIndex(activeIndex);
     setAnchor(anchorIndex);
     onSelectionChange?.(flat[activeIndex]?.node ?? null);
@@ -190,6 +195,7 @@ export function TreeView<T>({
     expandTimer.current = null;
     dragIds.current = [];
     setDropTargetId(null);
+    setDropPosition("into");
     setRootDrop(false);
   };
 
@@ -230,7 +236,17 @@ export function TreeView<T>({
     if (!dndEnabled || !canDrop!(draggedNodes(), node)) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
-    if (dropTargetId !== node.id) { setDropTargetId(node.id); hoverExpand(node); }
+    let pos: DropPosition = "into";
+    if (reorder) {
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      pos = y < rect.height * 0.25 ? "before" : y > rect.height * 0.75 ? "after" : "into";
+      if (pos !== dropPosition) setDropPosition(pos);
+    }
+    if (dropTargetId !== node.id) {
+      setDropTargetId(node.id);
+      if (pos === "into") hoverExpand(node);
+    }
     if (rootDrop) setRootDrop(false);
   };
 
@@ -242,7 +258,11 @@ export function TreeView<T>({
     }
     if (dndEnabled) {
       const dragged = draggedNodes();
-      if (canDrop!(dragged, node)) { e.preventDefault(); onDrop!(dragged, node); }
+      if (canDrop!(dragged, node)) {
+        e.preventDefault();
+        if (reorder) onDrop!(dragged, node, dropPosition);
+        else onDrop!(dragged, node);
+      }
     }
     clearDrag();
   };
@@ -306,6 +326,17 @@ export function TreeView<T>({
       {flat.map((f, i) => {
         const isSel = selected.has(f.node.id);
         const isDrop = dropTargetId === f.node.id;
+        const dropPos = isDrop ? (reorder ? dropPosition : "into") : null;
+        const dropClass =
+          dropPos === "into"
+            ? "bg-accent/25 ring-1 ring-inset ring-accent"
+            : dropPos === "before"
+              ? "shadow-[inset_0_2px_0_0_var(--color-accent)]"
+              : dropPos === "after"
+                ? "shadow-[inset_0_-2px_0_0_var(--color-accent)]"
+                : isSel
+                  ? "bg-list-active text-fg"
+                  : "text-fg hover:bg-surface-raised";
         const ctx: TreeItemContext<T> = {
           node: f.node,
           depth: f.depth,
@@ -331,13 +362,7 @@ export function TreeView<T>({
               if (!isSel) commitSelection(new Set([f.node.id]), i, i);
               onContextMenu?.(f.node, e);
             }}
-            className={`group flex cursor-pointer items-center gap-1 px-1 text-sm whitespace-nowrap ${
-              isDrop
-                ? "bg-accent/25 ring-1 ring-inset ring-accent"
-                : isSel
-                  ? "bg-list-active text-fg"
-                  : "text-fg hover:bg-surface-raised"
-            } ${treeFocused && ctx.focused && !isDrop ? "ring-1 ring-inset ring-accent/50" : ""}`}
+            className={`group flex cursor-pointer items-center gap-1 px-1 text-sm whitespace-nowrap ${dropClass} ${treeFocused && ctx.focused && !isDrop ? "ring-1 ring-inset ring-accent/50" : ""}`}
           >
             {f.collapsible ? (
               <button

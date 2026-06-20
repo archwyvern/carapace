@@ -23,6 +23,10 @@ export interface FlatNode<T = unknown> {
   ancestorIndices: number[];
 }
 
+/** Where a drag would land relative to the target row: as a sibling before/after
+ *  it, or as a child dropped onto ("into") it. */
+export type DropPosition = "before" | "into" | "after";
+
 /** Context passed to the renderer for each tree item. */
 export interface TreeItemContext<T = unknown> {
   node: TreeNode<T>;
@@ -51,6 +55,10 @@ export interface TreeViewProps<T = unknown> {
   indent?: number;
   /** Activated via Enter or double-click. */
   onActivate?: (node: TreeNode<T>) => void;
+  /** Controlled selection by node id. When set, TreeView reflects it instead of
+   *  managing selection internally — for syncing selection with another view
+   *  (e.g. a canvas). Pair with onSelectionChange/onSelectedChange to write back. */
+  selectedIds?: Set<string>;
   /** The primary (last-clicked) node of the selection. Fires on every selection change. */
   onSelectionChange?: (node: TreeNode<T> | null) => void;
   /** The full multi-selection. Plain click = single; Ctrl/Cmd+click toggles; Shift+click ranges. */
@@ -61,8 +69,14 @@ export interface TreeViewProps<T = unknown> {
    * onDrop makes rows draggable; omitting it disables DnD.
    */
   canDrop?: (dragged: TreeNode<T>[], target: TreeNode<T> | null) => boolean;
-  /** Perform the move when nodes are dropped on `target` (null = background/root). */
-  onDrop?: (dragged: TreeNode<T>[], target: TreeNode<T> | null) => void;
+  /** Perform the move when nodes are dropped on `target` (null = background/root).
+   *  With `reorder`, `position` says whether the drop is before/into/after the
+   *  target; without it, drops are always "into" and `position` is omitted. */
+  onDrop?: (dragged: TreeNode<T>[], target: TreeNode<T> | null, position?: DropPosition) => void;
+  /** Opt in to positional (reorder) drops: the top/bottom quarters of a row drop
+   *  before/after it (as a sibling) and the middle drops into it (as a child),
+   *  with a drop-line indicator. Default false = whole-row "into" only. */
+  reorder?: boolean;
   /** A drop from OUTSIDE the tree (no internal drag in progress) — e.g. dragging an
    *  item in from another view. Fires with the native event (read its dataTransfer) and
    *  the target node (null = background/root). Providing this makes rows accept external
