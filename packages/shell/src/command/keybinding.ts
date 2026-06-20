@@ -1,5 +1,14 @@
 // Parse/match keybinding chords like "Ctrl+Shift+P", "Alt+F4", "Cmd+K".
 
+/** Format a key combo for display (platform-aware: Ctrl/Shift/Alt -> ⌘/⇧/⌥ on Mac). */
+export function formatKeys(keys: string): string {
+  const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.userAgent);
+  return keys
+    .replace(/Ctrl\+/gi, isMac ? "⌘" : "Ctrl+")
+    .replace(/Shift\+/gi, isMac ? "⇧" : "Shift+")
+    .replace(/Alt\+/gi, isMac ? "⌥" : "Alt+");
+}
+
 export interface Chord {
   ctrl: boolean;
   shift: boolean;

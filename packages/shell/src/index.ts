@@ -150,7 +150,7 @@ export { CommandPalette } from "./command/CommandPalette";
 export type { CommandPaletteProps } from "./command/CommandPalette";
 export { ShortcutOverlay } from "./command/ShortcutOverlay";
 export type { ShortcutOverlayProps } from "./command/ShortcutOverlay";
-export { parseChord, matchEvent } from "./command/keybinding";
+export { parseChord, matchEvent, formatKeys } from "./command/keybinding";
 export type { Chord } from "./command/keybinding";
 
 // Overlay
