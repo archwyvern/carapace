@@ -19,6 +19,9 @@ export interface SpinSliderProps {
   /** Multiplier on drag-scrub speed (1 = default). <1 makes scrubbing less twitchy; useful for
    *  unbounded fields, which otherwise move a fixed 2·step per pixel. Keyboard/wheel are unaffected. */
   dragScale?: number;
+  /** Multiplier applied to the drag-scrub while Shift is held. Default 0.1 (Shift = fine). Set it >1
+   *  to make Shift a coarse/faster modifier instead (e.g. 10 for "Shift = 10× faster"). */
+  shiftScale?: number;
   /** Suppress the fill bar. */
   hideSlider?: boolean;
   /** Show stacked inc/dec buttons on the right (a classic spinbox). Each click steps by
@@ -55,7 +58,7 @@ function evaluate(text: string): number | null {
 export function SpinSlider({
   value, onChange, onCommit,
   min, max, step, integer,
-  orGreater, orLess, exp, hideSlider, spinButtons, suffix, wheel, readOnly, dragScale,
+  orGreater, orLess, exp, hideSlider, spinButtons, suffix, wheel, readOnly, dragScale, shiftScale,
 }: SpinSliderProps) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState("");
@@ -107,7 +110,7 @@ export function SpinSlider({
     d.acc += e.movementX;
     if (!d.moved && Math.abs(d.acc) < 3) return;
     d.moved = true;
-    const fine = (e.shiftKey ? 0.1 : 1) * (dragScale ?? 1);
+    const fine = (e.shiftKey ? (shiftScale ?? 0.1) : 1) * (dragScale ?? 1);
     if (expOk && d.startVal > 0) {
       onChange(clampRound(d.startVal * Math.exp((d.acc / 300) * logSpan * fine)));
     } else {

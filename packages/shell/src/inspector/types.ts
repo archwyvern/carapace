@@ -35,6 +35,8 @@ export interface NumberField extends InspectorFieldBase {
   integer?: boolean;
   /** Drag-scrub speed multiplier (1 = default). <1 tames twitchy unbounded fields. */
   dragScale?: number;
+  /** Multiplier while Shift is held during a drag. Default 0.1 (fine); >1 makes Shift coarse/faster. */
+  shiftScale?: number;
 }
 
 export interface BoolField extends InspectorFieldBase {
@@ -76,6 +78,8 @@ export interface VecField extends InspectorFieldBase {
   integer?: boolean;
   /** Drag-scrub speed multiplier for each axis (1 = default). */
   dragScale?: number;
+  /** Multiplier while Shift is held during a drag. Default 0.1 (fine); >1 makes Shift coarse/faster. */
+  shiftScale?: number;
   onChange: (v: number[]) => void;
   /** Fired on per-axis commit (drag-release / Enter / blur) with the full array. */
   onCommit?: (v: number[]) => void;

@@ -17,6 +17,8 @@ export interface FormVecProps {
   integer?: boolean;
   /** Drag-scrub speed multiplier passed to each axis SpinSlider (1 = default). */
   dragScale?: number;
+  /** Shift-held drag multiplier passed to each axis SpinSlider (default 0.1 fine; >1 = coarse/faster). */
+  shiftScale?: number;
   onChange: (value: number[]) => void;
   /** Fired on per-axis commit (drag-release / Enter / blur) with the full updated array. */
   onCommit?: (value: number[]) => void;
@@ -24,7 +26,7 @@ export interface FormVecProps {
 
 /** Labelled multi-axis number field (vec2/3/4). Each axis is a full SpinSlider (drag-scrub,
  *  click-to-type, expression eval) — consistent with every other scalar field in the inspector. */
-export function FormVec({ label, layout, value, size, step, min, max, integer, dragScale, onChange, onCommit }: FormVecProps) {
+export function FormVec({ label, layout, value, size, step, min, max, integer, dragScale, shiftScale, onChange, onCommit }: FormVecProps) {
   const withAxis = (index: number, v: number): number[] => {
     const next = [...value];
     next[index] = v;
@@ -49,6 +51,7 @@ export function FormVec({ label, layout, value, size, step, min, max, integer, d
                 max={max}
                 integer={integer}
                 dragScale={dragScale}
+                shiftScale={shiftScale}
               />
             </div>
           </div>
