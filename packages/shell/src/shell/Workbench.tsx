@@ -6,6 +6,10 @@ export interface WorkbenchProps {
   logo?: ReactNode;
   menu?: MenuModel;
   title?: string;
+  /** Flex-1 middle slot in the top bar (e.g. a breadcrumb trail). */
+  center?: ReactNode;
+  /** Right-aligned top-bar content before the window controls (e.g. account actions). */
+  actions?: ReactNode;
   showWindowControls?: boolean;
   /** Optional left icon strip. Omit → no activity bar, centre widens. */
   activityBar?: ReactNode;
@@ -23,6 +27,8 @@ export function Workbench({
   logo,
   menu,
   title,
+  center,
+  actions,
   showWindowControls,
   activityBar,
   statusBar,
@@ -30,7 +36,7 @@ export function Workbench({
 }: WorkbenchProps) {
   return (
     <div className="flex h-screen flex-col bg-surface text-fg">
-      <TopBar logo={logo} menu={menu} title={title} showWindowControls={showWindowControls} />
+      <TopBar logo={logo} menu={menu} title={title} center={center} actions={actions} showWindowControls={showWindowControls} />
       <div className="flex min-h-0 flex-1">
         {activityBar}
         <main className="min-h-0 min-w-0 flex-1 overflow-auto">{children}</main>
