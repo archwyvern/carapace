@@ -98,7 +98,7 @@ export { useMemento } from "./state/useMemento";
 export { OutputPanel } from "./output/OutputPanel";
 export type { OutputLine, OutputPanelProps } from "./output/OutputPanel";
 export { isCollapsible } from "./tree/treeTypes";
-export type { TreeNode, FlatNode, TreeItemContext, TreeViewProps } from "./tree/treeTypes";
+export type { TreeNode, FlatNode, TreeItemContext, TreeViewProps, DropPosition } from "./tree/treeTypes";
 export {
   flattenVisible,
   findParentIndex,
