@@ -5,7 +5,9 @@ export { createMemoryHost } from "./host/memoryHost";
 
 // Primitives
 export { Button } from "./primitives/Button";
-export type { ButtonProps } from "./primitives/Button";
+export type { ButtonProps, ButtonVariant, ButtonSize } from "./primitives/Button";
+export { SaveStatus } from "./primitives/SaveStatus";
+export type { SaveState, SaveStatusProps } from "./primitives/SaveStatus";
 export { SpinSlider } from "./primitives/SpinSlider";
 export type { SpinSliderProps } from "./primitives/SpinSlider";
 export { Sash } from "./primitives/Sash";

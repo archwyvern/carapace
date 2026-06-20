@@ -6,7 +6,9 @@
 import type { ReactNode } from "react";
 
 export interface MenuAction {
-  id: string;
+  /** Stable id, used by menu-bar/command integration. Optional for ad-hoc
+   *  context-menu items that carry their own `run` closure. */
+  id?: string;
   /** Display label; `&&` marks the mnemonic letter (VS Code convention): "&&New". */
   label: string;
   /** Display-only shortcut hint, e.g. "Ctrl+N". */
@@ -17,6 +19,8 @@ export interface MenuAction {
   enabled?: boolean;
   /** Renders a check/toggle indicator. */
   checked?: boolean;
+  /** Destructive action — rendered with the error color. */
+  danger?: boolean;
   run: () => void;
 }
 

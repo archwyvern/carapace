@@ -4,6 +4,7 @@ import { isCommandRef, isSeparator, isSubmenu } from "./model";
 import type { MenuItem } from "./model";
 import { parseMnemonic } from "./mnemonic";
 import { useOptionalCommands } from "../command/context";
+import { cx } from "../cx";
 
 const ROW =
   "flex w-full items-center gap-2 px-2 py-1 text-left text-sm whitespace-nowrap hover:bg-accent hover:text-accent-fg disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-fg";
@@ -51,6 +52,7 @@ export function MenuList({ items, onClose }: { items: MenuItem[]; onClose: () =>
         let disabled: boolean;
         let activate: () => void;
         let icon: ReactNode = null;
+        let danger = false;
         if (isCommandRef(item)) {
           const cmd = registry?.get(item.command);
           label = cmd?.label ?? item.command;
@@ -64,6 +66,7 @@ export function MenuList({ items, onClose }: { items: MenuItem[]; onClose: () =>
           disabled = item.enabled === false;
           activate = item.run;
           icon = item.icon ?? null;
+          danger = item.danger ?? false;
         }
         return (
           <button
@@ -71,7 +74,7 @@ export function MenuList({ items, onClose }: { items: MenuItem[]; onClose: () =>
             type="button"
             role="menuitem"
             disabled={disabled}
-            className={ROW}
+            className={cx(ROW, danger && "text-error")}
             onMouseEnter={() => setOpenSub(null)}
             onClick={() => {
               activate();
