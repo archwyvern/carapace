@@ -33,7 +33,7 @@ export function PromptDialog({
   const canConfirm = trimmed !== "" && validationError === null;
 
   return (
-    <Modal title={title} onClose={onCancel} initialFocus={inputRef}>
+    <Modal title={title} onClose={onCancel} initialFocus={inputRef} closeOnBackdrop={false}>
       {message && <p className="mb-3 text-sm text-fg-mid">{message}</p>}
       <input
         ref={inputRef}
@@ -42,7 +42,13 @@ export function PromptDialog({
         placeholder={placeholder}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && canConfirm) onConfirm(trimmed);
+          if (e.key === "Enter" && canConfirm) {
+            // Stop the Enter from re-activating the trigger button once the modal
+            // closes and focus restores to it (which would reopen the prompt).
+            e.preventDefault();
+            e.stopPropagation();
+            onConfirm(trimmed);
+          }
         }}
         aria-invalid={validationError !== null}
         className={DIALOG_INPUT}

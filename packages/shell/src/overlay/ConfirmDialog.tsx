@@ -10,6 +10,9 @@ export interface ConfirmDialogProps {
   /** Optional third action rendered leftmost (e.g. "Don't Save"); pairs with onTertiary. */
   tertiaryLabel?: string;
   danger?: boolean;
+  /** Focus the confirm button even for danger dialogs — for fast Enter-to-confirm flows where the
+   *  affirmative action is expected (e.g. a file-explorer delete). Default: danger focuses Cancel. */
+  defaultConfirm?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
   onTertiary?: () => void;
@@ -22,11 +25,12 @@ export function ConfirmDialog({
   cancelLabel,
   tertiaryLabel,
   danger,
+  defaultConfirm,
   onConfirm,
   onCancel,
   onTertiary,
 }: ConfirmDialogProps) {
-  // Destructive actions focus Cancel so a stray Enter doesn't commit.
+  // Destructive actions focus Cancel so a stray Enter doesn't commit — unless defaultConfirm opts in.
   const cancelRef = useRef<HTMLButtonElement>(null);
   const confirmRef = useRef<HTMLButtonElement>(null);
 
@@ -35,7 +39,7 @@ export function ConfirmDialog({
       title={title}
       titleClassName={danger ? "text-error" : undefined}
       onClose={onCancel}
-      initialFocus={danger ? cancelRef : confirmRef}
+      initialFocus={danger && !defaultConfirm ? cancelRef : confirmRef}
     >
       {message && <p className="mb-4 whitespace-pre-line text-sm text-fg-mid">{message}</p>}
       <div className="flex justify-end gap-2">

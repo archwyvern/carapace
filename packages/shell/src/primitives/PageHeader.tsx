@@ -26,7 +26,7 @@ export function PageHeader({ title, eyebrow, leading, actions, className }: Page
         {leading}
         {eyebrow && <span className="shrink-0 font-semibold text-accent">{eyebrow}</span>}
         {typeof title === "string" ? (
-          <span className="truncate text-xs uppercase tracking-wide text-fg-mid">{title}</span>
+          <span className="truncate text-sm uppercase tracking-wide text-fg-mid">{title}</span>
         ) : (
           title
         )}

@@ -51,7 +51,13 @@ export function TypedConfirmDialog({
         value={typed}
         onChange={(e) => setTyped(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && matches) onConfirm();
+          if (e.key === "Enter" && matches) {
+            // Prevent the Enter from re-activating the trigger button after the
+            // modal closes and restores focus to it.
+            e.preventDefault();
+            e.stopPropagation();
+            onConfirm();
+          }
         }}
         className="mb-4 w-full border border-border bg-surface-sunken px-2.5 py-1 text-sm text-fg outline-none focus:border-error"
         autoComplete="off"

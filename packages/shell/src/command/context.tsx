@@ -30,6 +30,9 @@ export function useOptionalCommands(): CommandRegistry | null {
 export function useCommandKeybindings(registry: CommandRegistry): void {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // A focused handler (e.g. a tree row's F2/Delete, an editor binding) that already
+      // consumed the key wins — don't also fire a global command for the same chord.
+      if (e.defaultPrevented) return;
       for (const cmd of registry.all()) {
         if (cmd.keybinding && matchEvent(parseChord(cmd.keybinding), e)) {
           e.preventDefault();

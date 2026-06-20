@@ -1,4 +1,4 @@
-import type { CSSProperties, MouseEvent, ReactNode } from "react";
+import type { CSSProperties, DragEvent, MouseEvent, ReactNode } from "react";
 
 /** A node in the tree, generic over the user data type T. */
 export interface TreeNode<T = unknown> {
@@ -37,6 +37,9 @@ export interface TreeViewProps<T = unknown> {
   roots: TreeNode<T>[];
   /** Render the content of a row (after the twistie + indent). */
   renderItem: (ctx: TreeItemContext<T>) => ReactNode;
+  /** Render right-aligned trailing content per row (e.g. hover actions, badges). The
+   *  row carries a `group` class, so `group-hover:` reveals hover-only actions. */
+  renderTrailing?: (ctx: TreeItemContext<T>) => ReactNode;
   /** Initially expanded ids (uncontrolled). */
   defaultExpanded?: Set<string>;
   /** Controlled expanded state. When set, TreeView does not manage it internally. */
@@ -48,7 +51,35 @@ export interface TreeViewProps<T = unknown> {
   indent?: number;
   /** Activated via Enter or double-click. */
   onActivate?: (node: TreeNode<T>) => void;
+  /** The primary (last-clicked) node of the selection. Fires on every selection change. */
   onSelectionChange?: (node: TreeNode<T> | null) => void;
+  /** The full multi-selection. Plain click = single; Ctrl/Cmd+click toggles; Shift+click ranges. */
+  onSelectedChange?: (nodes: TreeNode<T>[]) => void;
+  /**
+   * Enable drag-and-drop. Return whether the dragged nodes may drop onto `target`
+   * (a null target means the tree background / root). Providing this together with
+   * onDrop makes rows draggable; omitting it disables DnD.
+   */
+  canDrop?: (dragged: TreeNode<T>[], target: TreeNode<T> | null) => boolean;
+  /** Perform the move when nodes are dropped on `target` (null = background/root). */
+  onDrop?: (dragged: TreeNode<T>[], target: TreeNode<T> | null) => void;
+  /** A drop from OUTSIDE the tree (no internal drag in progress) — e.g. dragging an
+   *  item in from another view. Fires with the native event (read its dataTransfer) and
+   *  the target node (null = background/root). Providing this makes rows accept external
+   *  drags. */
+  onExternalDrop?: (e: DragEvent, target: TreeNode<T> | null) => void;
+  /** Delete key: fires with the current multi-selection. */
+  onDelete?: (nodes: TreeNode<T>[]) => void;
+  /** F2: fires with the focused node (consumer starts a rename). */
+  onRename?: (node: TreeNode<T>) => void;
+  /** Id of the row currently being edited in-place (inline rename / new item). */
+  editingId?: string;
+  /** Seed text for the inline editor (e.g. the current filename). */
+  editingInitial?: string;
+  /** Inline edit committed (Enter or blur) with the entered text. */
+  onEditCommit?: (value: string) => void;
+  /** Inline edit cancelled (Escape). */
+  onEditCancel?: () => void;
   onContextMenu?: (node: TreeNode<T>, e: MouseEvent) => void;
   /** Right-click on empty tree area (not on any row). */
   onBackgroundContextMenu?: (e: MouseEvent) => void;

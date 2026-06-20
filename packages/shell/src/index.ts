@@ -1,6 +1,6 @@
 // Host
 export type { CarapaceHost, DirEntry, ChangeKind, FileSystemProvider } from "./host/types";
-export { HostProvider, useHost } from "./host/context";
+export { HostProvider, useHost, useOptionalHost } from "./host/context";
 export { createMemoryHost } from "./host/memoryHost";
 
 // Primitives
@@ -20,6 +20,8 @@ export type { ToolbarProps } from "./primitives/Toolbar";
 export { SectionHeader } from "./primitives/SectionHeader";
 export { PageHeader } from "./primitives/PageHeader";
 export type { PageHeaderProps } from "./primitives/PageHeader";
+export { Breadcrumb } from "./primitives/Breadcrumb";
+export type { BreadcrumbItem, BreadcrumbProps } from "./primitives/Breadcrumb";
 
 // Form controls
 export { FormEnum } from "./form/FormEnum";
@@ -77,6 +79,18 @@ export { treeFilter } from "./tree/treeFilter";
 // Editor
 export { EditorTabs } from "./editor/EditorTabs";
 export type { EditorTab, EditorTabsProps } from "./editor/EditorTabs";
+export { CodeEditor } from "./editor/CodeEditor";
+export type { CodeEditorProps, Diagnostic } from "./editor/CodeEditor";
+export { formatJs } from "./format/formatJs";
+export type { FormatOptions } from "./format/formatJs";
+
+// Persisted UI state (memento pattern): a backend-agnostic StateService behind a
+// StateProvider, consumed via useMemento. Apps inject the service (localStorage by
+// default; a remote/host adapter optional).
+export { StateService } from "./state/StateService";
+export type { StateServiceOptions, RemoteStore } from "./state/StateService";
+export { StateProvider, useStateService } from "./state/StateContext";
+export { useMemento } from "./state/useMemento";
 
 // Output
 export { OutputPanel } from "./output/OutputPanel";

@@ -1,8 +1,10 @@
-import { useHost } from "../host/context";
+import { useOptionalHost } from "../host/context";
 
-/** Host-driven window controls (min/max/close). Used by TopBar. */
+/** Host-driven window controls (min/max/close). Used by TopBar. Renders nothing
+ *  when there is no `HostProvider` — e.g. an app that keeps the OS window frame. */
 export function WindowControls() {
-  const host = useHost();
+  const host = useOptionalHost();
+  if (!host) return null;
   return (
     <div className="flex gap-1">
       <button

@@ -19,3 +19,9 @@ export function useHost(): CarapaceHost {
   }
   return host;
 }
+
+/** Like {@link useHost} but returns null instead of throwing when there is no
+ *  `HostProvider` — for components that work with or without a platform host. */
+export function useOptionalHost(): CarapaceHost | null {
+  return useContext(HostContext);
+}

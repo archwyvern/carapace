@@ -11,6 +11,8 @@ export interface ConfirmOptions {
   tertiaryLabel?: string;
   /** Style the confirm button as destructive. */
   danger?: boolean;
+  /** Focus the confirm button by default (even when danger) for fast Enter-to-confirm flows. */
+  defaultConfirm?: boolean;
 }
 
 export type ConfirmResult = "confirm" | "cancel" | "tertiary";
@@ -53,6 +55,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
           cancelLabel={pending.options.cancelLabel}
           tertiaryLabel={pending.options.tertiaryLabel}
           danger={pending.options.danger}
+          defaultConfirm={pending.options.defaultConfirm}
           onConfirm={() => finish("confirm")}
           onCancel={() => finish("cancel")}
           onTertiary={() => finish("tertiary")}

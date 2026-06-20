@@ -16,6 +16,9 @@
   --color-accent: #4f8cff;
   --color-accent-fg: #ffffff;
 
+  /* Selected row in lists/trees (subtle, VS Code-style; not the loud accent). */
+  --color-list-active: rgba(79, 140, 255, 0.18);
+
   /* Semantic status palette */
   --color-info: #4cb5e0;
   --color-success: #89d185;

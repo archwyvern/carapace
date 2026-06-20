@@ -21,6 +21,9 @@ export interface SpinSliderProps {
   dragScale?: number;
   /** Suppress the fill bar. */
   hideSlider?: boolean;
+  /** Show stacked inc/dec buttons on the right (a classic spinbox). Each click steps by
+   *  `step` (Shift = ×10) and commits. */
+  spinButtons?: boolean;
   /** Unit suffix shown as dim micro-text. */
   suffix?: string;
   /** Opt in to wheel-to-step. Off by default so it never hijacks scroll. */
@@ -52,7 +55,7 @@ function evaluate(text: string): number | null {
 export function SpinSlider({
   value, onChange, onCommit,
   min, max, step, integer,
-  orGreater, orLess, exp, hideSlider, suffix, wheel, readOnly, dragScale,
+  orGreater, orLess, exp, hideSlider, spinButtons, suffix, wheel, readOnly, dragScale,
 }: SpinSliderProps) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState("");
@@ -66,7 +69,9 @@ export function SpinSlider({
   const showBar = hasRange && !hideSlider;
   const effStep = step ?? (integer ? 1 : 0.01);
   // ~300px traverses a known range; capped so 0..1000 doesn't become twitchy. Shift = fine.
-  const perPx = hasRange ? Math.min((hi - lo) / 300, 25 * effStep) : effStep * 2;
+  // Unbounded: scrub 2 * step, so an explicit small step (e.g. 0.1) stays gentle. A float field with
+  // NO step (eff 0.01, only for typing precision) falls back to 1 so it still scrubs at a usable rate.
+  const perPx = hasRange ? Math.min((hi - lo) / 300, 25 * effStep) : (step ?? 1) * 2;
   const expOk = exp === true && hasRange && lo > 0;
   const logSpan = expOk ? Math.log(hi / lo) : 0;
 
@@ -80,6 +85,12 @@ export function SpinSlider({
   };
   const nudge = (dir: number, fine: boolean) =>
     onChange(clampRound(value + dir * effStep * (fine ? 10 : 1)));
+  // Like nudge but also commits — used by the inc/dec spin buttons (each click is discrete).
+  const stepBy = (dir: number, fine: boolean) => {
+    const v = clampRound(value + dir * effStep * (fine ? 10 : 1));
+    onChange(v);
+    onCommit?.(v);
+  };
   const beginEdit = () => { setText(format(value, integer)); setEditing(true); };
 
   const onPointerDown = (e: React.PointerEvent) => {
@@ -176,6 +187,14 @@ export function SpinSlider({
       {suffix && (
         <span className="pointer-events-none relative shrink-0 text-[10px] leading-none text-fg-mid opacity-70">
           {suffix}
+        </span>
+      )}
+      {spinButtons && !readOnly && (
+        <span className="relative -mr-0.5 flex shrink-0 flex-col" onPointerDown={(e) => e.stopPropagation()}>
+          <button type="button" tabIndex={-1} aria-label="Increment" onClick={(e) => { e.stopPropagation(); stepBy(1, e.shiftKey); }}
+            className="flex h-[11px] w-3.5 items-center justify-center text-[8px] leading-none text-fg-mid hover:text-fg">▲</button>
+          <button type="button" tabIndex={-1} aria-label="Decrement" onClick={(e) => { e.stopPropagation(); stepBy(-1, e.shiftKey); }}
+            className="flex h-[11px] w-3.5 items-center justify-center text-[8px] leading-none text-fg-mid hover:text-fg">▼</button>
         </span>
       )}
     </div>
