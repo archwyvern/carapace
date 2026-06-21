@@ -46,6 +46,8 @@ export { Grid } from "./layout/Grid";
 export type { GridProps } from "./layout/Grid";
 export { Thumbnail } from "./layout/Thumbnail";
 export type { ThumbnailProps } from "./layout/Thumbnail";
+export { PanelGroup, SplitPane, SASH_SIZE } from "./layout/PanelGroup";
+export type { PanelGroupProps, SplitPaneProps } from "./layout/PanelGroup";
 
 // Navigation
 export { Tabs } from "./navigation/Tabs";
