@@ -108,7 +108,7 @@ export function ColorPicker({ value, hasAlpha, onChange }: ColorPickerProps) {
   });
 
   return (
-    <div className="flex w-[280px] flex-col gap-2 border border-border bg-surface-raised p-2 text-sm">
+    <div className="flex w-[280px] flex-col gap-2 border border-border bg-surface-raised p-2 text-xs">
       <ColorWheel hue={h} saturation={s} value={v} size={260} onChange={handleWheelChange} />
 
       <div className="flex items-center gap-1.5">
@@ -168,14 +168,14 @@ export function ColorPicker({ value, hasAlpha, onChange }: ColorPickerProps) {
       )}
 
       <div className="flex items-center gap-1">
-        <span className="w-7 text-sm text-fg-mid">Hex</span>
-        <span className="text-sm text-fg-mid">#</span>
+        <span className="w-7 text-xs text-fg-mid">Hex</span>
+        <span className="text-xs text-fg-mid">#</span>
         <input
           type="text"
           value={currentHex.slice(1)}
           onChange={(e) => handleHexChange(e.target.value)}
           maxLength={6}
-          className="h-[22px] flex-1 border border-border bg-surface px-1 font-mono text-sm text-fg outline-none"
+          className="h-[22px] flex-1 border border-border bg-surface px-1 font-mono text-xs text-fg outline-none"
         />
       </div>
     </div>

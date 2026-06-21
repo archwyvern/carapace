@@ -20,7 +20,12 @@ import {
 } from "@carapace/shell";
 import type { MenuItem, MenuModel, OutputLine } from "@carapace/shell";
 import { Gallery } from "./Gallery";
+import { InspectorPage } from "./pages/InspectorPage";
+import { ResourceInspectorPage } from "./pages/ResourceInspectorPage";
+import { TreeViewPage } from "./pages/TreeViewPage";
 import "./app.css";
+
+type Page = "components" | "inspector" | "trees" | "resources";
 
 const host = createMemoryHost({
   "/proj/src/main.tsx": "",
@@ -40,7 +45,7 @@ const LOG: OutputLine[] = [
 
 function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [view, setView] = useState("files");
+  const [page, setPage] = useState<Page>("inspector");
   const [sideW, setSideW] = useState(200);
   const [consoleH, setConsoleH] = useState(120);
   const [openFiles, setOpenFiles] = useState<{ id: string; title: string }[]>([]);
@@ -103,13 +108,19 @@ function App() {
         activityBar={
           <ActivityBar
             items={[
-              { id: "files", icon: <span>🗎</span>, title: "Files", active: view === "files", onClick: () => setView("files") },
-              { id: "search", icon: <span>⌕</span>, title: "Search", active: view === "search", onClick: () => setView("search") },
+              { id: "components", icon: <span>🧩</span>, title: "Components", active: page === "components", onClick: () => setPage("components") },
+              { id: "inspector", icon: <span>🎛</span>, title: "Inspector", active: page === "inspector", onClick: () => setPage("inspector") },
+              { id: "trees", icon: <span>🌳</span>, title: "TreeView", active: page === "trees", onClick: () => setPage("trees") },
+              { id: "resources", icon: <span>🗂</span>, title: "Resource Inspector", active: page === "resources", onClick: () => setPage("resources") },
             ]}
           />
         }
         statusBar={<StatusBar left={<span>Ready</span>} right={<span>Ctrl+P for commands</span>} />}
       >
+        {page === "inspector" && <InspectorPage />}
+        {page === "trees" && <TreeViewPage />}
+        {page === "resources" && <ResourceInspectorPage />}
+        {page === "components" && (
         <SplitView orientation="horizontal" primary="start" size={sideW} onResize={setSideW} min={140} max={400}>
           <div className="h-full border-r border-border bg-surface-sunken">
             <FileExplorer root="/proj" onOpen={openFile} />
@@ -125,7 +136,7 @@ function App() {
               }}
             />
             <SplitView orientation="vertical" primary="end" size={consoleH} onResize={setConsoleH} min={60} max={320}>
-              <div className="min-h-0 overflow-auto p-4" onContextMenu={ctx.open}>
+              <div className="h-full overflow-auto p-4" onContextMenu={ctx.open}>
                 {activeFile ? (
                   <div className="font-mono text-sm text-fg">{activeFile}</div>
                 ) : (
@@ -136,6 +147,7 @@ function App() {
             </SplitView>
           </div>
         </SplitView>
+        )}
       </Workbench>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       {ctx.state && (

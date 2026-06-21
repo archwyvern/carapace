@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { cx } from "../cx";
+import { CloseIcon } from "../icons";
 
 export type ToastTone = "info" | "success" | "warning" | "error";
 
@@ -59,7 +60,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={t.id}
             role={t.tone === "error" ? "alert" : "status"}
             className={cx(
-              "pointer-events-auto flex max-w-[360px] items-start gap-2 border bg-surface-raised px-3 py-2 text-sm text-fg shadow-lg",
+              "pointer-events-auto flex max-w-[360px] items-start gap-2 border bg-surface-raised px-3 py-2 text-xs text-fg shadow-lg",
               TONE_BORDER[t.tone],
             )}
           >
@@ -69,9 +70,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               type="button"
               onClick={() => dismiss(t.id)}
               aria-label="Dismiss notification"
-              className="shrink-0 text-base leading-none text-fg-mid hover:text-fg"
+              className="flex shrink-0 items-center text-fg-mid hover:text-fg"
             >
-              &times;
+              <CloseIcon className="h-3.5 w-3.5" />
             </button>
           </div>
         ))}

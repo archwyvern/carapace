@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { ChevronDownIcon } from "../icons";
 
 export interface SpinSliderProps {
   value: number;
@@ -8,7 +9,7 @@ export interface SpinSliderProps {
   onCommit?: (value: number) => void;
   min?: number;
   max?: number;
-  step?: number;
+  /** Integer field — the step is always 1.0 (the float Shift/Ctrl tiers don't apply). */
   integer?: boolean;
   /** Soft max — drag/type may exceed `max`. */
   orGreater?: boolean;
@@ -16,16 +17,10 @@ export interface SpinSliderProps {
   orLess?: boolean;
   /** Logarithmic drag mapping (requires min > 0). */
   exp?: boolean;
-  /** Multiplier on drag-scrub speed (1 = default). <1 makes scrubbing less twitchy; useful for
-   *  unbounded fields, which otherwise move a fixed 2·step per pixel. Keyboard/wheel are unaffected. */
-  dragScale?: number;
-  /** Multiplier applied to the drag-scrub while Shift is held. Default 0.1 (Shift = fine). Set it >1
-   *  to make Shift a coarse/faster modifier instead (e.g. 10 for "Shift = 10× faster"). */
-  shiftScale?: number;
   /** Suppress the fill bar. */
   hideSlider?: boolean;
-  /** Show stacked inc/dec buttons on the right (a classic spinbox). Each click steps by
-   *  `step` (Shift = ×10) and commits. */
+  /** Show stacked inc/dec buttons on the right (a classic spinbox). Each click steps by the
+   *  universal step (Shift/Ctrl coarsen it on float fields) and commits. */
   spinButtons?: boolean;
   /** Unit suffix shown as dim micro-text. */
   suffix?: string;
@@ -38,6 +33,20 @@ function format(value: number, integer?: boolean): string {
   if (integer) return String(Math.round(value));
   if (Number.isInteger(value)) return value.toFixed(0);
   return parseFloat(value.toFixed(4)).toString();
+}
+
+type Mod = { shiftKey: boolean; ctrlKey: boolean };
+
+/**
+ * The universal, non-customizable step. Float fields step by 0.01; Shift coarsens to 0.1, Ctrl to
+ * 1.0. Integer fields always step by 1.0. The same granularity drives keyboard, wheel, the spin
+ * buttons, AND drag (per pixel) — so a SpinSlider behaves identically everywhere it appears.
+ */
+function stepFor(integer: boolean | undefined, mod: Mod): number {
+  if (integer) return 1;
+  if (mod.ctrlKey) return 1;
+  if (mod.shiftKey) return 0.1;
+  return 0.01;
 }
 
 // Text -> number; supports arithmetic expressions like "1+2*3".
@@ -57,8 +66,8 @@ function evaluate(text: string): number | null {
 
 export function SpinSlider({
   value, onChange, onCommit,
-  min, max, step, integer,
-  orGreater, orLess, exp, hideSlider, spinButtons, suffix, wheel, readOnly, dragScale, shiftScale,
+  min, max, integer,
+  orGreater, orLess, exp, hideSlider, spinButtons, suffix, wheel, readOnly,
 }: SpinSliderProps) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState("");
@@ -70,27 +79,20 @@ export function SpinSlider({
   const hi = max ?? 0;
   const ratio = hasRange ? Math.min(1, Math.max(0, (value - lo) / (hi - lo))) : 0;
   const showBar = hasRange && !hideSlider;
-  const effStep = step ?? (integer ? 1 : 0.01);
-  // ~300px traverses a known range; capped so 0..1000 doesn't become twitchy. Shift = fine.
-  // Unbounded: scrub 2 * step, so an explicit small step (e.g. 0.1) stays gentle. A float field with
-  // NO step (eff 0.01, only for typing precision) falls back to 1 so it still scrubs at a usable rate.
-  const perPx = hasRange ? Math.min((hi - lo) / 300, 25 * effStep) : (step ?? 1) * 2;
   const expOk = exp === true && hasRange && lo > 0;
   const logSpan = expOk ? Math.log(hi / lo) : 0;
 
-  const clampRound = (v: number): number => {
+  const clamp = (v: number): number => {
     let x = v;
     if (min !== undefined && !orLess) x = Math.max(min, x);
     if (max !== undefined && !orGreater) x = Math.min(max, x);
     if (integer) return Math.round(x);
-    if (effStep > 0) x = Math.round(x / effStep) * effStep;
     return parseFloat(x.toFixed(6));
   };
-  const nudge = (dir: number, fine: boolean) =>
-    onChange(clampRound(value + dir * effStep * (fine ? 10 : 1)));
+  const nudge = (dir: number, mod: Mod) => onChange(clamp(value + dir * stepFor(integer, mod)));
   // Like nudge but also commits — used by the inc/dec spin buttons (each click is discrete).
-  const stepBy = (dir: number, fine: boolean) => {
-    const v = clampRound(value + dir * effStep * (fine ? 10 : 1));
+  const stepBy = (dir: number, mod: Mod) => {
+    const v = clamp(value + dir * stepFor(integer, mod));
     onChange(v);
     onCommit?.(v);
   };
@@ -110,11 +112,12 @@ export function SpinSlider({
     d.acc += e.movementX;
     if (!d.moved && Math.abs(d.acc) < 3) return;
     d.moved = true;
-    const fine = (e.shiftKey ? (shiftScale ?? 0.1) : 1) * (dragScale ?? 1);
     if (expOk && d.startVal > 0) {
-      onChange(clampRound(d.startVal * Math.exp((d.acc / 300) * logSpan * fine)));
+      onChange(clamp(d.startVal * Math.exp((d.acc / 300) * logSpan)));
     } else {
-      onChange(clampRound(d.startVal + d.acc * perPx * fine));
+      // Per-pixel granularity = the active step tier: 0.01/px (float), 0.1 with Shift, 1.0 with
+      // Ctrl, 1.0 (int). Hold Ctrl to scrub large unbounded fields quickly.
+      onChange(clamp(d.startVal + d.acc * stepFor(integer, e)));
     }
   };
   const onPointerUp = (e: React.PointerEvent) => {
@@ -129,7 +132,7 @@ export function SpinSlider({
 
   const onWheel = (e: React.WheelEvent) => {
     if (wheel !== true || readOnly || editing) return;
-    const next = clampRound(value + (e.deltaY < 0 ? 1 : -1) * effStep);
+    const next = clamp(value + (e.deltaY < 0 ? 1 : -1) * stepFor(integer, e));
     onChange(next);
     onCommit?.(next);
   };
@@ -137,7 +140,7 @@ export function SpinSlider({
   const commit = () => {
     const parsed = evaluate(text);
     if (parsed != null) {
-      const v = clampRound(parsed);
+      const v = clamp(parsed);
       onChange(v);
       onCommit?.(v);
     }
@@ -157,7 +160,7 @@ export function SpinSlider({
           if (e.key === "Enter") commit();
           if (e.key === "Escape") setEditing(false);
         }}
-        className="h-[22px] w-full border border-accent bg-surface-raised px-1.5 font-mono text-sm text-fg outline-none"
+        className="h-[22px] w-full rounded-control border border-accent bg-surface-sunken px-1.5 font-mono text-xs text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none"
       />
     );
   }
@@ -172,11 +175,11 @@ export function SpinSlider({
       onKeyDown={(e) => {
         if (readOnly) return;
         if (e.key === "Enter" || e.key === "F2") { e.preventDefault(); beginEdit(); }
-        else if (e.key === "ArrowUp") { e.preventDefault(); nudge(1, e.shiftKey); }
-        else if (e.key === "ArrowDown") { e.preventDefault(); nudge(-1, e.shiftKey); }
+        else if (e.key === "ArrowUp") { e.preventDefault(); nudge(1, e); }
+        else if (e.key === "ArrowDown") { e.preventDefault(); nudge(-1, e); }
       }}
       title="Drag to scrub · click or Enter to type · up/down to step · Shift = fine"
-      className={`relative flex h-[22px] w-full cursor-ew-resize select-none items-center gap-1 overflow-hidden border border-border bg-surface-raised px-1.5 font-mono text-sm text-fg outline-none hover:border-accent focus-visible:border-accent focus-visible:outline-none ${
+      className={`relative flex h-[22px] w-full cursor-ew-resize select-none items-center gap-1 overflow-hidden rounded-control border border-border bg-surface-sunken px-1.5 font-mono text-xs text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none hover:border-accent focus-visible:border-accent focus-visible:outline-none ${
         readOnly ? "opacity-60" : ""
       }`}
     >
@@ -193,11 +196,11 @@ export function SpinSlider({
         </span>
       )}
       {spinButtons && !readOnly && (
-        <span className="relative -mr-0.5 flex shrink-0 flex-col" onPointerDown={(e) => e.stopPropagation()}>
-          <button type="button" tabIndex={-1} aria-label="Increment" onClick={(e) => { e.stopPropagation(); stepBy(1, e.shiftKey); }}
-            className="flex h-[11px] w-3.5 items-center justify-center text-[8px] leading-none text-fg-mid hover:text-fg">▲</button>
-          <button type="button" tabIndex={-1} aria-label="Decrement" onClick={(e) => { e.stopPropagation(); stepBy(-1, e.shiftKey); }}
-            className="flex h-[11px] w-3.5 items-center justify-center text-[8px] leading-none text-fg-mid hover:text-fg">▼</button>
+        <span className="relative -mr-1 flex shrink-0 flex-col self-stretch border-l border-border" onPointerDown={(e) => e.stopPropagation()}>
+          <button type="button" tabIndex={-1} aria-label="Increment" onClick={(e) => { e.stopPropagation(); stepBy(1, e); }}
+            className="flex h-[10px] w-4 items-center justify-center text-fg-mid hover:bg-surface-raised hover:text-fg"><ChevronDownIcon className="h-2.5 w-2.5 rotate-180" /></button>
+          <button type="button" tabIndex={-1} aria-label="Decrement" onClick={(e) => { e.stopPropagation(); stepBy(-1, e); }}
+            className="flex h-[10px] w-4 items-center justify-center text-fg-mid hover:bg-surface-raised hover:text-fg"><ChevronDownIcon className="h-2.5 w-2.5" /></button>
         </span>
       )}
     </div>

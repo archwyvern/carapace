@@ -21,6 +21,13 @@ export interface InspectorFieldBase {
   /** Value differs from its declared default — drives the modified dot + reset. */
   modified?: boolean;
   onReset?: () => void;
+  /**
+   * Override the row layout the Inspector picks by kind. The Inspector is a table: `inline`
+   * places the control beside the label in the shared control column; `stacked` drops it to a
+   * full-width line below the label. By default scalars are `inline`, vec3/4 are `stacked`, and
+   * object/array/custom always span full width regardless of this hint.
+   */
+  layout?: "inline" | "stacked";
 }
 
 export interface NumberField extends InspectorFieldBase {
@@ -31,12 +38,7 @@ export interface NumberField extends InspectorFieldBase {
   onCommit?: (v: number) => void;
   min?: number;
   max?: number;
-  step?: number;
   integer?: boolean;
-  /** Drag-scrub speed multiplier (1 = default). <1 tames twitchy unbounded fields. */
-  dragScale?: number;
-  /** Multiplier while Shift is held during a drag. Default 0.1 (fine); >1 makes Shift coarse/faster. */
-  shiftScale?: number;
 }
 
 export interface BoolField extends InspectorFieldBase {
@@ -72,14 +74,9 @@ export interface VecField extends InspectorFieldBase {
   kind: "vec";
   value: number[];
   size: 2 | 3 | 4;
-  step?: number;
   min?: number;
   max?: number;
   integer?: boolean;
-  /** Drag-scrub speed multiplier for each axis (1 = default). */
-  dragScale?: number;
-  /** Multiplier while Shift is held during a drag. Default 0.1 (fine); >1 makes Shift coarse/faster. */
-  shiftScale?: number;
   onChange: (v: number[]) => void;
   /** Fired on per-axis commit (drag-release / Enter / blur) with the full array. */
   onCommit?: (v: number[]) => void;

@@ -17,7 +17,7 @@ export interface BreadcrumbProps {
  *  buttons; the last item is the current location and is never clickable. */
 export function Breadcrumb({ items, className }: BreadcrumbProps) {
   return (
-    <nav aria-label="Breadcrumb" className={cx("flex min-w-0 items-center gap-1 text-sm", className)}>
+    <nav aria-label="Breadcrumb" className={cx("flex min-w-0 items-center gap-1 text-xs", className)}>
       {items.map((it, i) => {
         const last = i === items.length - 1;
         return (

@@ -1,7 +1,16 @@
 /* The playground consumes Carapace from source, so it imports the theme by
    relative path. Real consumers use the package subpath export instead
-   (`@import "@archwyvern/carapace/theme.css"`) — see the README. The @source
+   (`@import "@carapace/shell/theme.css"`) — see the README. The @source
    glob lets Tailwind detect the classes Carapace's components use. */
 @import "tailwindcss";
-@import "../../src/theme.css";
-@source "../../src";
+/* Godot editor's UI stack — the carapace standard (theme.css declares the family tokens). */
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+@import "../../packages/shell/src/theme.css";
+@source "../../packages/shell/src";
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+  }
+}

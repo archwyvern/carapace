@@ -44,13 +44,13 @@ export function ShortcutOverlay({ open, onClose }: ShortcutOverlayProps) {
       >
         <div className="flex h-[38px] shrink-0 items-center justify-between border-b border-border bg-surface-raised px-4">
           <span className="text-xs uppercase tracking-wide text-accent">Keyboard Shortcuts</span>
-          <button type="button" onClick={onClose} className="text-sm text-fg-mid hover:text-fg">
+          <button type="button" onClick={onClose} className="text-xs text-fg-mid hover:text-fg">
             Esc
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
           {groups.size === 0 ? (
-            <span className="text-sm text-fg-mid">No shortcuts registered</span>
+            <span className="text-xs text-fg-mid">No shortcuts registered</span>
           ) : (
             [...groups.entries()].map(([group, shortcuts]) => (
               <div key={group} className="mb-4 last:mb-0">
@@ -58,7 +58,7 @@ export function ShortcutOverlay({ open, onClose }: ShortcutOverlayProps) {
                   {group}
                 </div>
                 {shortcuts.map((s) => (
-                  <div key={s.id} className="flex items-center justify-between py-1 text-sm">
+                  <div key={s.id} className="flex items-center justify-between py-1 text-xs">
                     <span className="text-fg-mid">{s.label}</span>
                     <kbd className="border border-border bg-surface-raised px-1.5 py-0.5 font-mono text-xs text-accent">
                       {s.keybinding}

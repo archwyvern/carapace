@@ -41,7 +41,7 @@ export function ConfirmDialog({
       onClose={onCancel}
       initialFocus={danger && !defaultConfirm ? cancelRef : confirmRef}
     >
-      {message && <p className="mb-4 whitespace-pre-line text-sm text-fg-mid">{message}</p>}
+      {message && <p className="mb-4 whitespace-pre-line text-xs text-fg-mid">{message}</p>}
       <div className="flex justify-end gap-2">
         {tertiaryLabel && (
           <button type="button" onClick={onTertiary} className={`mr-auto ${CANCEL_BTN}`}>

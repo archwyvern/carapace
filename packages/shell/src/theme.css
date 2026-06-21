@@ -2,32 +2,50 @@
    itself (every Carapace consumer already runs Tailwind v4). Import this after
    `@import "tailwindcss"`. */
 @theme {
-  /* Surfaces (dark workbench) */
-  --color-surface: #1e1e20;
-  --color-surface-raised: #252528;
-  --color-surface-sunken: #161618;
-  --color-border: #34343a;
+  /* Surfaces — cool near-black stack (the "gold on near-black" premium direction).
+     sunken = void + inset field wells · surface = panel/section body · raised = bands/hover. */
+  --color-surface: #131519;
+  --color-surface-raised: #1d2026;
+  --color-surface-sunken: #0b0c0f;
+  --color-border: #262a32;
 
   /* Foreground: near-white readable; -mid is the greyest allowed for labels */
-  --color-fg: #f4f4f5;
-  --color-fg-mid: #d8d8da;
+  --color-fg: #f2f3f5;
+  --color-fg-mid: #b6b9c0;
 
-  /* Accent */
-  --color-accent: #4f8cff;
-  --color-accent-fg: #ffffff;
+  /* Accent — warm gold (reads hot against the cool near-black surfaces) */
+  --color-accent: #d6a35a;
+  --color-accent-fg: #17130b;
 
-  /* Selected row in lists/trees (subtle, VS Code-style; not the loud accent). */
-  --color-list-active: rgba(79, 140, 255, 0.18);
+  /* Selected row in lists/trees (subtle gold tint; not the loud accent). */
+  --color-list-active: rgba(214, 163, 90, 0.15);
 
-  /* Semantic status palette */
+  /* Focus-ring colour as a role (decoupled from accent so it can diverge later). */
+  --color-ring: var(--color-accent);
+
+  /* Semantic status palette. Each colour pairs with a readable `-fg` (dark) for use as a
+     SOLID fill (`bg-info text-info-fg`); the tinted form stays `bg-info/15 text-info`. */
   --color-info: #4cb5e0;
+  --color-info-fg: #04141d;
   --color-success: #89d185;
+  --color-success-fg: #07160b;
   --color-warning: #e2c08d;
+  --color-warning-fg: #2a1e09;
   --color-error: #f48771;
+  --color-error-fg: #2a0d06;
 
   /* Chip micro-text (sanctioned 10px exception for tag-style chips). */
   --text-2xs: 0.625rem;
 
-  /* Radii + control sizing */
+  /* Typography — matches the Godot editor's UI stack: Inter for the interface, JetBrains
+     Mono for numeric/code values. Consumers load the actual font files (e.g.
+     `@fontsource-variable/inter` + `.../jetbrains-mono`); these tokens declare the family
+     + fallbacks and drive Tailwind's `font-sans` / `font-mono` and the base UI font. */
+  --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+
+  /* Radii — a small scale: sm = chips/insets, control = inputs/buttons (the default), lg = panels/cards. */
+  --radius-sm: 2px;
   --radius-control: 4px;
+  --radius-lg: 8px;
 }

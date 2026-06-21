@@ -41,12 +41,12 @@ export class ErrorBoundary extends Component<Props, State> {
           <h2 className="mb-2 text-base font-semibold uppercase tracking-wide text-error">
             Something broke
           </h2>
-          <p className="mb-3 text-sm text-fg-mid">
+          <p className="mb-3 text-xs text-fg-mid">
             The page hit an unhandled error. The app state is intact — try again, or reload if the
             problem persists.
           </p>
           <details className="mb-4">
-            <summary className="cursor-pointer text-sm text-fg-mid hover:text-fg">Details</summary>
+            <summary className="cursor-pointer text-xs text-fg-mid hover:text-fg">Details</summary>
             <pre className="mt-2 overflow-auto whitespace-pre-wrap break-words border border-border bg-surface-sunken p-2 text-xs text-fg-mid">
               {error.name}: {error.message}
               {error.stack ? `\n\n${error.stack}` : ""}
@@ -56,14 +56,14 @@ export class ErrorBoundary extends Component<Props, State> {
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="px-4 py-1.5 text-sm text-fg-mid hover:text-fg"
+              className="px-4 py-1.5 text-xs text-fg-mid hover:text-fg"
             >
               Reload
             </button>
             <button
               type="button"
               onClick={this.reset}
-              className="border border-accent/40 bg-accent/15 px-5 py-1.5 text-sm uppercase tracking-wide text-accent hover:bg-accent/25"
+              className="border border-accent/40 bg-accent/15 px-5 py-1.5 text-xs uppercase tracking-wide text-accent hover:bg-accent/25"
             >
               Try again
             </button>

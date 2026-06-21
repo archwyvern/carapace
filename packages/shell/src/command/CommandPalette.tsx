@@ -76,11 +76,11 @@ export function CommandPalette({ open, onClose, placeholder = "Type a command…
               onClose();
             }
           }}
-          className="w-full border-b border-border bg-transparent px-3 py-2 text-sm text-fg outline-none"
+          className="w-full rounded-control border border-border bg-surface-sunken px-3 py-2 text-xs text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none focus:border-accent"
         />
         <ul role="listbox" className="max-h-80 overflow-auto py-1">
           {results.length === 0 && (
-            <li className="px-3 py-2 text-sm text-fg-mid">No matching commands</li>
+            <li className="px-3 py-2 text-xs text-fg-mid">No matching commands</li>
           )}
           {results.map((cmd, i) => (
             <li key={cmd.id}>
@@ -90,7 +90,7 @@ export function CommandPalette({ open, onClose, placeholder = "Type a command…
                 aria-selected={i === highlight}
                 onMouseEnter={() => setHighlight(i)}
                 onClick={() => choose(i)}
-                className={`flex w-full items-center gap-2 px-3 py-1 text-left text-sm ${
+                className={`flex w-full items-center gap-2 px-3 py-1 text-left text-xs ${
                   i === highlight ? "bg-accent text-accent-fg" : "text-fg"
                 }`}
               >

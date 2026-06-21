@@ -113,7 +113,7 @@ export function DirectionPicker({ label, value, onChange }: DirectionPickerProps
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-sm text-fg-mid">{label ?? "Direction"}</span>
+        <span className="text-xs text-fg-mid">{label ?? "Direction"}</span>
         <span className="text-xs tabular-nums text-accent">
           {value.x.toFixed(2)}, {value.y.toFixed(2)}
         </span>

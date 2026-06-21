@@ -5,9 +5,10 @@ import type { MenuItem } from "./model";
 import { parseMnemonic } from "./mnemonic";
 import { useOptionalCommands } from "../command/context";
 import { cx } from "../cx";
+import { CheckIcon } from "../icons";
 
 const ROW =
-  "flex w-full items-center gap-2 px-2 py-1 text-left text-sm whitespace-nowrap hover:bg-accent hover:text-accent-fg disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-fg";
+  "flex w-full items-center gap-2 px-2 py-1 text-left text-xs whitespace-nowrap hover:bg-accent hover:text-accent-fg disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-fg";
 
 /**
  * Renders a menu dropdown from the menu data model — actions, separators,
@@ -81,7 +82,7 @@ export function MenuList({ items, onClose }: { items: MenuItem[]; onClose: () =>
               onClose();
             }}
           >
-            <span className="flex w-4 items-center justify-center">{icon ?? (checked ? "✓" : "")}</span>
+            <span className="flex w-4 items-center justify-center">{icon ?? (checked ? <CheckIcon className="h-3.5 w-3.5" /> : null)}</span>
             <span className="flex-1">{parseMnemonic(label).text}</span>
             {shortcut && <span className="ml-6 text-fg-mid">{shortcut}</span>}
           </button>

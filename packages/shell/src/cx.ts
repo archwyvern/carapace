@@ -1,15 +1,14 @@
-export type ClassValue = string | number | false | null | undefined | ClassValue[];
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
-/** Join truthy class values into a className string (clsx-lite). */
+export type { ClassValue };
+
+/**
+ * Compose class names: clsx semantics (strings / arrays / conditionals) followed by
+ * tailwind-merge conflict resolution — when two utilities target the same property the
+ * LATER one wins, so a caller's `className` reliably overrides a component's defaults
+ * (e.g. `cx("px-3", "px-4")` → `"px-4"`). This is the seam every component merges through.
+ */
 export function cx(...args: ClassValue[]): string {
-  const out: string[] = [];
-  for (const a of args) {
-    if (!a) continue;
-    if (typeof a === "string" || typeof a === "number") out.push(String(a));
-    else if (Array.isArray(a)) {
-      const nested = cx(...a);
-      if (nested) out.push(nested);
-    }
-  }
-  return out.join(" ");
+  return twMerge(clsx(args));
 }

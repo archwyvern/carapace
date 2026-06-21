@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { CloseIcon } from "../icons";
 
 export interface EditorTab {
   id: string;
@@ -29,7 +30,7 @@ export function EditorTabs({ tabs, activeId, onSelect, onClose }: EditorTabsProp
             onAuxClick={(e) => {
               if (e.button === 1) onClose?.(tab.id);
             }}
-            className={`group flex cursor-pointer items-center gap-1.5 border-r border-border px-3 text-sm whitespace-nowrap ${
+            className={`group flex cursor-pointer items-center gap-1.5 border-r border-border px-3 text-xs whitespace-nowrap ${
               active ? "bg-surface-raised text-fg" : "text-fg-mid hover:text-fg"
             }`}
           >
@@ -49,9 +50,9 @@ export function EditorTabs({ tabs, activeId, onSelect, onClose }: EditorTabsProp
                   e.stopPropagation();
                   onClose(tab.id);
                 }}
-                className="ml-1 rounded px-1 text-fg-mid opacity-0 hover:bg-border hover:text-fg group-hover:opacity-100"
+                className="ml-1 flex items-center rounded px-1 text-fg-mid opacity-0 hover:bg-border hover:text-fg group-hover:opacity-100"
               >
-                ✕
+                <CloseIcon className="h-3.5 w-3.5" />
               </button>
             )}
           </div>

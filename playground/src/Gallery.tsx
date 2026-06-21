@@ -1,33 +1,70 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 import {
+  AddIcon,
   Badge,
   Button,
   Card,
+  CheckIcon,
+  CloseIcon,
+  Collapsible,
   ColorPicker,
   ColorPickerButton,
   ConfirmDialog,
   DirectionPicker,
+  EmptyState,
   FormColor,
   FormEnum,
   FormSlider,
   FormToggle,
   FormVec,
+  GradientBar,
+  Grid,
+  IconButton,
+  ImageLightbox,
   Modal,
   PageHeader,
+  Panel,
   PositionPicker,
   PromptDialog,
+  ResetIcon,
+  Rulers,
+  SearchIcon,
   SectionHeader,
+  Select,
+  ShortcutGuide,
   ShortcutOverlay,
+  Spinner,
   SpinSlider,
+  StatusDot,
+  Tabs,
+  TagInput,
+  TextInput,
+  Thumbnail,
   Toolbar,
+  Tooltip,
   TreeFind,
   TreeView,
   TypedConfirmDialog,
   treeFilter,
+  useGridSelection,
   useToast,
 } from "@carapace/shell";
-import type { BadgeTone, TreeNode } from "@carapace/shell";
+import type { BadgeTone, GradientStop, TabItem, TreeNode } from "@carapace/shell";
+
+const swatch = (hex: string, label: string) =>
+  `data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'><rect width='100%' height='100%' fill='${hex}'/><text x='50%' y='53%' font-family='sans-serif' font-size='30' fill='white' text-anchor='middle'>${label}</text></svg>`,
+  )}`;
+
+const TILES: { id: string; label: string; hex: string; status: BadgeTone }[] = [
+  { id: "t1", label: "Nebula", hex: "#3b5bdb", status: "success" },
+  { id: "t2", label: "Hull", hex: "#d6a35a", status: "info" },
+  { id: "t3", label: "Engine", hex: "#c0392b", status: "warning" },
+  { id: "t4", label: "Cockpit", hex: "#16a085", status: "neutral" },
+  { id: "t5", label: "Turret", hex: "#8e44ad", status: "error" },
+];
+const LIGHTBOX = TILES.map((t) => ({ src: swatch(t.hex, t.label), caption: t.label }));
 
 const TONES: BadgeTone[] = ["accent", "info", "success", "warning", "error", "neutral"];
 
@@ -70,6 +107,24 @@ export function Gallery() {
   const [find, setFind] = useState("");
   const [dialog, setDialog] = useState<DialogKind | null>(null);
   const [shortcuts, setShortcuts] = useState(false);
+  const [tab, setTab] = useState("design");
+  const [search, setSearch] = useState("");
+  const [selectV, setSelectV] = useState("md");
+  const [tags, setTags] = useState<string[]>(["engine", "ion"]);
+  const [lightbox, setLightbox] = useState<number | null>(null);
+  const tileSel = useGridSelection(TILES.map((t) => t.id));
+  const [gradient, setGradient] = useState<GradientStop[]>([
+    { offset: 0, color: "#0d121f" },
+    { offset: 0.5, color: "#d66b33" },
+    { offset: 1, color: "#ffe6a6" },
+  ]);
+
+  const TABS: TabItem[] = [
+    { id: "design", label: "Design" },
+    { id: "code", label: "Code" },
+    { id: "preview", label: "Preview" },
+    { id: "export", label: "Export", disabled: true },
+  ];
 
   const filtered = treeFilter(SAMPLE_TREE, find, (node) => node.data);
 
@@ -106,6 +161,144 @@ export function Gallery() {
             <Button variant="accent">Primary</Button>
           </div>
         </Toolbar>
+      </Group>
+
+      <Group title="Icon buttons, inputs, spinner, tooltip">
+        <div className="flex flex-wrap items-center gap-2">
+          <IconButton label="Add" icon={<AddIcon />} />
+          <IconButton label="Confirm" variant="accent" icon={<CheckIcon />} />
+          <IconButton label="Reset" icon={<ResetIcon />} />
+          <IconButton label="Delete" variant="danger" icon={<CloseIcon />} />
+          <IconButton label="Search" active icon={<SearchIcon />} />
+          <IconButton label="Add (md)" size="md" icon={<AddIcon />} />
+          <Tooltip content="Hover tooltip — portaled, pointer-transparent">
+            <IconButton label="Help" icon={<SearchIcon />} />
+          </Tooltip>
+          <Spinner size="sm" />
+          <Spinner />
+        </div>
+        <div className="flex max-w-sm items-center gap-2">
+          <SearchIcon className="h-4 w-4 shrink-0 text-fg-mid" />
+          <TextInput value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Filter…" />
+          <TextInput value="invalid" onChange={() => {}} invalid readOnly className="max-w-[120px]" />
+        </div>
+      </Group>
+
+      <Group title="Tabs">
+        <Tabs items={TABS} value={tab} onChange={setTab} />
+        <Tabs items={TABS} value={tab} onChange={setTab} variant="underline" />
+        <div className="text-xs text-fg-mid">active: {tab}</div>
+      </Group>
+
+      <Group title="Collapsible">
+        <div className="max-w-sm space-y-2 border border-border bg-surface">
+          <Collapsible title="Transform" trailing={<Badge tone="neutral">3</Badge>}>
+            <div className="space-y-2 p-2">
+              <FormVec label="Position" value={vec} size={3} onChange={setVec} />
+              <FormSlider label="Opacity" value={slider} min={0} max={1} step={0.01} onChange={setSlider} />
+            </div>
+          </Collapsible>
+          <Collapsible title="Advanced" defaultOpen={false} variant="plain">
+            <div className="p-2 text-xs text-fg-mid">Hidden until expanded.</div>
+          </Collapsible>
+        </div>
+      </Group>
+
+      <Group title="Panel + Grid">
+        <Panel
+          title="Assets"
+          subtitle="12 items"
+          actions={<IconButton label="Add asset" icon={<AddIcon />} />}
+          footer="drag to reorder"
+          className="h-64 max-w-xl"
+        >
+          <Grid minColWidth={120} gap={8} className="p-2">
+            {Array.from({ length: 9 }, (_, i) => (
+              <Card key={i} interactive className="flex aspect-square items-center justify-center text-xs text-fg-mid">
+                tile {i + 1}
+              </Card>
+            ))}
+          </Grid>
+        </Panel>
+      </Group>
+
+      <Group title="Empty / loading / error states">
+        <div className="grid grid-cols-2 gap-3">
+          <Panel className="h-40">
+            <EmptyState status="empty" title="No assets yet" message="Import or create one to get started." action={<Button variant="accent">New asset</Button>} />
+          </Panel>
+          <Panel className="h-40">
+            <EmptyState status="loading" message="Loading assets…" />
+          </Panel>
+          <Panel className="h-40">
+            <EmptyState status="error" title="Failed to load" message="The asset service is unreachable." action={<Button>Retry</Button>} />
+          </Panel>
+          <Panel className="h-40">
+            <EmptyState status="info" title="Read-only" message="This project is shared with you." />
+          </Panel>
+        </div>
+      </Group>
+
+      <Group title="Select, tags, status dots">
+        <div className="max-w-sm space-y-3">
+          <Select
+            ariaLabel="Size"
+            value={selectV}
+            onChange={setSelectV}
+            options={[
+              { value: "xs", label: "Extra small" },
+              { value: "sm", label: "Small" },
+              { value: "md", label: "Medium" },
+              { value: "lg", label: "Large" },
+              { value: "xl", label: "Extra large (disabled)", disabled: true },
+            ]}
+          />
+          <TagInput
+            value={tags}
+            onChange={setTags}
+            suggestions={["engine", "ion", "plasma", "fusion", "thruster", "nav", "shield", "hull"]}
+            placeholder="Add tag…"
+          />
+          <div className="flex flex-wrap items-center gap-3 text-xs text-fg-mid">
+            <span className="flex items-center gap-1.5"><StatusDot tone="success" /> online</span>
+            <span className="flex items-center gap-1.5"><StatusDot tone="warning" pulse /> building</span>
+            <span className="flex items-center gap-1.5"><StatusDot tone="error" /> failed</span>
+            <span className="flex items-center gap-1.5"><StatusDot tone="neutral" /> idle</span>
+          </div>
+        </div>
+      </Group>
+
+      <Group title="Thumbnails · grid-selection · lightbox">
+        <div className="text-2xs text-fg-mid">click · Ctrl/Shift-click to multi-select · double-click to open</div>
+        <Grid minColWidth={120} gap={10} className="max-w-xl">
+          {TILES.map((t, i) => (
+            <Thumbnail
+              key={t.id}
+              src={swatch(t.hex, t.label)}
+              label={t.label}
+              status={t.status}
+              statusPulse={t.status === "warning"}
+              badge={<Badge tone="neutral">png</Badge>}
+              selected={tileSel.isSelected(t.id)}
+              onClick={(e) => tileSel.onItemClick(t.id, e)}
+              onDoubleClick={() => setLightbox(i)}
+            />
+          ))}
+        </Grid>
+      </Group>
+
+      <Group title="Gradient editor & rulers (canvas chrome)">
+        <div className="max-w-md space-y-4">
+          <GradientBar stops={gradient} onChange={setGradient} />
+          <div className="h-56 overflow-hidden rounded-control border border-border">
+            <Rulers scale={2} origin={{ x: 24, y: 24 }}>
+              <div className="flex h-full w-full items-center justify-center bg-surface-sunken text-2xs text-fg-mid">
+                viewport content
+              </div>
+            </Rulers>
+          </div>
+          <div className="text-2xs text-fg-mid">shortcut guide is pinned bottom-left ↙</div>
+        </div>
       </Group>
 
       <Group title="Form controls">
@@ -223,6 +416,25 @@ export function Gallery() {
           onCancel={() => setDialog(null)}
         />
       )}
+      {lightbox !== null && (
+        <ImageLightbox
+          images={LIGHTBOX}
+          index={lightbox}
+          onIndexChange={setLightbox}
+          onClose={() => setLightbox(null)}
+        />
+      )}
+      <ShortcutGuide
+        corner="bottom-left"
+        storageKey="carapace-playground-shortcuts"
+        items={[
+          { keys: "Ctrl+P", label: "Command palette" },
+          { keys: "Ctrl+S", label: "Save" },
+          { keys: "F2", label: "Rename" },
+          { keys: "Del", label: "Delete" },
+          { keys: "Space", label: "Pan canvas" },
+        ]}
+      />
       <ShortcutOverlay open={shortcuts} onClose={() => setShortcuts(false)} />
     </div>
   );

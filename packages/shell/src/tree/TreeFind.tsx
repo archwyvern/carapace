@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { CloseIcon } from "../icons";
 
 export interface TreeFindProps {
   onPatternChange: (pattern: string) => void;
@@ -62,7 +63,7 @@ export function TreeFind({
             onPrev?.();
           }
         }}
-        className="h-[23px] min-w-0 flex-1 border border-border bg-surface px-1.5 text-sm text-fg outline-none focus:border-accent"
+        className="h-[23px] min-w-0 flex-1 rounded-control border border-border bg-surface-sunken px-1.5 text-xs text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none focus:border-accent"
       />
       {showCount && (
         <span className="shrink-0 whitespace-nowrap text-xs text-fg-mid">
@@ -73,9 +74,9 @@ export function TreeFind({
         type="button"
         onClick={onClose}
         aria-label="Close find"
-        className="shrink-0 px-1 text-fg-mid hover:text-fg"
+        className="flex shrink-0 items-center px-1 text-fg-mid hover:text-fg"
       >
-        ✕
+        <CloseIcon className="h-3.5 w-3.5" />
       </button>
     </div>
   );

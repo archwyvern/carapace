@@ -24,6 +24,40 @@ export { PageHeader } from "./primitives/PageHeader";
 export type { PageHeaderProps } from "./primitives/PageHeader";
 export { Breadcrumb } from "./primitives/Breadcrumb";
 export type { BreadcrumbItem, BreadcrumbProps } from "./primitives/Breadcrumb";
+export { IconButton } from "./primitives/IconButton";
+export type { IconButtonProps, IconButtonVariant, IconButtonSize } from "./primitives/IconButton";
+export { TextInput } from "./primitives/TextInput";
+export type { TextInputProps } from "./primitives/TextInput";
+export { Spinner } from "./primitives/Spinner";
+export type { SpinnerSize } from "./primitives/Spinner";
+export { Collapsible } from "./primitives/Collapsible";
+export type { CollapsibleProps, CollapsibleVariant } from "./primitives/Collapsible";
+export { StatusDot } from "./primitives/StatusDot";
+export type { StatusDotProps } from "./primitives/StatusDot";
+export { Select } from "./primitives/Select";
+export type { SelectProps, SelectOption } from "./primitives/Select";
+export { TagInput } from "./primitives/TagInput";
+export type { TagInputProps } from "./primitives/TagInput";
+
+// Layout
+export { Panel } from "./layout/Panel";
+export type { PanelProps } from "./layout/Panel";
+export { Grid } from "./layout/Grid";
+export type { GridProps } from "./layout/Grid";
+export { Thumbnail } from "./layout/Thumbnail";
+export type { ThumbnailProps } from "./layout/Thumbnail";
+
+// Navigation
+export { Tabs } from "./navigation/Tabs";
+export type { TabsProps, TabItem, TabsVariant } from "./navigation/Tabs";
+
+// Feedback
+export { EmptyState } from "./feedback/EmptyState";
+export type { EmptyStateProps, EmptyStateStatus } from "./feedback/EmptyState";
+
+// Hooks
+export { useGridSelection } from "./hooks/useGridSelection";
+export type { GridSelection, GridSelectionOptions, GridSelectionMods } from "./hooks/useGridSelection";
 
 // Form controls
 export { FormEnum } from "./form/FormEnum";
@@ -59,6 +93,8 @@ export type { ColorWheelProps } from "./color/ColorWheel";
 export { ColorSlider } from "./color/ColorSlider";
 export type { ColorSliderProps } from "./color/ColorSlider";
 export { ColorPickerButton } from "./color/ColorPickerButton";
+export { GradientBar } from "./color/GradientBar";
+export type { GradientBarProps, GradientStop } from "./color/GradientBar";
 
 // Pickers
 export { DirectionPicker } from "./picker/DirectionPicker";
@@ -69,6 +105,9 @@ export type { PositionPickerProps } from "./picker/PositionPicker";
 // Utilities
 export { cx } from "./cx";
 export type { ClassValue } from "./cx";
+
+// Icons — Fluent UI System Icons under carapace's semantic names (the shared icon vocabulary).
+export { CloseIcon, AddIcon, MinimizeIcon, MaximizeIcon, ResetIcon, ChevronRightIcon, ChevronDownIcon, CheckIcon, InfoIcon, WarningIcon, ErrorIcon, SearchIcon } from "./icons";
 
 // Tree
 export { TreeView } from "./tree/TreeView";
@@ -177,9 +216,21 @@ export type { TypedConfirmDialogProps } from "./overlay/TypedConfirmDialog";
 export { ErrorBoundary } from "./overlay/ErrorBoundary";
 export { ToastProvider, useToast } from "./overlay/Toast";
 export type { ToastTone } from "./overlay/Toast";
+export { Tooltip } from "./overlay/Tooltip";
+export type { TooltipProps, TooltipPlacement } from "./overlay/Tooltip";
+export { Popover } from "./overlay/Popover";
+export type { PopoverProps, PopoverPlacement } from "./overlay/Popover";
+export { ImageLightbox } from "./overlay/ImageLightbox";
+export type { ImageLightboxProps, LightboxImage } from "./overlay/ImageLightbox";
+export { ShortcutGuide } from "./overlay/ShortcutGuide";
+export type { ShortcutGuideProps, ShortcutItem, ShortcutCorner } from "./overlay/ShortcutGuide";
+
+// Viewport / canvas chrome
+export { Rulers } from "./viewport/Rulers";
+export type { RulersProps } from "./viewport/Rulers";
 
 // Inspector — presentational, data-model-agnostic property editor.
-export { Inspector } from "./inspector/Inspector";
+export { Inspector, FieldGrid } from "./inspector/Inspector";
 export type {
   InspectorField,
   InspectorProps,
