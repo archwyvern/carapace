@@ -29,6 +29,13 @@ describe("createNodeFs", () => {
     await fs.delete(nodePath.join(dir, "b.txt"));
     await expect(fs.read(nodePath.join(dir, "b.txt"))).rejects.toThrow();
   });
+
+  it("writes and reads back raw bytes via createFile", async () => {
+    const bytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x00, 0xff]);
+    await fs.createFile(nodePath.join(dir, "img.bin"), bytes);
+    const round = await fsp.readFile(nodePath.join(dir, "img.bin"));
+    expect(new Uint8Array(round)).toEqual(bytes);
+  });
 });
 
 describe("createNodeFs with mounts (virtual paths)", () => {

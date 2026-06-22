@@ -99,10 +99,10 @@ export function serveFs(ipcMain: IpcMainLike, webContents: WebContentsLike, fs: 
     const a = (args as unknown[]) ?? [];
     switch (op as string) {
       case "read": return fs.read(a[0] as string);
-      case "write": return fs.write(a[0] as string, a[1] as string);
+      case "write": return fs.write(a[0] as string, a[1] as string | Uint8Array);
       case "rename": return fs.rename(a[0] as string, a[1] as string);
       case "delete": return fs.delete(a[0] as string);
-      case "createFile": return fs.createFile(a[0] as string, a[1] as string);
+      case "createFile": return fs.createFile(a[0] as string, a[1] as string | Uint8Array);
       case "createDir": return fs.createDir(a[0] as string);
       case "list": return fs.list(a[0] as string);
       case "watch": {

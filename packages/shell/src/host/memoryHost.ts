@@ -3,7 +3,7 @@ import type { CarapaceHost, ChangeKind, DirEntry } from "./types";
 type Watcher = (path: string, kind: ChangeKind) => void;
 
 export function createMemoryHost(seed: Record<string, string> = {}): CarapaceHost & { fs: NonNullable<CarapaceHost["fs"]> } {
-  const files = new Map<string, string>(Object.entries(seed));
+  const files = new Map<string, string | Uint8Array>(Object.entries(seed));
   const watchers = new Set<Watcher>();
   let maximized = false;
   const maxListeners = new Set<(m: boolean) => void>();
@@ -32,7 +32,7 @@ export function createMemoryHost(seed: Record<string, string> = {}): CarapaceHos
       async read(path) {
         const v = files.get(path);
         if (v === undefined) throw new Error(`ENOENT: ${path}`);
-        return v;
+        return typeof v === "string" ? v : new TextDecoder().decode(v);
       },
       async write(path, data) {
         const existed = files.has(path);

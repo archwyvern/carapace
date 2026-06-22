@@ -20,10 +20,10 @@ export interface CarapaceHost {
    */
   fs?: {
     read(path: string): Promise<string>;
-    write(path: string, data: string): Promise<void>;
+    write(path: string, data: string | Uint8Array): Promise<void>;
     rename(from: string, to: string): Promise<void>;
     delete(path: string): Promise<void>;
-    createFile(path: string, data: string): Promise<void>;
+    createFile(path: string, data: string | Uint8Array): Promise<void>;
     createDir(path: string): Promise<void>;
     list(path: string): Promise<DirEntry[]>;
     watch(path: string, cb: (path: string, kind: ChangeKind) => void): () => void;
