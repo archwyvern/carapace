@@ -39,6 +39,8 @@ export interface NumberField extends InspectorFieldBase {
   min?: number;
   max?: number;
   integer?: boolean;
+  /** Increment for spin buttons / arrow keys (defaults to 1, or a value-scaled step). */
+  step?: number;
 }
 
 export interface BoolField extends InspectorFieldBase {
