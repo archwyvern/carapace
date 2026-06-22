@@ -32,7 +32,9 @@ export function OutputPanel({ lines, follow = true, ariaLabel = "Output", classN
       ref={ref}
       role="log"
       aria-label={ariaLabel}
-      className={`min-h-0 overflow-auto bg-surface-sunken p-2 font-mono text-base ${className ?? ""}`}
+      // log lines are copyable content, so opt back into text selection (the shell base layer
+      // disables it on chrome by default)
+      className={`min-h-0 overflow-auto bg-surface-sunken p-2 font-mono text-base select-text ${className ?? ""}`}
     >
       {lines.map((line) => (
         <div key={line.id} className={`whitespace-pre-wrap ${LEVEL_CLASS[line.level ?? "info"]}`}>

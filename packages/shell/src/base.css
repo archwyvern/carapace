@@ -1,0 +1,21 @@
+/* Carapace base layer — behavioural resets for a desktop/editor shell. Tokens live in `theme.css`;
+   this file is opinionated reset rules. Import after `@import "tailwindcss"` (and `theme.css`). */
+@layer base {
+  /* An editor's chrome is not a document: drag-selecting labels, tabs, tree rows, etc. feels broken
+     in a desktop app (and especially under Electron). Disable text selection by default and opt back
+     in where users genuinely copy text — form fields, editable regions, and anything tagged
+     `.select-text` (e.g. log/output panels, code, copyable values). */
+  body {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  input,
+  textarea,
+  [contenteditable=""],
+  [contenteditable="true"],
+  .select-text,
+  .select-text * {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
