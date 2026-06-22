@@ -58,6 +58,11 @@ export function TreeView<T>({
   const [rootDrop, setRootDrop] = useState(false);
   const [treeFocused, setTreeFocused] = useState(false);
   const dragIds = useRef<string[]>([]);
+  // Mirror of dropPosition for the native `drop` handler: reading the state there
+  // is stale (the final `dragover`'s setState hasn't committed to the drop
+  // closure yet), so the commit wouldn't match the rendered drop-line. The ref is
+  // updated synchronously in dragover, so the drop reads the position you see.
+  const dropPositionRef = useRef<DropPosition>("into");
   const expandTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const treeRef = useRef<HTMLDivElement>(null);
   const scrollRaf = useRef<number | null>(null);
@@ -200,6 +205,7 @@ export function TreeView<T>({
     dragIds.current = [];
     setDropTargetId(null);
     setDropPosition("into");
+    dropPositionRef.current = "into";
     setRootDrop(false);
     stopAutoScroll();
   };
@@ -299,6 +305,7 @@ export function TreeView<T>({
       pos = canAcceptInto
         ? frac < 0.3 ? "before" : frac > 0.7 ? "after" : "into"
         : frac < 0.5 ? "before" : "after";
+      dropPositionRef.current = pos;
       if (pos !== dropPosition) setDropPosition(pos);
     }
     const isInto = pos === "into";
@@ -321,7 +328,7 @@ export function TreeView<T>({
       const dragged = draggedNodes();
       if (canDrop!(dragged, node)) {
         e.preventDefault();
-        if (reorder) onDrop!(dragged, node, dropPosition);
+        if (reorder) onDrop!(dragged, node, dropPositionRef.current);
         else onDrop!(dragged, node);
       }
     }
