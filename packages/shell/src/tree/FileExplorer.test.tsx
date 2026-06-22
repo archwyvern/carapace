@@ -1,8 +1,14 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HostProvider } from "../host/context";
 import { createMemoryHost } from "../host/memoryHost";
 import { FileExplorer } from "./FileExplorer";
+
+// jsdom doesn't implement File.arrayBuffer(); the import path only needs name + arrayBuffer,
+// so stand in a faithful stub (real Chromium/Electron supplies a full File).
+function fakeFile(name: string, bytes: number[]): File {
+  return { name, arrayBuffer: async () => new Uint8Array(bytes).buffer } as unknown as File;
+}
 
 function setup(onOpen: (p: string) => void = () => {}) {
   const host = createMemoryHost({
@@ -54,4 +60,35 @@ test("exclude omits matching entries (and never walks into them)", async () => {
   expect(await screen.findByText("src")).toBeInTheDocument();
   expect(screen.getByText("README.md")).toBeInTheDocument();
   expect(screen.queryByText("node_modules")).not.toBeInTheDocument();
+});
+
+test("dropping OS files imports them into the target folder", async () => {
+  const host = createMemoryHost({ "/proj/README.md": "z" });
+  const createSpy = vi.spyOn(host.fs, "createFile");
+  render(
+    <HostProvider host={host}>
+      <FileExplorer root="/proj" />
+    </HostProvider>,
+  );
+  await screen.findByText("README.md");
+  const file = fakeFile("drop.png", [1, 2, 3]);
+  fireEvent.drop(screen.getByRole("tree"), { dataTransfer: { files: [file], items: [], types: ["Files"] } });
+  expect(await screen.findByText("drop.png")).toBeInTheDocument();
+  expect(createSpy).toHaveBeenCalledWith("/proj/drop.png", expect.any(Uint8Array));
+});
+
+test("a consumer onExternalDrop overrides the built-in import", async () => {
+  const host = createMemoryHost({ "/proj/README.md": "z" });
+  const createSpy = vi.spyOn(host.fs, "createFile");
+  const onExternalDrop = vi.fn();
+  render(
+    <HostProvider host={host}>
+      <FileExplorer root="/proj" onExternalDrop={onExternalDrop} />
+    </HostProvider>,
+  );
+  await screen.findByText("README.md");
+  const file = fakeFile("drop.png", [1]);
+  fireEvent.drop(screen.getByRole("tree"), { dataTransfer: { files: [file], items: [], types: ["Files"] } });
+  expect(onExternalDrop).toHaveBeenCalledTimes(1);
+  expect(createSpy).not.toHaveBeenCalled();
 });

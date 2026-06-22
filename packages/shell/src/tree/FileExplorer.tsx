@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, ReactNode } from "react";
+import type { DragEvent as ReactDragEvent, KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, ReactNode } from "react";
 import { useHost } from "../host/context";
 import { useOptionalConfirm } from "../overlay/confirm";
 import { ContextMenu, useContextMenu } from "../menu/ContextMenu";
@@ -297,6 +297,28 @@ function ActiveFileExplorer({
     return active.isDir ? active.path : (parents.current.get(active.path) ?? root);
   }, [active, root]);
 
+  // Import OS files dropped onto the tree: read each file's bytes (web File API — no Electron
+  // path dependency, so web backends work too) and copy into destDir with a collision-safe name.
+  const importFiles = useCallback(async (files: File[], destDir: string) => {
+    for (const file of files) {
+      try {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        await fs.createFile(await uniqueName(destDir, file.name), bytes);
+      } catch { /* collision / unreadable; skip */ }
+    }
+    void reload();
+  }, [fs, uniqueName, reload]);
+
+  // External drop: a consumer override owns it entirely; otherwise import any OS files. The
+  // DataTransfer is only valid during the event, so snapshot files synchronously before awaiting.
+  const handleExternalDrop = useCallback((e: ReactDragEvent, node: TreeNode<DirEntry> | null) => {
+    const targetDir = destDirOf(node);
+    if (onExternalDrop) { onExternalDrop(e.dataTransfer, targetDir); return; }
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length === 0) return;
+    void importFiles(files, targetDir);
+  }, [onExternalDrop, destDirOf, importFiles]);
+
   const handleClipKeys = useCallback((e: ReactKeyboardEvent) => {
     if (!(e.ctrlKey || e.metaKey)) return;
     const k = e.key.toLowerCase();
@@ -400,7 +422,7 @@ function ActiveFileExplorer({
         onSelectedChange={(nodes) => setSelected(nodes.map((n) => n.data))}
         canDrop={canDrop}
         onDrop={(dragged, target) => void moveInto(dragged, target)}
-        onExternalDrop={onExternalDrop ? (e, node) => onExternalDrop(e.dataTransfer, destDirOf(node)) : undefined}
+        onExternalDrop={handleExternalDrop}
         onDelete={(nodes) => void removeMany(nodes.map((n) => n.data).filter((d) => d.path !== root))}
         onRename={(node) => startRename(node.data)}
         onContextMenu={(node, e) => {
