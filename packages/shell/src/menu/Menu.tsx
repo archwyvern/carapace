@@ -199,7 +199,7 @@ function MenuInner(props: MenuProps) {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Filter…"
-                className="w-full bg-transparent text-xs outline-none placeholder:text-fg-mid"
+                className="w-full bg-transparent text-base outline-none placeholder:text-fg-mid"
               />
             </div>
           )}

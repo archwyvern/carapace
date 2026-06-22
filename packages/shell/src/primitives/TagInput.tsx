@@ -54,7 +54,7 @@ export function TagInput({ value, onChange, suggestions = [], placeholder, ariaL
         ref={wrapRef}
         onClick={() => inputRef.current?.focus()}
         className={cx(
-          "flex min-h-[22px] w-full flex-wrap items-center gap-1 rounded-control border border-border bg-surface-sunken px-1 py-0.5 text-xs shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] focus-within:border-accent",
+          "flex min-h-[22px] w-full flex-wrap items-center gap-1 rounded-control border border-border bg-surface-sunken px-1 py-0.5 text-base shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] focus-within:border-accent",
           className,
         )}
       >
@@ -106,7 +106,7 @@ export function TagInput({ value, onChange, suggestions = [], placeholder, ariaL
                 add(s);
                 inputRef.current?.focus();
               }}
-              className="cursor-pointer px-2 py-1 text-xs text-fg-mid hover:bg-list-active hover:text-fg"
+              className="cursor-pointer px-2 py-1 text-base text-fg-mid hover:bg-list-active hover:text-fg"
             >
               {s}
             </li>

@@ -24,9 +24,10 @@ import { InspectorPage } from "./pages/InspectorPage";
 import { ResourceInspectorPage } from "./pages/ResourceInspectorPage";
 import { TreeViewPage } from "./pages/TreeViewPage";
 import { ContextMenuPage } from "./pages/ContextMenuPage";
+import { TypographyPage } from "./pages/TypographyPage";
 import "./app.css";
 
-type Page = "components" | "inspector" | "trees" | "resources" | "contextmenu";
+type Page = "components" | "inspector" | "trees" | "resources" | "contextmenu" | "typography";
 
 const host = createMemoryHost({
   "/proj/src/main.tsx": "",
@@ -46,7 +47,7 @@ const LOG: OutputLine[] = [
 
 function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [page, setPage] = useState<Page>("inspector");
+  const [page, setPage] = useState<Page>("typography");
   const [sideW, setSideW] = useState(200);
   const [consoleH, setConsoleH] = useState(120);
   const [openFiles, setOpenFiles] = useState<{ id: string; title: string }[]>([]);
@@ -114,6 +115,7 @@ function App() {
               { id: "trees", icon: <span>🌳</span>, title: "TreeView", active: page === "trees", onClick: () => setPage("trees") },
               { id: "resources", icon: <span>🗂</span>, title: "Resource Inspector", active: page === "resources", onClick: () => setPage("resources") },
               { id: "contextmenu", icon: <span>📋</span>, title: "Context Menu", active: page === "contextmenu", onClick: () => setPage("contextmenu") },
+              { id: "typography", icon: <span>🔤</span>, title: "Typography", active: page === "typography", onClick: () => setPage("typography") },
             ]}
           />
         }
@@ -123,6 +125,7 @@ function App() {
         {page === "trees" && <TreeViewPage />}
         {page === "resources" && <ResourceInspectorPage />}
         {page === "contextmenu" && <ContextMenuPage />}
+        {page === "typography" && <TypographyPage />}
         {page === "components" && (
         <SplitView orientation="horizontal" primary="start" size={sideW} onResize={setSideW} min={140} max={400}>
           <div className="h-full border-r border-border bg-surface-sunken">

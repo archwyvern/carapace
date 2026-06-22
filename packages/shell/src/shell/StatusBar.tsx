@@ -8,7 +8,7 @@ export interface StatusBarProps {
 /** Optional bottom strip. */
 export function StatusBar({ left, right }: StatusBarProps) {
   return (
-    <footer className="flex h-6 items-center justify-between border-t border-border bg-surface px-2 text-xs text-fg-mid">
+    <footer className="flex h-6 items-center justify-between border-t border-border bg-surface px-2 text-base text-fg-mid">
       <div className="flex items-center gap-3">{left}</div>
       <div className="flex items-center gap-3">{right}</div>
     </footer>

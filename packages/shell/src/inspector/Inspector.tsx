@@ -59,7 +59,7 @@ export function FieldGrid({ children, className = "" }: { children: ReactNode; c
 function CategoryBand({ name }: { name: string }) {
   return (
     <div className="border-y border-border bg-surface-raised px-2 py-1.5 text-center">
-      <span className="text-xs font-bold text-fg">{name}</span>
+      <span className="text-base font-bold text-fg">{name}</span>
     </div>
   );
 }
@@ -120,11 +120,11 @@ function InspectorSection({ name, info, fields }: { name: string; info?: Inspect
             className="accent-accent"
           />
         )}
-        <span className="flex-1 cursor-pointer text-xs font-semibold text-fg" onClick={() => setOpen(!open)}>
+        <span className="flex-1 cursor-pointer text-base font-semibold text-fg" onClick={() => setOpen(!open)}>
           {name}
         </span>
         {!open && changes > 0 && (
-          <span className="text-xs text-fg-mid">
+          <span className="text-base text-fg-mid">
             ({changes} change{changes > 1 ? "s" : ""})
           </span>
         )}
@@ -185,7 +185,7 @@ function InspectorRow({ field, action }: { field: InspectorField; action?: React
     return (
       <div className="group/row col-span-full flex flex-col gap-0.5">
         <div className="flex items-center justify-between gap-1">
-          <span className="truncate text-xs text-fg-mid">{field.label}</span>
+          <span className="truncate text-base text-fg-mid">{field.label}</span>
           {actions && <span className="flex w-4 shrink-0 justify-center">{actions}</span>}
         </div>
         {control}
@@ -198,7 +198,7 @@ function InspectorRow({ field, action }: { field: InspectorField; action?: React
   const tall = field.kind === "vec";
   return (
     <div className={`group/row col-span-full grid grid-cols-subgrid ${tall ? "items-start" : "items-center"}`}>
-      <span className={`truncate text-xs text-fg-mid ${tall ? "flex min-h-[22px] items-center" : ""}`}>{field.label}</span>
+      <span className={`truncate text-base text-fg-mid ${tall ? "flex min-h-[22px] items-center" : ""}`}>{field.label}</span>
       <div className={`flex min-w-0 gap-1 ${tall ? "items-start" : "items-center"}`}>
         <div className="min-w-0 flex-1">{control}</div>
         {actions && <span className={`flex shrink-0 justify-center ${tall ? "min-h-[22px] items-center" : ""}`}>{actions}</span>}
@@ -262,7 +262,7 @@ function renderControl(field: InspectorField): ReactNode {
   }
 }
 
-const ICON_BTN = "text-fg-mid hover:text-fg text-xs leading-none";
+const ICON_BTN = "text-fg-mid hover:text-fg text-base leading-none";
 
 /**
  * A sub-resource field, framed as a SUB-INSPECTOR: an accent header bar (label + type +
@@ -281,13 +281,13 @@ function ObjectControl({ field }: { field: ObjectField }) {
         <button type="button" aria-label={open ? "Collapse" : "Expand"} onClick={() => setOpen(!open)} className="flex items-center">
           <Chevron open={open} />
         </button>
-        <span className="flex-1 truncate text-xs font-semibold text-fg-mid">{field.label}</span>
+        <span className="flex-1 truncate text-base font-semibold text-fg-mid">{field.label}</span>
         <div className="flex items-center gap-1.5 text-fg-mid">
           {field.icon}
           {field.typeName ? (
             <span className="truncate rounded border border-accent/40 bg-accent/10 px-1.5 py-px font-mono text-2xs text-accent">{field.typeName}</span>
           ) : (
-            !has && <span className="text-xs">(empty)</span>
+            !has && <span className="text-base">(empty)</span>
           )}
           {field.onCreate && (
             <button type="button" onClick={field.onCreate} className={ICON_BTN}>
@@ -320,9 +320,9 @@ function ArrayControl({ field }: { field: ArrayField }) {
   return (
     <div className="overflow-hidden rounded-control border border-border bg-surface">
       <div className="flex items-center justify-between gap-2 border-b border-border bg-surface-raised px-2 py-1">
-        <span className="text-xs font-medium text-fg-mid">{field.label}</span>
+        <span className="text-base font-medium text-fg-mid">{field.label}</span>
         <div className="flex items-center gap-1.5 text-fg-mid">
-          <span className="text-xs">{field.items.length}</span>
+          <span className="text-base">{field.items.length}</span>
           {field.onAdd && (
             <button type="button" onClick={field.onAdd} className={ICON_BTN} aria-label={`Add to ${field.label}`}>
               <AddIcon className="h-3.5 w-3.5" />

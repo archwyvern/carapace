@@ -30,7 +30,7 @@ export function EditorTabs({ tabs, activeId, onSelect, onClose }: EditorTabsProp
             onAuxClick={(e) => {
               if (e.button === 1) onClose?.(tab.id);
             }}
-            className={`group flex cursor-pointer items-center gap-1.5 border-r border-border px-3 text-xs whitespace-nowrap ${
+            className={`group flex cursor-pointer items-center gap-1.5 border-r border-border px-3 text-base whitespace-nowrap ${
               active ? "bg-surface-raised text-fg" : "text-fg-mid hover:text-fg"
             }`}
           >

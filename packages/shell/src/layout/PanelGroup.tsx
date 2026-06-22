@@ -299,7 +299,7 @@ export function PanelGroup({
                 onClick={() => handleDoubleClick(i === 0 ? 0 : i - 1)}
                 title="Expand panel"
               >
-                <span className="text-xs text-fg-mid">{isHorizontal ? "►" : "▼"}</span>
+                <span className="text-base text-fg-mid">{isHorizontal ? "►" : "▼"}</span>
               </div>
             ) : (
               <div

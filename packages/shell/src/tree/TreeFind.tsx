@@ -63,10 +63,10 @@ export function TreeFind({
             onPrev?.();
           }
         }}
-        className="h-[23px] min-w-0 flex-1 rounded-control border border-border bg-surface-sunken px-1.5 text-xs text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none focus:border-accent"
+        className="h-[23px] min-w-0 flex-1 rounded-control border border-border bg-surface-sunken px-1.5 text-base text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none focus:border-accent"
       />
       {showCount && (
-        <span className="shrink-0 whitespace-nowrap text-xs text-fg-mid">
+        <span className="shrink-0 whitespace-nowrap text-base text-fg-mid">
           {pattern ? (matchCount! > 0 ? `${(currentMatch ?? 0) + 1}/${matchCount}` : "No results") : ""}
         </span>
       )}

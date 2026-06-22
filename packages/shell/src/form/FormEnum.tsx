@@ -18,7 +18,7 @@ export function FormEnum({ label, ariaLabel, layout, value, options, onChange }:
       aria-label={label === undefined ? ariaLabel : undefined}
       value={value}
       onChange={(e) => onChange(parseInt(e.target.value, 10))}
-      className="h-[22px] w-full cursor-pointer rounded-control border border-border bg-surface-raised px-1.5 text-xs text-fg outline-none focus:border-accent"
+      className="h-[22px] w-full cursor-pointer rounded-control border border-border bg-surface-raised px-1.5 text-base text-fg outline-none focus:border-accent"
     >
       {options.map((opt, i) => (
         <option key={i} value={i}>

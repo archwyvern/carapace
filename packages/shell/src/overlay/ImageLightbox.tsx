@@ -63,7 +63,7 @@ export function ImageLightbox({ images, index, onIndexChange, onClose }: ImageLi
         className="max-h-[80vh] max-w-[88vw] object-contain"
       />
       {(cur.caption || count > 1) && (
-        <div className="mt-3 flex items-center gap-3 text-xs text-fg-mid" onClick={(e) => e.stopPropagation()}>
+        <div className="mt-3 flex items-center gap-3 text-base text-fg-mid" onClick={(e) => e.stopPropagation()}>
           {cur.caption && <span>{cur.caption}</span>}
           {count > 1 && <span className="tabular-nums">{index + 1} / {count}</span>}
         </div>

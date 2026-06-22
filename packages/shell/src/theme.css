@@ -34,8 +34,16 @@
   --color-error: #f48771;
   --color-error-fg: #2a0d06;
 
-  /* Chip micro-text (sanctioned 10px exception for tag-style chips). */
-  --text-2xs: 0.625rem;
+  /* Type scale. `text-base` (13px) is the STANDARD body size — the workhorse the
+     components use. Smaller sizes step down (sm/xs = secondary/caption, 2xs is the
+     sanctioned 10px chip exception); md/lg step up (emphasis labels, headings).
+     13px lines up with a code-editor-style default (JetBrains Mono / the Godot UI). */
+  --text-2xs: 0.625rem;   /* 10px — chip / badge micro-text (exception) */
+  --text-xs: 0.6875rem;   /* 11px — small / caption */
+  --text-sm: 0.75rem;     /* 12px — secondary */
+  --text-base: 0.8125rem; /* 13px — STANDARD body (default) */
+  --text-md: 0.9375rem;   /* 15px — emphasis labels */
+  --text-lg: 1.125rem;    /* 18px — headings */
 
   /* Typography — matches the Godot editor's UI stack: Inter for the interface, JetBrains
      Mono for numeric/code values. Consumers load the actual font files (e.g.

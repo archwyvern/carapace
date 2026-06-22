@@ -39,8 +39,8 @@ export function TypedConfirmDialog({
       initialFocus={inputRef}
       className="min-w-[320px] max-w-[440px] border border-error/40 bg-surface-raised p-5 outline-none"
     >
-      <p className="mb-3 whitespace-pre-line text-xs text-fg-mid">{message}</p>
-      <p className="mb-1.5 text-xs text-fg-mid">
+      <p className="mb-3 whitespace-pre-line text-base text-fg-mid">{message}</p>
+      <p className="mb-1.5 text-base text-fg-mid">
         Type{" "}
         <span className="border border-border bg-surface-sunken px-1 font-mono text-fg">{expectedText}</span>{" "}
         to confirm{expectedLabel ? ` the ${expectedLabel}` : ""}:
@@ -59,7 +59,7 @@ export function TypedConfirmDialog({
             onConfirm();
           }
         }}
-        className="mb-4 w-full rounded-control border border-border bg-surface-sunken px-2.5 py-1 text-xs text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none focus:border-error"
+        className="mb-4 w-full rounded-control border border-border bg-surface-sunken px-2.5 py-1 text-base text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none focus:border-error"
         autoComplete="off"
         spellCheck={false}
         aria-label={expectedLabel ? `Type ${expectedLabel} to confirm` : "Type to confirm"}

@@ -24,7 +24,7 @@ export function FormColor({ label, ariaLabel, layout, value, hasAlpha, onChange 
       <div className="h-[22px] w-[26px] shrink-0">
         <ColorPickerButton value={value} hasAlpha={hasAlpha} onChange={onChange} ariaLabel={label !== undefined ? `${label} colour` : ariaLabel} />
       </div>
-      <div className="flex h-[22px] min-w-0 flex-1 items-center gap-1 rounded-control border border-border bg-surface-sunken px-1.5 font-mono text-xs text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)]">
+      <div className="flex h-[22px] min-w-0 flex-1 items-center gap-1 rounded-control border border-border bg-surface-sunken px-1.5 font-mono text-base text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)]">
         <span className="truncate">{hex}</span>
         {alpha && <span className="shrink-0 text-fg-mid">{alpha}</span>}
       </div>

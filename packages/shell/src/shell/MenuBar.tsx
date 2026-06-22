@@ -69,7 +69,7 @@ export function MenuBar({ menu }: MenuBarProps) {
           role="menuitem"
           aria-haspopup="menu"
           aria-expanded={open === i}
-          className={`px-2 text-xs hover:bg-surface-raised ${open === i ? "bg-surface-raised" : ""}`}
+          className={`px-2 text-base hover:bg-surface-raised ${open === i ? "bg-surface-raised" : ""}`}
           onClick={() => setOpen(open === i ? null : i)}
           onMouseEnter={() => {
             if (open !== null) setOpen(i);

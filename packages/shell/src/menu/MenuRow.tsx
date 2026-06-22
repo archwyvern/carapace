@@ -6,7 +6,7 @@ import { CheckIcon, ChevronRightIcon } from "../icons";
 export type MenuSize = "sm" | "md";
 
 export function rowClass(opts: { danger?: boolean; size?: MenuSize } = {}): string {
-  const pad = opts.size === "md" ? "px-2.5 py-1.5 text-sm" : "px-2 py-1 text-xs";
+  const pad = opts.size === "md" ? "px-2.5 py-1.5 text-md" : "px-2 py-1 text-base";
   return cx(
     "flex w-full items-center gap-2 text-left whitespace-nowrap outline-none",
     pad,

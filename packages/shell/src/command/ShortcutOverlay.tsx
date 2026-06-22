@@ -43,24 +43,24 @@ export function ShortcutOverlay({ open, onClose }: ShortcutOverlayProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex h-[38px] shrink-0 items-center justify-between border-b border-border bg-surface-raised px-4">
-          <span className="text-xs uppercase tracking-wide text-accent">Keyboard Shortcuts</span>
-          <button type="button" onClick={onClose} className="text-xs text-fg-mid hover:text-fg">
+          <span className="text-base uppercase tracking-wide text-accent">Keyboard Shortcuts</span>
+          <button type="button" onClick={onClose} className="text-base text-fg-mid hover:text-fg">
             Esc
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
           {groups.size === 0 ? (
-            <span className="text-xs text-fg-mid">No shortcuts registered</span>
+            <span className="text-base text-fg-mid">No shortcuts registered</span>
           ) : (
             [...groups.entries()].map(([group, shortcuts]) => (
               <div key={group} className="mb-4 last:mb-0">
-                <div className="mb-2 border-b border-border/40 pb-1 text-xs uppercase tracking-wide text-fg-mid">
+                <div className="mb-2 border-b border-border/40 pb-1 text-base uppercase tracking-wide text-fg-mid">
                   {group}
                 </div>
                 {shortcuts.map((s) => (
-                  <div key={s.id} className="flex items-center justify-between py-1 text-xs">
+                  <div key={s.id} className="flex items-center justify-between py-1 text-base">
                     <span className="text-fg-mid">{s.label}</span>
-                    <kbd className="border border-border bg-surface-raised px-1.5 py-0.5 font-mono text-xs text-accent">
+                    <kbd className="border border-border bg-surface-raised px-1.5 py-0.5 font-mono text-base text-accent">
                       {s.keybinding}
                     </kbd>
                   </div>

@@ -59,7 +59,7 @@ export function FileExplorer(props: FileExplorerProps) {
   const host = useHost();
   if (!host.fs) {
     return (
-      <div className="flex h-full items-center justify-center p-4 text-center text-xs text-fg-mid">
+      <div className="flex h-full items-center justify-center p-4 text-center text-base text-fg-mid">
         No filesystem available.
       </div>
     );

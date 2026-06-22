@@ -123,12 +123,12 @@ export function Submenu({ item, size }: { item: SubmenuModel; size: MenuSize }) 
             >
               <div className="max-h-[var(--menu-max-h,80vh)] overflow-y-auto">
                 {loading && (
-                  <div className="flex items-center gap-2 px-2 py-1 text-xs text-fg-mid">
+                  <div className="flex items-center gap-2 px-2 py-1 text-base text-fg-mid">
                     <Spinner size="sm" /> Loading…
                   </div>
                 )}
                 {!loading && items.length === 0 && (
-                  <div className="px-2 py-1 text-xs italic text-fg-mid">(empty)</div>
+                  <div className="px-2 py-1 text-base italic text-fg-mid">(empty)</div>
                 )}
                 {!loading && items.length > 0 && (
                   <MenuRenderContext.Provider value={childCtx}>

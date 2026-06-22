@@ -14,7 +14,7 @@ export interface FormSliderProps {
 export function FormSlider({ label, value, min, max, onChange, onCommit }: FormSliderProps) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-sm text-fg-mid">{label}</span>
+      <span className="text-md text-fg-mid">{label}</span>
       <SpinSlider value={value} onChange={onChange} onCommit={onCommit} min={min} max={max} />
     </div>
   );

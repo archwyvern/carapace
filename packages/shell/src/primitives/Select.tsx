@@ -85,7 +85,7 @@ export function Select({ options, value, onChange, placeholder = "Select…", di
         onClick={() => (open ? setOpen(false) : openMenu())}
         onKeyDown={onKeyDown}
         className={cx(
-          "flex h-[22px] w-full items-center gap-1 rounded-control border border-border bg-surface-sunken px-1.5 text-xs text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none focus-visible:border-accent disabled:cursor-default disabled:opacity-60",
+          "flex h-[22px] w-full items-center gap-1 rounded-control border border-border bg-surface-sunken px-1.5 text-base text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none focus-visible:border-accent disabled:cursor-default disabled:opacity-60",
           className,
         )}
       >
@@ -106,7 +106,7 @@ export function Select({ options, value, onChange, placeholder = "Select…", di
                 onMouseEnter={() => setActive(i)}
                 onClick={() => choose(i)}
                 className={cx(
-                  "flex cursor-pointer items-center gap-1.5 px-2 py-1 text-xs",
+                  "flex cursor-pointer items-center gap-1.5 px-2 py-1 text-base",
                   o.disabled && "pointer-events-none opacity-40",
                   i === active ? "bg-list-active text-fg" : "text-fg-mid",
                 )}

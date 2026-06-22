@@ -420,7 +420,7 @@ export function TreeView<T>({
               if (!isSel) commitSelection(new Set([f.node.id]), i, i);
               onContextMenu?.(f.node, e);
             }}
-            className={`group relative flex cursor-pointer items-center gap-1 px-1 text-xs whitespace-nowrap ${dropClass} ${treeFocused && ctx.focused && !isDrop ? "ring-1 ring-inset ring-accent/50" : ""}`}
+            className={`group relative flex cursor-pointer items-center gap-1 px-1 text-base whitespace-nowrap ${dropClass} ${treeFocused && ctx.focused && !isDrop ? "ring-1 ring-inset ring-accent/50" : ""}`}
           >
             {showLine && (
               <span
@@ -519,7 +519,7 @@ function TreeEditInput({
       onBlur={commit}
       spellCheck={false}
       autoComplete="off"
-      className="min-w-0 flex-1 rounded-control border border-border bg-surface-sunken px-1 text-xs text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none focus:border-accent"
+      className="min-w-0 flex-1 rounded-control border border-border bg-surface-sunken px-1 text-base text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none focus:border-accent"
     />
   );
 }

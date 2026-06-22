@@ -37,7 +37,7 @@ export function Panel({
       {hasHeader && (
         <div className="flex shrink-0 items-center gap-2 border-b border-border bg-surface-raised px-2.5 py-1.5">
           <div className="min-w-0 flex-1">
-            {title !== undefined && <div className="truncate text-xs font-bold text-fg">{title}</div>}
+            {title !== undefined && <div className="truncate text-base font-bold text-fg">{title}</div>}
             {subtitle !== undefined && <div className="truncate text-2xs text-fg-mid">{subtitle}</div>}
           </div>
           {actions && <div className="flex shrink-0 items-center gap-0.5">{actions}</div>}

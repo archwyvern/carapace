@@ -113,8 +113,8 @@ export function DirectionPicker({ label, value, onChange }: DirectionPickerProps
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-xs text-fg-mid">{label ?? "Direction"}</span>
-        <span className="text-xs tabular-nums text-accent">
+        <span className="text-base text-fg-mid">{label ?? "Direction"}</span>
+        <span className="text-base tabular-nums text-accent">
           {value.x.toFixed(2)}, {value.y.toFixed(2)}
         </span>
       </div>
@@ -137,12 +137,12 @@ export function DirectionPicker({ label, value, onChange }: DirectionPickerProps
         <button
           type="button"
           onClick={() => onChange({ x: 0, y: 0 })}
-          className="mx-auto mt-1.5 block text-xs uppercase tracking-wide text-fg-mid hover:text-fg"
+          className="mx-auto mt-1.5 block text-base uppercase tracking-wide text-fg-mid hover:text-fg"
         >
           Reset to center
         </button>
       ) : (
-        <p className="mt-1.5 text-center text-xs text-fg-mid">Click to set direction</p>
+        <p className="mt-1.5 text-center text-base text-fg-mid">Click to set direction</p>
       )}
     </div>
   );

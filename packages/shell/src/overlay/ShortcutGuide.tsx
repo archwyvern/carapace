@@ -69,7 +69,7 @@ export function ShortcutGuide({
       {open ? (
         <div className="pointer-events-auto w-56 rounded-control border border-border bg-surface-raised/95 shadow-lg backdrop-blur-sm">
           <div className="flex items-center justify-between border-b border-border px-2 py-1">
-            <span className="text-xs font-semibold text-fg-mid">{title}</span>
+            <span className="text-base font-semibold text-fg-mid">{title}</span>
             <button
               type="button"
               aria-label="Hide shortcuts"
@@ -81,7 +81,7 @@ export function ShortcutGuide({
           </div>
           <ul className="max-h-[60vh] overflow-auto p-1.5">
             {items.map((it, i) => (
-              <li key={i} className="flex items-center justify-between gap-3 px-1 py-0.5 text-xs">
+              <li key={i} className="flex items-center justify-between gap-3 px-1 py-0.5 text-base">
                 <span className="text-fg-mid">{it.label}</span>
                 <kbd className="shrink-0 rounded-sm border border-border bg-surface-sunken px-1 font-mono text-2xs text-fg">
                   {it.keys}
@@ -95,7 +95,7 @@ export function ShortcutGuide({
           type="button"
           onClick={() => toggle(true)}
           aria-label="Show keyboard shortcuts"
-          className="pointer-events-auto flex items-center gap-1 rounded-control border border-border bg-surface-raised/95 px-2 py-1 text-xs text-fg-mid shadow-lg backdrop-blur-sm hover:text-fg"
+          className="pointer-events-auto flex items-center gap-1 rounded-control border border-border bg-surface-raised/95 px-2 py-1 text-base text-fg-mid shadow-lg backdrop-blur-sm hover:text-fg"
         >
           <kbd className="rounded-sm border border-border bg-surface-sunken px-1 font-mono text-2xs">?</kbd>
           {title}

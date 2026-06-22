@@ -32,7 +32,7 @@ export function OutputPanel({ lines, follow = true, ariaLabel = "Output", classN
       ref={ref}
       role="log"
       aria-label={ariaLabel}
-      className={`min-h-0 overflow-auto bg-surface-sunken p-2 font-mono text-xs ${className ?? ""}`}
+      className={`min-h-0 overflow-auto bg-surface-sunken p-2 font-mono text-base ${className ?? ""}`}
     >
       {lines.map((line) => (
         <div key={line.id} className={`whitespace-pre-wrap ${LEVEL_CLASS[line.level ?? "info"]}`}>

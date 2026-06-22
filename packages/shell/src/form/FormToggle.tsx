@@ -53,7 +53,7 @@ export function FormToggle({ label, ariaLabel, layout, value, onChange, disabled
   } else {
     row = (
       <div className="flex items-center justify-between">
-        <span className={`text-sm text-fg-mid ${disabled ? "opacity-50" : ""}`}>{label}</span>
+        <span className={`text-md text-fg-mid ${disabled ? "opacity-50" : ""}`}>{label}</span>
         {button}
       </div>
     );

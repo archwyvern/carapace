@@ -18,7 +18,7 @@ export function TextInput({ invalid = false, type = "text", className, ref, ...r
       ref={ref}
       type={type}
       className={cx(
-        "h-[22px] w-full rounded-control border bg-surface-sunken px-1.5 text-xs text-fg outline-none",
+        "h-[22px] w-full rounded-control border bg-surface-sunken px-1.5 text-base text-fg outline-none",
         "shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] placeholder:text-fg-mid/60",
         "disabled:cursor-default disabled:opacity-60",
         invalid ? "border-error focus:border-error" : "border-border focus:border-accent",

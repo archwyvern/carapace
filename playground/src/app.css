@@ -12,5 +12,6 @@
 @layer base {
   body {
     font-family: var(--font-sans);
+    font-size: var(--text-base); /* 13px — the standard body size */
   }
 }

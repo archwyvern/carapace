@@ -21,7 +21,7 @@ export function TopBar({ logo, menu, title, center, actions, showWindowControls 
   const drag = draggable ? ({ WebkitAppRegion: "drag" } as CSSProperties) : undefined;
   const noDrag = draggable ? ({ WebkitAppRegion: "no-drag" } as CSSProperties) : undefined;
   return (
-    <header style={drag} className="flex h-9 select-none items-center gap-2 border-b border-border bg-surface px-2 text-xs text-fg-mid">
+    <header style={drag} className="flex h-9 select-none items-center gap-2 border-b border-border bg-surface px-2 text-base text-fg-mid">
       {logo && <div className="flex shrink-0 items-center">{logo}</div>}
       {menu ? (
         <div style={noDrag} className="flex items-center">

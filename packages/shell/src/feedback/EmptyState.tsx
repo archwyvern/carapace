@@ -55,9 +55,9 @@ export function EmptyState({
     >
       {leading && <span className={cx("flex [&_svg]:h-6 [&_svg]:w-6", iconTone)}>{leading}</span>}
       {title !== undefined && (
-        <div className={cx("text-xs font-medium", status === "error" ? "text-error" : "text-fg")}>{title}</div>
+        <div className={cx("text-base font-medium", status === "error" ? "text-error" : "text-fg")}>{title}</div>
       )}
-      {message !== undefined && <div className="max-w-[44ch] text-xs text-fg-mid">{message}</div>}
+      {message !== undefined && <div className="max-w-[44ch] text-base text-fg-mid">{message}</div>}
       {action && <div className="mt-1">{action}</div>}
     </div>
   );

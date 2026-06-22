@@ -95,7 +95,7 @@ export function Modal({
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
-          <h3 id={headingId} className={`mb-2 text-base font-semibold ${titleClassName ?? "text-fg"}`}>
+          <h3 id={headingId} className={`mb-2 text-lg font-semibold ${titleClassName ?? "text-fg"}`}>
             {title}
           </h3>
         )}

@@ -59,7 +59,7 @@ export function Collapsible({
             aria-hidden
             className={cx("h-3.5 w-3.5 shrink-0 text-fg-mid transition-transform", isOpen && "rotate-90")}
           />
-          <span className="truncate text-xs font-semibold text-fg-mid">{title}</span>
+          <span className="truncate text-base font-semibold text-fg-mid">{title}</span>
         </button>
         {trailing && <span className="flex shrink-0 items-center">{trailing}</span>}
       </div>

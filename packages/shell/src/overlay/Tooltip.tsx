@@ -81,7 +81,7 @@ export function Tooltip({ content, children, placement = "top", delay = 400, cla
             id={id}
             style={{ position: "fixed", left: coords.x, top: coords.y, transform }}
             className={cx(
-              "pointer-events-none z-[120] max-w-[280px] rounded-control border border-border bg-surface-raised px-2 py-1 text-xs text-fg shadow-lg",
+              "pointer-events-none z-[120] max-w-[280px] rounded-control border border-border bg-surface-raised px-2 py-1 text-base text-fg shadow-lg",
               className,
             )}
           >

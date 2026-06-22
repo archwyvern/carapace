@@ -31,7 +31,7 @@ export function SaveStatus({ status, title, className }: SaveStatusProps) {
       role="status"
       aria-live="polite"
       title={title}
-      className={cx("flex items-center gap-1.5 text-xs select-none whitespace-nowrap", className)}
+      className={cx("flex items-center gap-1.5 text-base select-none whitespace-nowrap", className)}
     >
       <span className={cx("h-1.5 w-1.5 shrink-0 rounded-full", dot)} />
       <span className="text-fg-mid">{LABELS[status]}</span>

@@ -63,7 +63,7 @@ export function Thumbnail({
         {badge && <span className="absolute right-1 top-1">{badge}</span>}
       </div>
       {label !== undefined && (
-        <div className="truncate text-xs text-fg" style={{ width: size }}>
+        <div className="truncate text-base text-fg" style={{ width: size }}>
           {label}
         </div>
       )}

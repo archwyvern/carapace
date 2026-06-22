@@ -19,14 +19,14 @@ export function FieldLayout({ label, layout = "stacked", children }: FieldLayout
   if (layout === "inline") {
     return (
       <label className="flex items-center gap-2">
-        <span className="w-2/5 shrink-0 truncate text-xs text-fg-mid">{label}</span>
+        <span className="w-2/5 shrink-0 truncate text-base text-fg-mid">{label}</span>
         <div className="min-w-0 flex-1">{children}</div>
       </label>
     );
   }
   return (
     <label className="flex flex-col gap-0.5">
-      <span className="text-xs text-fg-mid">{label}</span>
+      <span className="text-base text-fg-mid">{label}</span>
       {children}
     </label>
   );

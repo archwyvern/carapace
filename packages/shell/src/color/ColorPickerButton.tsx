@@ -77,7 +77,7 @@ export function ColorPickerButton({
   if (label) {
     return (
       <div className="flex flex-col gap-0.5">
-        <span className="text-xs text-fg-mid">{label}</span>
+        <span className="text-base text-fg-mid">{label}</span>
         <div style={{ height: 22 }}>{swatch}</div>
         {popup}
       </div>

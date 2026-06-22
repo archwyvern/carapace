@@ -31,7 +31,7 @@ export function FormString({ label, ariaLabel, layout, value, onChange, onCommit
           onCommit?.(value);
         }
       }}
-      className={`h-[22px] w-full rounded-control border border-border bg-surface-sunken px-1.5 text-xs text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none focus:border-accent ${
+      className={`h-[22px] w-full rounded-control border border-border bg-surface-sunken px-1.5 text-base text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none focus:border-accent ${
         readOnly ? "cursor-default opacity-60" : ""
       }`}
     />

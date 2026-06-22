@@ -79,7 +79,7 @@ export function ColorSlider({ label, value, min, max, step, color, gradient, onC
 
   return (
     <div className="flex items-center gap-1.5" style={{ height: 24 }}>
-      <span className="shrink-0 text-xs font-semibold" style={{ width: 12, color }}>
+      <span className="shrink-0 text-base font-semibold" style={{ width: 12, color }}>
         {label}
       </span>
       <div
@@ -102,7 +102,7 @@ export function ColorSlider({ label, value, min, max, step, color, gradient, onC
         value={parseFloat(value.toFixed(step < 1 ? 2 : 0))}
         step={step}
         onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-        className="h-[22px] shrink-0 border border-border bg-surface px-1 text-right text-xs text-fg outline-none"
+        className="h-[22px] shrink-0 border border-border bg-surface px-1 text-right text-base text-fg outline-none"
         style={{ width: 52 }}
       />
     </div>

@@ -34,7 +34,7 @@ export function PromptDialog({
 
   return (
     <Modal title={title} onClose={onCancel} initialFocus={inputRef} closeOnBackdrop={false}>
-      {message && <p className="mb-3 text-xs text-fg-mid">{message}</p>}
+      {message && <p className="mb-3 text-base text-fg-mid">{message}</p>}
       <input
         ref={inputRef}
         type="text"
@@ -56,7 +56,7 @@ export function PromptDialog({
         spellCheck={false}
       />
       {validationError && (
-        <p role="alert" className="mb-2 text-xs text-error">
+        <p role="alert" className="mb-2 text-base text-error">
           {validationError}
         </p>
       )}

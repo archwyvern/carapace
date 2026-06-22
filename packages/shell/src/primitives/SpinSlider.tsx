@@ -160,7 +160,7 @@ export function SpinSlider({
           if (e.key === "Enter") commit();
           if (e.key === "Escape") setEditing(false);
         }}
-        className="h-[22px] w-full rounded-control border border-accent bg-surface-sunken px-1.5 font-mono text-xs text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none"
+        className="h-[22px] w-full rounded-control border border-accent bg-surface-sunken px-1.5 font-mono text-base text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none"
       />
     );
   }
@@ -179,7 +179,7 @@ export function SpinSlider({
         else if (e.key === "ArrowDown") { e.preventDefault(); nudge(-1, e); }
       }}
       title="Drag to scrub · click or Enter to type · up/down to step · Shift = fine"
-      className={`relative flex h-[22px] w-full cursor-ew-resize select-none items-center gap-1 overflow-hidden rounded-control border border-border bg-surface-sunken px-1.5 font-mono text-xs text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none hover:border-accent focus-visible:border-accent focus-visible:outline-none ${
+      className={`relative flex h-[22px] w-full cursor-ew-resize select-none items-center gap-1 overflow-hidden rounded-control border border-border bg-surface-sunken px-1.5 font-mono text-base text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none hover:border-accent focus-visible:border-accent focus-visible:outline-none ${
         readOnly ? "opacity-60" : ""
       }`}
     >

@@ -24,7 +24,7 @@ export interface TabsProps {
 const tabs = tv({
   slots: {
     list: "",
-    tab: "inline-flex items-center gap-1.5 text-xs outline-none transition-colors",
+    tab: "inline-flex items-center gap-1.5 text-base outline-none transition-colors",
   },
   variants: {
     variant: {
