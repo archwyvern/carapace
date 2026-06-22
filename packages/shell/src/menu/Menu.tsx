@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, ReactNode } from "react";
 import {
   FloatingFocusManager, FloatingList, FloatingPortal, FloatingTree,
   autoUpdate, useDismiss, useFloating, useFloatingNodeId, useFloatingParentNodeId,
@@ -174,6 +174,21 @@ function MenuInner(props: MenuProps) {
 
   if (!open || !anchored) return null;
 
+  // A FloatingPortal moves the menu's DOM under document.body, but React still bubbles its synthetic
+  // events up the *component* tree to the menu's logical parent. When that parent is a gesture
+  // surface — e.g. a canvas that calls setPointerCapture on pointerdown — a press on a menu item
+  // would start a host drag, and the captured pointer retargets the follow-up click off the item so
+  // it never fires. Insulate the overlay: run floating-ui's own handler, then stop the press from
+  // leaking past the menu. (useDismiss/outside-press use native document listeners, so this React
+  // synthetic stopPropagation does not affect open/close behaviour.)
+  const floatingProps = getFloatingProps();
+  const insulate =
+    (inner: unknown) =>
+    (e: ReactPointerEvent | ReactMouseEvent) => {
+      (inner as ((ev: ReactPointerEvent | ReactMouseEvent) => void) | undefined)?.(e);
+      e.stopPropagation();
+    };
+
   return (
     <FloatingPortal>
       <FloatingFocusManager context={context} modal={modal} returnFocus>
@@ -189,7 +204,9 @@ function MenuInner(props: MenuProps) {
             className,
           )}
           aria-label={ariaLabel}
-          {...getFloatingProps()}
+          {...floatingProps}
+          onPointerDown={insulate(floatingProps.onPointerDown)}
+          onMouseDown={insulate(floatingProps.onMouseDown)}
         >
           {filterable && (
             <div className="mb-1 flex items-center gap-2 border-b border-border px-2 pb-1">

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Menu } from "./Menu";
 import type { MenuProps } from "./Menu";
@@ -23,6 +23,25 @@ describe("Menu surface", () => {
     open([{ label: "Save", shortcut: "Ctrl+S", run }]);
     expect(screen.getByText("Ctrl+S")).toBeInTheDocument();
     await userEvent.click(screen.getByText("Save"));
+    expect(run).toHaveBeenCalledOnce();
+  });
+
+  // The menu is portaled, but React still bubbles synthetic events up the component tree to the
+  // menu's logical parent. A parent that captures the pointer on pointerdown (e.g. a canvas calling
+  // setPointerCapture) would otherwise hijack the press and the item's click would never fire.
+  it("does not leak pointer-press events to a host gesture surface", async () => {
+    const hostDown = vi.fn();
+    const run = vi.fn();
+    render(
+      <div onPointerDown={hostDown} onMouseDown={hostDown}>
+        <Menu items={[{ label: "Smooth", run }]} open onOpenChange={() => {}} anchor={{ x: 0, y: 0 }} ariaLabel="test" />
+      </div>,
+    );
+    const item = screen.getByRole("menuitem", { name: "Smooth" });
+    fireEvent.pointerDown(item);
+    fireEvent.mouseDown(item);
+    expect(hostDown).not.toHaveBeenCalled();
+    await userEvent.click(item);
     expect(run).toHaveBeenCalledOnce();
   });
 
