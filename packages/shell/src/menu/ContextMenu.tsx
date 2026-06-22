@@ -1,65 +1,35 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { MouseEvent as ReactMouseEvent } from "react";
-import { createPortal } from "react-dom";
-import { MenuList } from "./MenuList";
-import type { MenuItem } from "./model";
+import { useCallback, useState } from "react";
+import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
+import { Menu } from "./Menu";
+import type { MenuAction, MenuItem } from "./model";
+import type { MenuSize } from "./MenuRow";
 
 export interface ContextMenuProps {
   items: MenuItem[];
-  /** Cursor position (typically the right-click clientX/clientY). */
-  x: number;
-  y: number;
+  /** A cursor point (from a right-click) or an element to anchor to. */
+  anchor: { x: number; y: number } | HTMLElement;
   onClose: () => void;
+  size?: MenuSize;
+  filterable?: boolean;
+  ariaLabel?: string;
+  onAction?: (item: MenuAction) => void;
 }
 
-/**
- * A context menu: the shared MenuList opened at the cursor, in a portal, with
- * viewport edge-flip, click-outside, and Escape. Reuses the menu data model, so
- * items can be actions, separators, submenus, or command-refs.
- */
-export function ContextMenu({ items, x, y, onClose }: ContextMenuProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState({ left: x, top: y });
-
-  // Keep the menu on-screen (runs before paint, so no visible jump).
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    let left = x;
-    let top = y;
-    if (x + rect.width > window.innerWidth) left = Math.max(4, window.innerWidth - rect.width - 4);
-    if (y + rect.height > window.innerHeight) top = Math.max(4, window.innerHeight - rect.height - 4);
-    setPos({ left, top });
-  }, [x, y]);
-
-  useEffect(() => {
-    const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.stopPropagation();
-        onClose();
-      }
-    };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [onClose]);
-
-  return createPortal(
-    <div
-      ref={ref}
-      style={{ position: "fixed", left: pos.left, top: pos.top, zIndex: 100 }}
-      onContextMenu={(e) => e.preventDefault()}
-    >
-      <MenuList items={items} onClose={onClose} />
-    </div>,
-    document.body,
+/** A context menu opened at a point or element; closes via Escape / outside-press. */
+export function ContextMenu({ items, anchor, onClose, size, filterable, ariaLabel, onAction }: ContextMenuProps) {
+  return (
+    <Menu
+      items={items}
+      open
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+      anchor={anchor}
+      size={size}
+      filterable={filterable}
+      ariaLabel={ariaLabel ?? "Context menu"}
+      onAction={onAction}
+    />
   );
 }
 
@@ -68,13 +38,54 @@ export interface ContextMenuState {
   y: number;
 }
 
-/** Open/close state for a context menu, driven by an `onContextMenu` handler. */
+/** Open/close state for a context menu, driven by an `onContextMenu` handler or a point. */
 export function useContextMenu() {
   const [state, setState] = useState<ContextMenuState | null>(null);
-  const open = useCallback((e: ReactMouseEvent) => {
-    e.preventDefault();
-    setState({ x: e.clientX, y: e.clientY });
+  const open = useCallback((e: ReactMouseEvent | ContextMenuState) => {
+    if ("clientX" in e) {
+      e.preventDefault();
+      setState({ x: e.clientX, y: e.clientY });
+    } else {
+      setState({ x: e.x, y: e.y });
+    }
   }, []);
   const close = useCallback(() => setState(null), []);
   return { state, open, close };
+}
+
+export interface ContextMenuTriggerProps {
+  items: MenuItem[] | ((e: MouseEvent) => MenuItem[]);
+  children: ReactNode;
+  size?: MenuSize;
+  filterable?: boolean;
+  onAction?: (item: MenuAction) => void;
+}
+
+/** Wraps a region; right-click opens a context menu with (optionally per-target) items. */
+export function ContextMenuTrigger({ items, children, size, filterable, onAction }: ContextMenuTriggerProps) {
+  const ctx = useContextMenu();
+  const [resolved, setResolved] = useState<MenuItem[]>([]);
+  return (
+    <>
+      <div
+        onContextMenu={(e) => {
+          const list = typeof items === "function" ? items(e.nativeEvent) : items;
+          setResolved(list);
+          ctx.open(e);
+        }}
+      >
+        {children}
+      </div>
+      {ctx.state && (
+        <ContextMenu
+          items={resolved}
+          anchor={ctx.state}
+          onClose={ctx.close}
+          size={size}
+          filterable={filterable}
+          onAction={onAction}
+        />
+      )}
+    </>
+  );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { MenuModel } from "../menu/model";
 import { parseMnemonic } from "../menu/mnemonic";
-import { MenuList } from "../menu/MenuList";
+import { Menu } from "../menu/Menu";
 
 export interface MenuBarProps {
   menu: MenuModel;
@@ -24,15 +24,17 @@ export function MenuBar({ menu }: MenuBarProps) {
   const [open, setOpen] = useState<number | null>(null);
   const [mnemonics, setMnemonics] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const btnRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
-    const onDocDown = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(null);
-    };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(null);
       else if (e.key === "Alt") setMnemonics(true);
-      else if (e.altKey && e.key.length === 1) {
+      else if (open !== null && (e.key === "ArrowRight" || e.key === "ArrowLeft")) {
+        e.preventDefault();
+        const dir = e.key === "ArrowRight" ? 1 : -1;
+        setOpen((cur) => (cur === null ? 0 : (cur + dir + menu.length) % menu.length));
+      } else if (e.altKey && e.key.length === 1) {
         const k = e.key.toUpperCase();
         const idx = menu.findIndex((m) => parseMnemonic(m.label).key === k);
         if (idx >= 0) {
@@ -45,40 +47,49 @@ export function MenuBar({ menu }: MenuBarProps) {
     const onKeyUp = (e: KeyboardEvent) => {
       if (e.key === "Alt") setMnemonics(false);
     };
-    document.addEventListener("mousedown", onDocDown);
     document.addEventListener("keydown", onKey);
     document.addEventListener("keyup", onKeyUp);
     return () => {
-      document.removeEventListener("mousedown", onDocDown);
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("keyup", onKeyUp);
     };
-  }, [menu]);
+  }, [menu, open]);
+
+  const active = open !== null ? menu[open] : null;
 
   return (
     <div ref={rootRef} role="menubar" className="flex items-stretch">
       {menu.map((top, i) => (
-        <div key={i} className="relative flex">
-          <button
-            type="button"
-            role="menuitem"
-            aria-haspopup="menu"
-            aria-expanded={open === i}
-            className={`px-2 text-xs hover:bg-surface-raised ${open === i ? "bg-surface-raised" : ""}`}
-            onClick={() => setOpen(open === i ? null : i)}
-            onMouseEnter={() => {
-              if (open !== null) setOpen(i);
-            }}
-          >
-            <MenuLabel label={top.label} showMnemonic={mnemonics} />
-          </button>
-          {open === i && (
-            <div className="absolute left-0 top-full z-50">
-              <MenuList items={top.items} onClose={() => setOpen(null)} />
-            </div>
-          )}
-        </div>
+        <button
+          key={i}
+          ref={(n) => {
+            btnRefs.current[i] = n;
+          }}
+          type="button"
+          role="menuitem"
+          aria-haspopup="menu"
+          aria-expanded={open === i}
+          className={`px-2 text-xs hover:bg-surface-raised ${open === i ? "bg-surface-raised" : ""}`}
+          onClick={() => setOpen(open === i ? null : i)}
+          onMouseEnter={() => {
+            if (open !== null) setOpen(i);
+          }}
+        >
+          <MenuLabel label={top.label} showMnemonic={mnemonics} />
+        </button>
       ))}
+      {active && open !== null && btnRefs.current[open] && (
+        <Menu
+          items={active.items}
+          open
+          modal={false}
+          onOpenChange={(o) => {
+            if (!o) setOpen(null);
+          }}
+          anchor={btnRefs.current[open]!}
+          ariaLabel={parseMnemonic(active.label).text}
+        />
+      )}
     </div>
   );
 }

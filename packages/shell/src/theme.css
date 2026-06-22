@@ -49,3 +49,15 @@
   --radius-control: 4px;
   --radius-lg: 8px;
 }
+
+/* Menu/context-menu open animation (gated behind motion-safe: in the component). */
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

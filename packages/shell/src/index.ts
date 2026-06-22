@@ -167,16 +167,27 @@ export type {
   TopMenu,
   MenuItem,
   MenuAction,
+  MenuRadioGroup,
+  MenuHeader,
   MenuSeparator,
   Submenu,
+  SubmenuItems,
   MenuCommandRef,
+  MenuCustom,
 } from "./menu/model";
-export { isAction, isSeparator, isSubmenu, isCommandRef } from "./menu/model";
+export {
+  isAction, isSeparator, isHeader, isSubmenu, isRadioGroup, isCommandRef, isCustom,
+} from "./menu/model";
 export { parseMnemonic } from "./menu/mnemonic";
 export type { ParsedMnemonic } from "./menu/mnemonic";
+export { Menu } from "./menu/Menu";
+export type { MenuProps } from "./menu/Menu";
+export type { MenuSize } from "./menu/MenuRow";
 export { MenuList } from "./menu/MenuList";
-export { ContextMenu, useContextMenu } from "./menu/ContextMenu";
-export type { ContextMenuProps, ContextMenuState } from "./menu/ContextMenu";
+export { ContextMenu, ContextMenuTrigger, useContextMenu } from "./menu/ContextMenu";
+export type {
+  ContextMenuProps, ContextMenuTriggerProps, ContextMenuState,
+} from "./menu/ContextMenu";
 
 // Commands
 export type { Command, CommandRegistry } from "./command/registry";

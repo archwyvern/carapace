@@ -438,7 +438,7 @@ function ActiveFileExplorer({
         )}
         renderTrailing={rowActions ? (c) => rowActions(c.node.data) : undefined}
       />
-      {ctx.state && <ContextMenu items={menuItems} x={ctx.state.x} y={ctx.state.y} onClose={ctx.close} />}
+      {ctx.state && <ContextMenu items={menuItems} anchor={{ x: ctx.state.x, y: ctx.state.y }} onClose={ctx.close} />}
     </div>
   );
 }

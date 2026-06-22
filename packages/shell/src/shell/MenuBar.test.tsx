@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MenuBar } from "./MenuBar";
 import type { MenuModel } from "../menu/model";
@@ -24,60 +25,72 @@ function makeMenu(spies: { onNew?: () => void; onCut?: () => void } = {}): MenuM
   ];
 }
 
-test("renders every top-level label", () => {
-  render(<MenuBar menu={makeMenu()} />);
-  expect(screen.getByRole("menuitem", { name: "File" })).toBeInTheDocument();
-  expect(screen.getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
-});
+describe("MenuBar", () => {
+  it("renders every top-level label", () => {
+    render(<MenuBar menu={makeMenu()} />);
+    expect(screen.getByRole("menuitem", { name: "File" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
+  });
 
-test("clicking a top menu opens its dropdown", async () => {
-  render(<MenuBar menu={makeMenu()} />);
-  await userEvent.click(screen.getByRole("menuitem", { name: "File" }));
-  expect(screen.getByText("New")).toBeInTheDocument();
-  expect(screen.getByText("Open")).toBeInTheDocument();
-});
+  it("clicking a top menu opens its dropdown", async () => {
+    render(<MenuBar menu={makeMenu()} />);
+    await userEvent.click(screen.getByRole("menuitem", { name: "File" }));
+    expect(await screen.findByText("New")).toBeInTheDocument();
+    expect(screen.getByText("Open")).toBeInTheDocument();
+  });
 
-test("clicking an action runs it and closes the dropdown", async () => {
-  const onNew = vi.fn();
-  render(<MenuBar menu={makeMenu({ onNew })} />);
-  await userEvent.click(screen.getByRole("menuitem", { name: "File" }));
-  await userEvent.click(screen.getByText("New"));
-  expect(onNew).toHaveBeenCalledTimes(1);
-  expect(screen.queryByText("New")).not.toBeInTheDocument();
-});
+  it("clicking an action runs it and closes the dropdown", async () => {
+    const onNew = vi.fn();
+    render(<MenuBar menu={makeMenu({ onNew })} />);
+    await userEvent.click(screen.getByRole("menuitem", { name: "File" }));
+    await userEvent.click(await screen.findByText("New"));
+    expect(onNew).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(screen.queryByText("New")).not.toBeInTheDocument());
+  });
 
-test("a disabled action is not run", async () => {
-  const onCut = vi.fn();
-  render(<MenuBar menu={makeMenu({ onCut })} />);
-  await userEvent.click(screen.getByRole("menuitem", { name: "Edit" }));
-  await userEvent.click(screen.getByRole("menuitem", { name: "Cut" }));
-  expect(onCut).not.toHaveBeenCalled();
-});
+  it("a disabled action is not run", async () => {
+    const onCut = vi.fn();
+    render(<MenuBar menu={makeMenu({ onCut })} />);
+    await userEvent.click(screen.getByRole("menuitem", { name: "Edit" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Cut" }));
+    expect(onCut).not.toHaveBeenCalled();
+  });
 
-test("a separator renders", async () => {
-  render(<MenuBar menu={makeMenu()} />);
-  await userEvent.click(screen.getByRole("menuitem", { name: "File" }));
-  expect(screen.getByRole("separator")).toBeInTheDocument();
-});
+  it("a separator renders", async () => {
+    render(<MenuBar menu={makeMenu()} />);
+    await userEvent.click(screen.getByRole("menuitem", { name: "File" }));
+    expect(await screen.findByRole("separator")).toBeInTheDocument();
+  });
 
-test("hovering a submenu reveals its child items", async () => {
-  render(<MenuBar menu={makeMenu()} />);
-  await userEvent.click(screen.getByRole("menuitem", { name: "File" }));
-  await userEvent.hover(screen.getByRole("menuitem", { name: /Open Recent/ }));
-  expect(screen.getByText("project-a")).toBeInTheDocument();
-});
+  it("hovering a submenu reveals its child items", async () => {
+    render(<MenuBar menu={makeMenu()} />);
+    await userEvent.click(screen.getByRole("menuitem", { name: "File" }));
+    await userEvent.hover(await screen.findByRole("menuitem", { name: /Open Recent/ }));
+    expect(await screen.findByText("project-a")).toBeInTheDocument();
+  });
 
-test("clicking outside closes the dropdown", async () => {
-  render(<MenuBar menu={makeMenu()} />);
-  await userEvent.click(screen.getByRole("menuitem", { name: "File" }));
-  expect(screen.getByText("New")).toBeInTheDocument();
-  await userEvent.click(document.body);
-  expect(screen.queryByText("New")).not.toBeInTheDocument();
-});
+  it("clicking outside closes the dropdown", async () => {
+    render(<MenuBar menu={makeMenu()} />);
+    await userEvent.click(screen.getByRole("menuitem", { name: "File" }));
+    expect(await screen.findByText("New")).toBeInTheDocument();
+    await userEvent.click(document.body);
+    await waitFor(() => expect(screen.queryByText("New")).not.toBeInTheDocument());
+  });
 
-test("Escape closes the dropdown", async () => {
-  render(<MenuBar menu={makeMenu()} />);
-  await userEvent.click(screen.getByRole("menuitem", { name: "File" }));
-  await userEvent.keyboard("{Escape}");
-  expect(screen.queryByText("New")).not.toBeInTheDocument();
+  it("Escape closes the dropdown", async () => {
+    render(<MenuBar menu={makeMenu()} />);
+    await userEvent.click(screen.getByRole("menuitem", { name: "File" }));
+    expect(await screen.findByText("New")).toBeInTheDocument();
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByText("New")).not.toBeInTheDocument());
+  });
+
+  it("moves between top-level menus with ArrowRight when open", async () => {
+    render(<MenuBar menu={makeMenu()} />);
+    await userEvent.click(screen.getByRole("menuitem", { name: "File" }));
+    expect(await screen.findByText("New")).toBeInTheDocument();
+    await userEvent.keyboard("{ArrowRight}");
+    await waitFor(() => expect(screen.getByRole("menuitem", { name: "Edit" })).toHaveAttribute("aria-expanded", "true"));
+    expect(await screen.findByText("Cut")).toBeInTheDocument();
+  });
 });

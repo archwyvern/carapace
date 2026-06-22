@@ -1,6 +1,8 @@
 // Command registry — the single source of truth for actions. A command drives the
 // menu, its keybinding, and the command palette. Mirrors VS Code's command model.
 
+import type { ReactNode } from "react";
+
 export interface Command {
   id: string;
   /** Display label (palette + menu). `&&` mnemonic allowed when shown in a menu. */
@@ -9,6 +11,12 @@ export interface Command {
   category?: string;
   /** Display + binding chord, e.g. "Ctrl+Shift+P". */
   keybinding?: string;
+  /** Leading icon shown when the command appears in a menu. */
+  icon?: ReactNode;
+  /** Secondary text shown in a menu. */
+  description?: string;
+  /** Toggle state; when defined the command renders as a checkbox menu item. */
+  checked?: boolean;
   /** Dynamic enablement; defaults to always enabled. */
   isEnabled?: () => boolean;
   run: () => void;

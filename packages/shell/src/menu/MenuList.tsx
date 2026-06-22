@@ -1,93 +1,37 @@
 import { useState } from "react";
-import type { ReactNode } from "react";
-import { isCommandRef, isSeparator, isSubmenu } from "./model";
+import { Menu } from "./Menu";
 import type { MenuItem } from "./model";
-import { parseMnemonic } from "./mnemonic";
-import { useOptionalCommands } from "../command/context";
-import { cx } from "../cx";
-import { CheckIcon } from "../icons";
-
-const ROW =
-  "flex w-full items-center gap-2 px-2 py-1 text-left text-xs whitespace-nowrap hover:bg-accent hover:text-accent-fg disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-fg";
+import type { MenuSize } from "./MenuRow";
 
 /**
- * Renders a menu dropdown from the menu data model — actions, separators,
- * submenus (hover flyout), and command-refs (resolved via the command registry).
- * Shared by MenuBar and ContextMenu.
+ * Legacy/embedded menu surface: an always-open Menu anchored to a wrapper element at its
+ * render location. Retained for MenuBar dropdowns and existing callers; new code should
+ * prefer ContextMenu / ContextMenuTrigger or Menu with an explicit anchor.
  */
-export function MenuList({ items, onClose }: { items: MenuItem[]; onClose: () => void }) {
-  const [openSub, setOpenSub] = useState<number | null>(null);
-  const registry = useOptionalCommands();
+export function MenuList({
+  items, onClose, size, ariaLabel,
+}: {
+  items: MenuItem[];
+  onClose: () => void;
+  size?: MenuSize;
+  ariaLabel?: string;
+}) {
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   return (
-    <div role="menu" className="min-w-[12rem] border border-border bg-surface-raised py-1 shadow-lg">
-      {items.map((item, i) => {
-        if (isSeparator(item)) {
-          return <div key={i} role="separator" className="my-1 h-px bg-border" />;
-        }
-        if (isSubmenu(item)) {
-          return (
-            <div key={i} className="relative" onMouseEnter={() => setOpenSub(i)}>
-              <button
-                type="button"
-                role="menuitem"
-                aria-haspopup="menu"
-                aria-expanded={openSub === i}
-                className={ROW}
-              >
-                <span className="w-4" />
-                <span className="flex-1">{parseMnemonic(item.label).text}</span>
-                <span aria-hidden className="ml-6">&#x276F;</span>
-              </button>
-              {openSub === i && (
-                <div className="absolute left-full top-0">
-                  <MenuList items={item.items} onClose={onClose} />
-                </div>
-              )}
-            </div>
-          );
-        }
-        // Action or command-reference → resolve to a uniform shape.
-        let label: string;
-        let shortcut: string | undefined;
-        let checked = false;
-        let disabled: boolean;
-        let activate: () => void;
-        let icon: ReactNode = null;
-        let danger = false;
-        if (isCommandRef(item)) {
-          const cmd = registry?.get(item.command);
-          label = cmd?.label ?? item.command;
-          shortcut = cmd?.keybinding;
-          disabled = !cmd || !(registry?.isEnabled(item.command) ?? false);
-          activate = () => registry?.run(item.command);
-        } else {
-          label = item.label;
-          shortcut = item.shortcut;
-          checked = item.checked ?? false;
-          disabled = item.enabled === false;
-          activate = item.run;
-          icon = item.icon ?? null;
-          danger = item.danger ?? false;
-        }
-        return (
-          <button
-            key={i}
-            type="button"
-            role="menuitem"
-            disabled={disabled}
-            className={cx(ROW, danger && "text-error")}
-            onMouseEnter={() => setOpenSub(null)}
-            onClick={() => {
-              activate();
-              onClose();
-            }}
-          >
-            <span className="flex w-4 items-center justify-center">{icon ?? (checked ? <CheckIcon className="h-3.5 w-3.5" /> : null)}</span>
-            <span className="flex-1">{parseMnemonic(label).text}</span>
-            {shortcut && <span className="ml-6 text-fg-mid">{shortcut}</span>}
-          </button>
-        );
-      })}
-    </div>
+    <>
+      <span ref={setAnchor} className="sr-only" aria-hidden />
+      {anchor && (
+        <Menu
+          items={items}
+          open
+          onOpenChange={(o) => {
+            if (!o) onClose();
+          }}
+          anchor={anchor}
+          size={size}
+          ariaLabel={ariaLabel}
+        />
+      )}
+    </>
   );
 }

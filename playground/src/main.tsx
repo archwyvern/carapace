@@ -23,9 +23,10 @@ import { Gallery } from "./Gallery";
 import { InspectorPage } from "./pages/InspectorPage";
 import { ResourceInspectorPage } from "./pages/ResourceInspectorPage";
 import { TreeViewPage } from "./pages/TreeViewPage";
+import { ContextMenuPage } from "./pages/ContextMenuPage";
 import "./app.css";
 
-type Page = "components" | "inspector" | "trees" | "resources";
+type Page = "components" | "inspector" | "trees" | "resources" | "contextmenu";
 
 const host = createMemoryHost({
   "/proj/src/main.tsx": "",
@@ -112,6 +113,7 @@ function App() {
               { id: "inspector", icon: <span>🎛</span>, title: "Inspector", active: page === "inspector", onClick: () => setPage("inspector") },
               { id: "trees", icon: <span>🌳</span>, title: "TreeView", active: page === "trees", onClick: () => setPage("trees") },
               { id: "resources", icon: <span>🗂</span>, title: "Resource Inspector", active: page === "resources", onClick: () => setPage("resources") },
+              { id: "contextmenu", icon: <span>📋</span>, title: "Context Menu", active: page === "contextmenu", onClick: () => setPage("contextmenu") },
             ]}
           />
         }
@@ -120,6 +122,7 @@ function App() {
         {page === "inspector" && <InspectorPage />}
         {page === "trees" && <TreeViewPage />}
         {page === "resources" && <ResourceInspectorPage />}
+        {page === "contextmenu" && <ContextMenuPage />}
         {page === "components" && (
         <SplitView orientation="horizontal" primary="start" size={sideW} onResize={setSideW} min={140} max={400}>
           <div className="h-full border-r border-border bg-surface-sunken">
@@ -151,7 +154,7 @@ function App() {
       </Workbench>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       {ctx.state && (
-        <ContextMenu items={CTX_ITEMS} x={ctx.state.x} y={ctx.state.y} onClose={ctx.close} />
+        <ContextMenu items={CTX_ITEMS} anchor={{ x: ctx.state.x, y: ctx.state.y }} onClose={ctx.close} />
       )}
       </ToastProvider>
     </CommandProvider>
