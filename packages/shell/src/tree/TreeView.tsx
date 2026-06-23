@@ -346,11 +346,31 @@ export function TreeView<T>({
       if (dropTargetId) setDropTargetId(null);
       return;
     }
-    if (!dndEnabled || !canDrop!(draggedNodes(), null)) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    if (!rootDrop) setRootDrop(true);
-    if (dropTargetId) setDropTargetId(null);
+    if (!dndEnabled) return;
+    const dragged = draggedNodes();
+    if (canDrop!(dragged, null)) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      if (!rootDrop) setRootDrop(true);
+      if (dropTargetId) setDropTargetId(null);
+      return;
+    }
+    // The consumer rejects a background/root drop (canDrop(…, null) === false),
+    // but the cursor is in the empty space below the list. Fall back to "after
+    // the last visible row" so items can be dropped to the bottom without
+    // precisely hitting that row's lower half. Reorder-only — a non-reorder
+    // tree has no positional "after" to honour.
+    if (reorder && flat.length > 0) {
+      const last = flat[flat.length - 1]!.node;
+      if (canDrop!(dragged, last)) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        dropPositionRef.current = "after";
+        if (dropPosition !== "after") setDropPosition("after");
+        if (dropTargetId !== last.id) setDropTargetId(last.id);
+        if (rootDrop) setRootDrop(false);
+      }
+    }
   };
 
   const handleContainerDrop = (e: DragEvent) => {
@@ -360,6 +380,11 @@ export function TreeView<T>({
       } else if (dndEnabled) {
         const dragged = draggedNodes();
         if (canDrop!(dragged, null)) { e.preventDefault(); onDrop!(dragged, null); }
+        // Mirror the dragover fallback: empty-space drop → after the last row.
+        else if (reorder && flat.length > 0) {
+          const last = flat[flat.length - 1]!.node;
+          if (canDrop!(dragged, last)) { e.preventDefault(); onDrop!(dragged, last, "after"); }
+        }
       }
     }
     clearDrag();
