@@ -29,6 +29,7 @@ export function TreeView<T>({
   canDrop,
   onDrop,
   reorder = false,
+  expandOnReselect = false,
   onDelete,
   onRename,
   onExternalDrop,
@@ -117,10 +118,13 @@ export function TreeView<T>({
       else ids.add(id);
       commitSelection(ids, index, index);
     } else {
+      const wasSelected = selected.has(id);
       commitSelection(new Set([id]), index, index);
-      // VS Code: a plain click on a folder row also toggles its expansion.
+      // VS Code: a plain click on a folder row also toggles its expansion. With
+      // `expandOnReselect`, only an already-selected row toggles — an unselected
+      // row just selects (re-click, or the twistie, to expand).
       const f = flat[index]!;
-      if (f.collapsible) setExpand(f.node.id, !f.expanded);
+      if (f.collapsible && (!expandOnReselect || wasSelected)) setExpand(f.node.id, !f.expanded);
     }
   };
 

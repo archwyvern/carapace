@@ -77,6 +77,12 @@ export interface TreeViewProps<T = unknown> {
    *  before/after it (as a sibling) and the middle drops into it (as a child),
    *  with a drop-line indicator. Default false = whole-row "into" only. */
   reorder?: boolean;
+  /** When true, a plain click on an already-selected collapsible row toggles its
+   *  expansion; a click on an unselected row only selects it (re-click, or the
+   *  twistie, to expand). Default false = a plain click always toggles (the
+   *  file-explorer / VS Code convention). Use for trees where selecting and
+   *  expanding are distinct intents — e.g. a layer tree. */
+  expandOnReselect?: boolean;
   /** A drop from OUTSIDE the tree (no internal drag in progress) — e.g. dragging an
    *  item in from another view. Fires with the native event (read its dataTransfer) and
    *  the target node (null = background/root). Providing this makes rows accept external

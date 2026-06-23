@@ -108,6 +108,20 @@ test("single-clicking a folder toggles its expansion", () => {
   expect(screen.queryByText("a.ts")).not.toBeInTheDocument();
 });
 
+test("expandOnReselect: first click only selects; re-click toggles expansion", () => {
+  renderTree({ expandOnReselect: true });
+  expect(screen.queryByText("a.ts")).not.toBeInTheDocument();
+  // First click on an unselected folder selects it WITHOUT expanding.
+  fireEvent.click(screen.getByText("src"));
+  expect(selectedItems()).toHaveLength(1);
+  expect(screen.queryByText("a.ts")).not.toBeInTheDocument();
+  // Re-clicking the now-selected folder toggles expansion.
+  fireEvent.click(screen.getByText("src"));
+  expect(screen.getByText("a.ts")).toBeInTheDocument();
+  fireEvent.click(screen.getByText("src"));
+  expect(screen.queryByText("a.ts")).not.toBeInTheDocument();
+});
+
 test("editingId renders an inline input that commits on Enter and cancels on Escape", () => {
   const onEditCommit = vi.fn();
   const onEditCancel = vi.fn();
