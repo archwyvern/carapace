@@ -37,6 +37,16 @@ export interface CarapaceHost {
     writeText(text: string): Promise<void>;
     readText(): Promise<string>;
   };
+  /**
+   * Native-OS integration. Optional + Electron-only — absent in the browser, which disables
+   * OS-bound actions (e.g. "reveal in file manager"). Backed by carapace's OS seam
+   * (`serveOs` / `exposeOs` / `createIpcOs`); virtual-path apps wire a resolve adapter on the
+   * main side.
+   */
+  os?: {
+    /** Reveal a path in the native file manager, selecting it in its parent folder. */
+    reveal(path: string): Promise<void>;
+  };
 }
 
 /**

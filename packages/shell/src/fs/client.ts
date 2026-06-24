@@ -67,3 +67,7 @@ export function exposeFs(contextBridge: ContextBridgeLike, ipcRenderer: IpcRende
 // Window-control seam (frameless TopBar) shares this renderer/preload entry (@carapace/shell/ipc).
 export { createIpcWindow, exposeWindow } from "../window/client";
 export type { WindowBridge } from "../window/protocol";
+
+// OS-integration seam (reveal in file manager) shares this renderer/preload entry.
+export { createIpcOs, exposeOs } from "../os/client";
+export type { OsBridge } from "../os/protocol";
