@@ -125,3 +125,7 @@ export function serveFs(ipcMain: IpcMainLike, webContents: WebContentsLike, fs: 
     }
   });
 }
+
+// Window-control seam (frameless TopBar) shares this main-process entry (@carapace/shell/node).
+export { serveWindow } from "../window/node";
+export type { BrowserWindowLike } from "../window/node";

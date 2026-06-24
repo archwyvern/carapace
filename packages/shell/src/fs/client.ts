@@ -63,3 +63,7 @@ export function exposeFs(contextBridge: ContextBridgeLike, ipcRenderer: IpcRende
   };
   contextBridge.exposeInMainWorld(key, bridge);
 }
+
+// Window-control seam (frameless TopBar) shares this renderer/preload entry (@carapace/shell/ipc).
+export { createIpcWindow, exposeWindow } from "../window/client";
+export type { WindowBridge } from "../window/protocol";
