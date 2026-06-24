@@ -11,6 +11,9 @@ export interface WorkbenchProps {
   /** Right-aligned top-bar content before the window controls (e.g. account actions). */
   actions?: ReactNode;
   showWindowControls?: boolean;
+  /** Make the top bar a draggable window region (frameless Electron). Interactive slots
+   *  (menu / center / actions / window controls) stay clickable. */
+  draggable?: boolean;
   /** Optional left icon strip. Omit → no activity bar, centre widens. */
   activityBar?: ReactNode;
   /** Optional bottom strip. Omit → no status bar, centre gets the height. */
@@ -30,13 +33,14 @@ export function Workbench({
   center,
   actions,
   showWindowControls,
+  draggable,
   activityBar,
   statusBar,
   children,
 }: WorkbenchProps) {
   return (
     <div className="flex h-screen flex-col bg-surface text-fg">
-      <TopBar logo={logo} menu={menu} title={title} center={center} actions={actions} showWindowControls={showWindowControls} />
+      <TopBar logo={logo} menu={menu} title={title} center={center} actions={actions} showWindowControls={showWindowControls} draggable={draggable} />
       <div className="flex min-h-0 flex-1">
         {activityBar}
         <main className="min-h-0 min-w-0 flex-1 overflow-auto">{children}</main>
