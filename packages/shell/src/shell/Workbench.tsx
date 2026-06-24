@@ -11,8 +11,10 @@ export interface WorkbenchProps {
   /** Right-aligned top-bar content before the window controls (e.g. account actions). */
   actions?: ReactNode;
   showWindowControls?: boolean;
-  /** Make the top bar a draggable window region (frameless Electron). Interactive slots
-   *  (menu / center / actions / window controls) stay clickable. */
+  /** Make the top bar a draggable window region (frameless Electron). Defaults to TRUE —
+   *  carapace apps are chromeless by default (own-chrome TopBar over `frame: false`); pass
+   *  `false` to keep the OS window frame. Interactive slots (menu / center / actions / window
+   *  controls) stay clickable. */
   draggable?: boolean;
   /** Optional left icon strip. Omit → no activity bar, centre widens. */
   activityBar?: ReactNode;
@@ -33,7 +35,7 @@ export function Workbench({
   center,
   actions,
   showWindowControls,
-  draggable,
+  draggable = true,
   activityBar,
   statusBar,
   children,
