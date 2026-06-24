@@ -7,7 +7,9 @@ export interface TopBarProps {
   logo?: ReactNode;
   menu?: MenuModel;
   title?: string;
-  /** Flex-1 middle slot (e.g. a breadcrumb trail). Takes the place of the spacer. */
+  /** Slot pinned to the true horizontal centre of the bar (e.g. a command/search pill),
+   *  overlaid independent of the left/right cluster widths so it stays window-centred.
+   *  Only the slot's own content opts out of dragging — the bar around it stays grabbable. */
   center?: ReactNode;
   /** Right-aligned content before the window controls (e.g. user/account actions). */
   actions?: ReactNode;
@@ -21,7 +23,7 @@ export function TopBar({ logo, menu, title, center, actions, showWindowControls 
   const drag = draggable ? ({ WebkitAppRegion: "drag" } as CSSProperties) : undefined;
   const noDrag = draggable ? ({ WebkitAppRegion: "no-drag" } as CSSProperties) : undefined;
   return (
-    <header style={drag} className="flex h-9 select-none items-center gap-2 border-b border-border bg-surface px-2 text-base text-fg-mid">
+    <header style={drag} className="relative flex h-9 select-none items-center gap-2 border-b border-border bg-surface px-2 text-base text-fg-mid">
       {logo && <div className="flex shrink-0 items-center">{logo}</div>}
       {menu ? (
         <div style={noDrag} className="flex items-center">
@@ -30,13 +32,9 @@ export function TopBar({ logo, menu, title, center, actions, showWindowControls 
       ) : title ? (
         <span className="truncate">{title}</span>
       ) : null}
-      {center ? (
-        <div style={noDrag} className="flex min-w-0 flex-1 items-center">
-          {center}
-        </div>
-      ) : (
-        <div className="flex-1" />
-      )}
+      {/* Draggable spacer: fills the gap between the left and right clusters so the bar
+          is grabbable everywhere except the interactive slots. */}
+      <div className="min-w-0 flex-1" />
       {actions && (
         <div style={noDrag} className="flex shrink-0 items-center gap-2">
           {actions}
@@ -45,6 +43,13 @@ export function TopBar({ logo, menu, title, center, actions, showWindowControls 
       {showWindowControls && (
         <div style={noDrag} className="flex shrink-0 items-center">
           <WindowControls />
+        </div>
+      )}
+      {/* Centre slot overlays the bar, pinned to the window's true centre. Its wrapper
+          shrink-wraps the content, so no-drag covers only the pill — not the whole width. */}
+      {center && (
+        <div style={noDrag} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          {center}
         </div>
       )}
     </header>

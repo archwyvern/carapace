@@ -29,6 +29,41 @@ export interface TextureInfo {
   type: DataTypeValue;
   texBinding: number;
   samplerBinding: number;
+  // Declared `hint_screen_texture`: the renderer binds a copy of the framebuffer to this
+  // slot (rather than a material texture) before drawing. The web backends have no shared
+  // base-set screen sampler like the engine's GLSL, so the screen texture keeps a normal
+  // per-shader binding and is flagged here instead.
+  screenTexture?: boolean;
+  // The screen texture's declared filter requests mipmaps (renderer generates them).
+  screenTextureMipmaps?: boolean;
+}
+
+// Filter hints (snake_case source text, as stored on UniformDecl.hints) that imply mipmaps.
+const MIPMAP_FILTER_HINTS = new Set<string>([
+  'filter_nearest_mipmap',
+  'filter_linear_mipmap',
+  'filter_nearest_mipmap_anisotropic',
+  'filter_linear_mipmap_anisotropic',
+]);
+
+export interface ScreenTextureInfo {
+  isScreenTexture: boolean;
+  mipmaps: boolean;
+}
+
+/**
+ * Inspect a sampler uniform's hints for `hint_screen_texture` and whether its declared
+ * filter uses mipmaps. Mirrors the C# GlslCodeGen screen-texture detection; the flags let
+ * the renderer copy the framebuffer (and generate mipmaps) before drawing with the shader.
+ */
+export function screenTextureFromHints(hints: ReadonlyArray<{ kind: string }>): ScreenTextureInfo {
+  let isScreenTexture = false;
+  let mipmaps = false;
+  for (const h of hints) {
+    if (h.kind === 'hint_screen_texture') isScreenTexture = true;
+    else if (MIPMAP_FILTER_HINTS.has(h.kind)) mipmaps = true;
+  }
+  return { isScreenTexture, mipmaps: isScreenTexture && mipmaps };
 }
 
 export interface BufferInfo {
@@ -71,6 +106,9 @@ export interface CodeGenResult {
   specConstants: SpecConstantInfo[];
   renderModes: RenderModes;
   rawRenderModes: string[];
+  // A `hint_screen_texture` sampler is present; the renderer must copy the framebuffer.
+  usesScreenTexture: boolean;
+  usesScreenTextureMipmaps: boolean;
   diagnostics: Diagnostic[];
 }
 

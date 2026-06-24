@@ -2,6 +2,7 @@ import { DataType, TypeInfo, isSampler, scalarComponentOf } from '../../lang/typ
 import type { DataTypeValue } from '../../lang/types.js';
 import { Diagnostic } from '../../lang/diagnostic.js';
 import type { ShaderBackend, BackendOptions, CodeGenResult, UniformInfo, TextureInfo, BufferInfo, SpecConstantInfo, RenderModes } from '../backend.js';
+import { screenTextureFromHints } from '../backend.js';
 import { getLibraryFunctionName } from '../library-names.js';
 import * as Ast from '../../lang/ast.js';
 
@@ -235,10 +236,25 @@ export class Glsl300EsCodeGen implements ShaderBackend {
     const samplerLines: string[] = [];
     const textures: TextureInfo[] = [];
     let texBinding = 0;
+    let usesScreenTexture = false;
+    let usesScreenTextureMipmaps = false;
     for (const u of samplerUniforms) {
       const glslType = SAMPLER_TYPE_MAP.get(u.type.type) ?? 'sampler2D';
       samplerLines.push(`uniform ${glslType} ${u.name};`);
-      textures.push({ name: u.name, type: u.type.type, texBinding, samplerBinding: texBinding });
+      // `hint_screen_texture` stays an ordinary sampler the renderer fills from a framebuffer
+      // copy (WebGL has no shared base-set screen sampler); flagged so the renderer does the copy.
+      const screen = screenTextureFromHints(u.hints ?? []);
+      if (screen.isScreenTexture) {
+        usesScreenTexture = true;
+        if (screen.mipmaps) usesScreenTextureMipmaps = true;
+      }
+      textures.push({
+        name: u.name,
+        type: u.type.type,
+        texBinding,
+        samplerBinding: texBinding,
+        ...(screen.isScreenTexture && { screenTexture: true, screenTextureMipmaps: screen.mipmaps }),
+      });
       texBinding++;
     }
     const samplerDeclarations = samplerLines.join('\n');
@@ -349,6 +365,8 @@ export class Glsl300EsCodeGen implements ShaderBackend {
       specConstants,
       renderModes,
       rawRenderModes,
+      usesScreenTexture,
+      usesScreenTextureMipmaps,
       diagnostics: this.diagnostics,
     };
   }

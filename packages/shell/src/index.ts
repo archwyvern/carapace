@@ -38,6 +38,8 @@ export { Select } from "./primitives/Select";
 export type { SelectProps, SelectOption } from "./primitives/Select";
 export { TagInput } from "./primitives/TagInput";
 export type { TagInputProps } from "./primitives/TagInput";
+export { Palette } from "./primitives/Palette";
+export type { PaletteProps, PaletteItem, PaletteGroup } from "./primitives/Palette";
 
 // Layout
 export { Panel } from "./layout/Panel";
@@ -115,6 +117,12 @@ export { CloseIcon, AddIcon, MinimizeIcon, MaximizeIcon, ResetIcon, ChevronRight
 export { TreeView } from "./tree/TreeView";
 export { FileExplorer } from "./tree/FileExplorer";
 export type { FileExplorerProps } from "./tree/FileExplorer";
+export { FileTypeIcon } from "./tree/fileIcons/FileTypeIcon";
+export type { FileTypeIconProps } from "./tree/fileIcons/FileTypeIcon";
+export { registerFileIcons, resolveFileIcon, FileIconRegistry } from "./tree/fileIcons/registry";
+export type { FileIconSpec, FileIconRef, FileIconOverrides } from "./tree/fileIcons/registry";
+export { setiIconDefinitions } from "./tree/fileIcons/setiIconData";
+export type { SetiIconDef } from "./tree/fileIcons/setiIconData";
 export { TreeFind } from "./tree/TreeFind";
 export type { TreeFindProps } from "./tree/TreeFind";
 export { treeFilter } from "./tree/treeFilter";
@@ -122,8 +130,10 @@ export { treeFilter } from "./tree/treeFilter";
 // Editor
 export { EditorTabs } from "./editor/EditorTabs";
 export type { EditorTab, EditorTabsProps } from "./editor/EditorTabs";
-export { CodeEditor } from "./editor/CodeEditor";
-export type { CodeEditorProps, Diagnostic } from "./editor/CodeEditor";
+export { CodeEditor, CARAPACE_DARK_THEME } from "./editor/CodeEditor";
+export type { CodeEditorProps } from "./editor/CodeEditor";
+export { configureMonacoOffline } from "./editor/monacoLoader";
+export type { MonacoOfflineOptions, MonacoWorkerFactory } from "./editor/monacoLoader";
 export { formatJs } from "./format/formatJs";
 export type { FormatOptions } from "./format/formatJs";
 

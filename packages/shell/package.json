@@ -7,7 +7,9 @@
   "files": [
     "dist",
     "src/theme.css",
-    "src/base.css"
+    "src/base.css",
+    "src/tree/fileIcons/seti.css",
+    "src/tree/fileIcons/seti.woff"
   ],
   "exports": {
     ".": {
@@ -23,7 +25,8 @@
       "import": "./dist/fs/node.js"
     },
     "./theme.css": "./src/theme.css",
-    "./base.css": "./src/base.css"
+    "./base.css": "./src/base.css",
+    "./seti.css": "./src/tree/fileIcons/seti.css"
   },
   "scripts": {
     "build": "tsup",
@@ -33,16 +36,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@codemirror/commands": "^6.10.3",
-    "@codemirror/lang-javascript": "^6.2.5",
-    "@codemirror/lang-json": "^6.0.2",
-    "@codemirror/language": "^6.12.3",
-    "@codemirror/lint": "^6.9.7",
-    "@codemirror/state": "^6.6.0",
-    "@codemirror/view": "^6.43.1",
     "@floating-ui/react": "^0.27.19",
     "@fluentui/react-icons": "^2.0.330",
-    "@lezer/highlight": "^1.2.3",
+    "@monaco-editor/react": "^4.7.0",
     "chokidar": "5.0.0",
     "clsx": "^2.1.1",
     "prettier": "^3.8.4",
@@ -50,6 +46,7 @@
     "tailwind-variants": "^3.2.2"
   },
   "peerDependencies": {
+    "monaco-editor": ">=0.50",
     "react": ">=19",
     "react-dom": ">=19"
   },
@@ -62,6 +59,7 @@
     "@types/react-dom": "19.0.0",
     "@vscode/codicons": "0.0.36",
     "jsdom": "25.0.1",
+    "monaco-editor": "0.55.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "tsup": "8.3.5",

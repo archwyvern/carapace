@@ -1,182 +1,96 @@
-import { useEffect, useRef } from "react";
-import { Compartment, EditorState, type Extension } from "@codemirror/state";
-import {
-  EditorView,
-  keymap,
-  lineNumbers,
-  highlightActiveLine,
-  highlightActiveLineGutter,
-  highlightSpecialChars,
-  drawSelection,
-} from "@codemirror/view";
-import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
-import {
-  syntaxHighlighting,
-  HighlightStyle,
-  indentOnInput,
-  bracketMatching,
-} from "@codemirror/language";
-import { javascript } from "@codemirror/lang-javascript";
-import { json } from "@codemirror/lang-json";
-import { lintGutter, setDiagnostics } from "@codemirror/lint";
-import { tags as t } from "@lezer/highlight";
+import Editor, { type BeforeMount, type OnChange, type Monaco } from "@monaco-editor/react";
+import type { editor as MonacoEditor } from "monaco-editor";
 
-export type { Diagnostic } from "@codemirror/lint";
-import type { Diagnostic } from "@codemirror/lint";
+/** Built-in dark theme, registered automatically. Tuned to carapace's dark surfaces;
+ *  override by passing your own `theme` (and defining it in `beforeMount`). */
+export const CARAPACE_DARK_THEME = "carapace-dark";
 
-// Syntax palette. Carapace defines no per-token code colours, so this is a small
-// self-contained scheme tuned for the dark theme; structural colours reference the
-// carapace tokens (--color-fg / -fg-mid / -error / -accent) so it tracks the theme.
-const highlight = HighlightStyle.define([
-  { tag: t.keyword, color: "#c792ea" },
-  { tag: [t.name, t.deleted, t.character, t.propertyName, t.macroName], color: "var(--color-fg)" },
-  { tag: [t.function(t.variableName), t.labelName], color: "#82aaff" },
-  { tag: [t.color, t.constant(t.name), t.standard(t.name)], color: "#f78c6c" },
-  { tag: [t.definition(t.name), t.separator], color: "var(--color-fg)" },
-  { tag: [t.typeName, t.className, t.number, t.changed, t.annotation, t.modifier, t.self], color: "#ffcb6b" },
-  { tag: [t.operator, t.operatorKeyword, t.url, t.escape, t.regexp, t.special(t.string)], color: "#89ddff" },
-  { tag: [t.meta, t.comment], color: "var(--color-fg-mid)", fontStyle: "italic" },
-  { tag: t.strong, fontWeight: "bold" },
-  { tag: t.emphasis, fontStyle: "italic" },
-  { tag: [t.string, t.inserted], color: "#c3e88d" },
-  { tag: t.invalid, color: "var(--color-error)" },
-]);
-
-const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
-
-const theme = EditorView.theme(
-  {
-    "&": {
-      color: "var(--color-fg)",
-      backgroundColor: "var(--color-surface)",
-      height: "100%",
-      fontSize: "13px",
+function defineCarapaceTheme(monaco: Monaco): void {
+  monaco.editor.defineTheme(CARAPACE_DARK_THEME, {
+    base: "vs-dark",
+    inherit: true,
+    rules: [
+      { token: "comment", foreground: "6A7A55", fontStyle: "italic" },
+      { token: "keyword", foreground: "C586C0" },
+      { token: "string", foreground: "C3A56A" },
+      { token: "number", foreground: "B5CEA8" },
+      { token: "type", foreground: "7ABAD4" },
+      { token: "function", foreground: "DCDCAA" },
+      { token: "variable", foreground: "BFC0BA" },
+      { token: "identifier", foreground: "BFC0BA" },
+      { token: "property", foreground: "9CDCFE" },
+      { token: "operator", foreground: "D4D4D4" },
+    ],
+    colors: {
+      "editor.background": "#1A1B1C",
+      "editor.foreground": "#BBBEBF",
+      "editor.lineHighlightBackground": "#242526",
+      "editorLineNumber.foreground": "#6B6E6F",
+      "editorLineNumber.activeForeground": "#BBBEBF",
+      "editorCursor.foreground": "#BBBEBF",
     },
-    "&.cm-focused": { outline: "none" },
-    ".cm-scroller": { fontFamily: MONO, lineHeight: "1.6" },
-    ".cm-content": { caretColor: "var(--color-accent)" },
-    ".cm-cursor, .cm-dropCursor": { borderLeftColor: "var(--color-accent)" },
-    "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
-      backgroundColor: "color-mix(in srgb, var(--color-accent) 28%, transparent)",
-    },
-    ".cm-gutters": {
-      backgroundColor: "var(--color-surface)",
-      color: "var(--color-fg-mid)",
-      border: "none",
-    },
-    ".cm-activeLine": { backgroundColor: "color-mix(in srgb, var(--color-fg) 4%, transparent)" },
-    ".cm-activeLineGutter": { backgroundColor: "color-mix(in srgb, var(--color-fg) 7%, transparent)" },
-    ".cm-lineNumbers .cm-gutterElement": { padding: "0 8px 0 14px" },
-    ".cm-foldPlaceholder": { backgroundColor: "var(--color-surface-raised)", border: "none", color: "var(--color-fg-mid)" },
-  },
-  { dark: true },
-);
+  });
+}
+
+const DEFAULT_OPTIONS: MonacoEditor.IStandaloneEditorConstructionOptions = {
+  fontSize: 13,
+  minimap: { enabled: false },
+  renderLineHighlight: "line",
+  overviewRulerBorder: false,
+  hideCursorInOverviewRuler: true,
+  scrollBeyondLastLine: true,
+  smoothScrolling: true,
+  automaticLayout: true,
+};
 
 export interface CodeEditorProps {
-  /** Document text. Controlled: external changes are reflected without losing cursor/history when possible. */
-  value: string;
-  /** Fired on every user edit with the full document. */
-  onChange?: (value: string) => void;
-  /** Language for syntax highlighting. Read once at mount. */
-  language?: "javascript" | "json";
-  /** Disable editing. Reconfigured live. */
-  readOnly?: boolean;
-  /** Inline diagnostics (squiggles + gutter markers). Offsets are document character indices. */
-  diagnostics?: Diagnostic[];
-  /** Extra CodeMirror extensions, appended at mount. */
-  extensions?: Extension[];
+  /** Document text (controlled). Omit when managing models imperatively via `onMount`. */
+  value?: string;
+  /** Monaco language id (e.g. "typescript"). Omit when driving the model directly. */
+  language?: string;
+  /** Model path/URI; lets Monaco keep a model (and its view state) per file. */
+  path?: string;
+  /** Theme id. Defaults to the built-in carapace dark theme. */
+  theme?: string;
+  /** Monaco construction options, merged over carapace defaults. */
+  options?: MonacoEditor.IStandaloneEditorConstructionOptions;
   /** Wrapper class. Give it a height (e.g. h-full) — the editor fills it. */
   className?: string;
-  /** Receives the EditorView once mounted, for imperative access. */
-  onReady?: (view: EditorView) => void;
+  /** Fired on every edit with the full document. */
+  onChange?: (value: string) => void;
+  /** Register custom languages/themes/diagnostics before mount. The carapace default
+   *  theme is already defined when this runs. */
+  beforeMount?: (monaco: Monaco) => void;
+  /** Imperative access once mounted — manage models, add commands, attach diagnostics. */
+  onMount?: (editor: MonacoEditor.IStandaloneCodeEditor, monaco: Monaco) => void;
 }
 
 /**
- * Generic CodeMirror 6 editor, themed to carapace tokens. Presentational and
- * domain-agnostic: it knows nothing about what it edits. Consumers own the document,
- * compute diagnostics, and wire any run/save affordances around it.
+ * Monaco-based code editor, the shell's editor primitive. Presentational and
+ * domain-agnostic: it owns the Monaco mount, a dark theme, and sane defaults, but
+ * knows nothing about what it edits. Consumers register languages and wire models,
+ * diagnostics, and save/run affordances through `beforeMount` / `onMount`.
  */
 export function CodeEditor({
-  value,
-  onChange,
-  language = "javascript",
-  readOnly = false,
-  diagnostics,
-  extensions = [],
-  className,
-  onReady,
+  value, language, path, theme = CARAPACE_DARK_THEME, options, className = "h-full", onChange, beforeMount, onMount,
 }: CodeEditorProps) {
-  const host = useRef<HTMLDivElement>(null);
-  const view = useRef<EditorView | null>(null);
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
-  const readOnlyComp = useRef(new Compartment());
-
-  // Mount once. language/extensions are read here and not reconfigured live (a use
-  // site edits one kind of document); remount via React key to switch languages.
-  useEffect(() => {
-    if (!host.current) return;
-    const lang = language === "json" ? [json()] : language === "javascript" ? [javascript()] : [];
-    const v = new EditorView({
-      parent: host.current,
-      state: EditorState.create({
-        doc: value,
-        extensions: [
-          lineNumbers(),
-          highlightActiveLineGutter(),
-          highlightActiveLine(),
-          highlightSpecialChars(),
-          history(),
-          drawSelection(),
-          indentOnInput(),
-          bracketMatching(),
-          lintGutter(),
-          syntaxHighlighting(highlight, { fallback: true }),
-          keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
-          ...lang,
-          theme,
-          readOnlyComp.current.of([EditorState.readOnly.of(readOnly), EditorView.editable.of(!readOnly)]),
-          EditorView.updateListener.of((u) => {
-            if (u.docChanged) onChangeRef.current?.(u.state.doc.toString());
-          }),
-          ...extensions,
-        ],
-      }),
-    });
-    view.current = v;
-    onReady?.(v);
-    return () => {
-      v.destroy();
-      view.current = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Controlled value: only patch when the prop diverges from the live doc (so typing
-  // doesn't fight itself and the cursor survives).
-  useEffect(() => {
-    const v = view.current;
-    if (!v) return;
-    const cur = v.state.doc.toString();
-    if (value !== cur) v.dispatch({ changes: { from: 0, to: cur.length, insert: value } });
-  }, [value]);
-
-  useEffect(() => {
-    const v = view.current;
-    if (!v) return;
-    v.dispatch({
-      effects: readOnlyComp.current.reconfigure([
-        EditorState.readOnly.of(readOnly),
-        EditorView.editable.of(!readOnly),
-      ]),
-    });
-  }, [readOnly]);
-
-  useEffect(() => {
-    const v = view.current;
-    if (!v) return;
-    v.dispatch(setDiagnostics(v.state, diagnostics ?? []));
-  }, [diagnostics]);
-
-  return <div ref={host} className={className} />;
+  const handleBeforeMount: BeforeMount = (monaco) => {
+    defineCarapaceTheme(monaco);
+    beforeMount?.(monaco);
+  };
+  const handleChange: OnChange = (next) => onChange?.(next ?? "");
+  return (
+    <div className={className}>
+      <Editor
+        theme={theme}
+        value={value}
+        language={language}
+        path={path}
+        beforeMount={handleBeforeMount}
+        onMount={onMount}
+        onChange={handleChange}
+        options={{ ...DEFAULT_OPTIONS, ...options }}
+      />
+    </div>
+  );
 }

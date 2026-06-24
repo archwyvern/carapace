@@ -6,6 +6,7 @@ import { ContextMenu, useContextMenu } from "../menu/ContextMenu";
 import type { MenuItem } from "../menu/model";
 import { useMemento } from "../state/useMemento";
 import { TreeView } from "./TreeView";
+import { FileTypeIcon } from "./fileIcons/FileTypeIcon";
 import type { TreeNode } from "./treeTypes";
 import type { CarapaceHost, DirEntry } from "../host/types";
 
@@ -15,7 +16,9 @@ export interface FileExplorerProps {
   root: string;
   /** Activate (Enter / double-click) a file. */
   onOpen?: (path: string) => void;
-  /** Leading icon for an entry (e.g. a file-type glyph). Consumer-supplied. */
+  /** Leading icon for an entry. Defaults to the built-in Seti file-type icons (extend
+   *  them via `registerFileIcons`). Pass to override per-entry, or `() => null` to disable.
+   *  Requires `@import "@carapace/shell/seti.css"` for the default glyphs to render. */
   getIcon?: (entry: DirEntry) => ReactNode;
   /** Right-aligned per-row actions (e.g. a hover play button). The row carries `group`,
    *  so `group-hover:` can reveal hover-only actions. */
@@ -106,6 +109,12 @@ function indexEntries(roots: TreeNode<DirEntry>[]): Map<string, DirEntry> {
   };
   walk(roots);
   return map;
+}
+
+/** Default leading icon: Seti file-type glyph for files, nothing for folders. Size is left to the
+ *  CSS default (1.5em of the row font), matching VSCode's Seti icon theme ("size": "150%"). */
+function defaultGetIcon(entry: DirEntry): ReactNode {
+  return <FileTypeIcon name={entry.name} isDir={entry.isDir} />;
 }
 
 function baseExt(name: string): [string, string] {
@@ -445,7 +454,7 @@ function ActiveFileExplorer({
         onBackgroundContextMenu={openRootMenu}
         renderItem={(c) => (
           <span className="flex items-center gap-1.5">
-            {getIcon?.(c.node.data)}
+            {(getIcon ?? defaultGetIcon)(c.node.data)}
             <span className="truncate">{c.node.data.name}</span>
           </span>
         )}

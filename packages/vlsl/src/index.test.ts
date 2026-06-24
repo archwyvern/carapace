@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { compile } from './index.js';
+import { compile, webglBackend } from './index.js';
 
 describe('compile()', () => {
   it('compiles a minimal fragment shader', () => {
@@ -297,5 +297,51 @@ describe('backend selection', () => {
     const result = compile('shader_type canvas_item;\nvoid fragment() { COLOR = vec4(1.0, 0.0, 0.0, 1.0); }', { backend: fakeBackend });
     assert.equal(called, true);
     assert.equal(result.success, true);
+  });
+});
+
+describe('hint_screen_texture', () => {
+  const SCREEN_SHADER = `
+    shader_type canvas_item;
+    uniform sampler2D screen : hint_screen_texture, filter_linear;
+    void fragment() { COLOR = texture(screen, SCREEN_UV); }
+  `;
+
+  it('flags usesScreenTexture and marks the texture (WGSL)', () => {
+    const result = compile(SCREEN_SHADER);
+    assert.equal(result.success, true);
+    assert.equal(result.usesScreenTexture, true);
+    assert.equal(result.usesScreenTextureMipmaps, false);
+    assert.equal(result.textures.length, 1);
+    assert.equal((result.textures[0] as any).screenTexture, true);
+  });
+
+  it('flags usesScreenTexture and marks the texture (WebGL)', () => {
+    const result = compile(SCREEN_SHADER, { backend: webglBackend });
+    assert.equal(result.success, true);
+    assert.equal(result.usesScreenTexture, true);
+    assert.equal((result.textures[0] as any).screenTexture, true);
+  });
+
+  it('sets usesScreenTextureMipmaps when the filter requests mipmaps', () => {
+    const result = compile(`
+      shader_type canvas_item;
+      uniform sampler2D screen : hint_screen_texture, filter_linear_mipmap;
+      void fragment() { COLOR = texture(screen, SCREEN_UV); }
+    `);
+    assert.equal(result.success, true);
+    assert.equal(result.usesScreenTexture, true);
+    assert.equal(result.usesScreenTextureMipmaps, true);
+  });
+
+  it('leaves a plain sampler unflagged', () => {
+    const result = compile(`
+      shader_type canvas_item;
+      uniform sampler2D tex : hint_normal;
+      void fragment() { COLOR = texture(tex, SCREEN_UV); }
+    `);
+    assert.equal(result.success, true);
+    assert.equal(result.usesScreenTexture, false);
+    assert.equal((result.textures[0] as any).screenTexture, undefined);
   });
 });

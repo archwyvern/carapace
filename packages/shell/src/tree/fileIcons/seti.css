@@ -1,0 +1,31 @@
+/* Seti file-type icon font (jesseweed/seti-ui, MIT), vendored from VSCode theme-seti.
+ * Consumers of FileExplorer's default icons (or <FileTypeIcon>) must import this once:
+ *   @import "@carapace/shell/seti.css";
+ * Glyphs are addressed by codepoint via the FileIconRegistry; this only wires the font. */
+
+@font-face {
+  font-family: "carapace-seti";
+  src: url("./seti.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+.carapace-file-icon {
+  font-family: "carapace-seti";
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  /* Match VSCode's Seti icon theme: glyphs sit small in their em box, so the theme renders them at
+   * 150% of the row font (vs-seti-icon-theme.json "size": "150%"). Consumers can still override with
+   * an explicit px `size` on <FileTypeIcon>. */
+  font-size: 1.5em;
+  line-height: 1;
+  display: inline-block;
+  width: 1em;
+  text-align: center;
+  flex-shrink: 0;
+  speak: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

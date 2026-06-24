@@ -24,6 +24,14 @@ export type {
   SpecConstantInfo,
 } from './backends/backend.js';
 
+// Language-frontend pieces consumed by editor tooling (Monaco providers, diagnostics).
+export { KEYWORDS, TYPE_KEYWORDS, HINT_KEYWORDS, FILTER_REPEAT_KEYWORDS, TokenKind } from './lang/tokens.js';
+export type { TokenKindValue, Token } from './lang/tokens.js';
+export { getBuiltinFunctions, getBuiltinVariables } from './lang/builtins.js';
+export type { Overload, BuiltinVariable } from './lang/builtins.js';
+export { Diagnostic, DiagnosticSeverity } from './lang/diagnostic.js';
+export type { DiagnosticSeverityValue } from './lang/diagnostic.js';
+
 export class CompilationResult {
   codeSections: Map<string, string>;
   userFunctions: string;
@@ -38,6 +46,10 @@ export class CompilationResult {
   specConstants: unknown[];
   renderModes: RenderModes;
   rawRenderModes: string[];
+  // A `hint_screen_texture` sampler is present; the renderer must copy the framebuffer
+  // (and generate mipmaps, if requested) before drawing with this shader.
+  usesScreenTexture: boolean;
+  usesScreenTextureMipmaps: boolean;
   libraries: Set<string>;
   varyings: VaryingInfo[];
   diagnostics: Diagnostic[];
@@ -62,6 +74,8 @@ export class CompilationResult {
       worldVertexCoords: false,
     };
     this.rawRenderModes = [];
+    this.usesScreenTexture = false;
+    this.usesScreenTextureMipmaps = false;
     this.libraries = new Set();
     this.varyings = [];
     this.diagnostics = [];
@@ -229,6 +243,8 @@ export function compilePreprocessed(preprocessedSource: string, {
   result.specConstants = genResult.specConstants;
   result.renderModes = genResult.renderModes;
   result.rawRenderModes = genResult.rawRenderModes;
+  result.usesScreenTexture = genResult.usesScreenTexture;
+  result.usesScreenTextureMipmaps = genResult.usesScreenTextureMipmaps;
   result.varyings = genResult.varyings ?? [];
   result.diagnostics.push(...(genResult.diagnostics || []));
 
@@ -301,6 +317,8 @@ export function compile(source: string, {
   result.specConstants = genResult.specConstants;
   result.renderModes = genResult.renderModes;
   result.rawRenderModes = genResult.rawRenderModes;
+  result.usesScreenTexture = genResult.usesScreenTexture;
+  result.usesScreenTextureMipmaps = genResult.usesScreenTextureMipmaps;
   result.varyings = genResult.varyings ?? [];
   result.diagnostics.push(...(genResult.diagnostics || []));
 

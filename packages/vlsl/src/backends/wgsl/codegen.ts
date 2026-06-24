@@ -2,6 +2,7 @@ import { DataType, TypeInfo, isSampler, scalarComponentOf } from '../../lang/typ
 import type { DataTypeValue } from '../../lang/types.js';
 import { Diagnostic } from '../../lang/diagnostic.js';
 import type { BackendOptions, CodeGenResult, UniformInfo, TextureInfo, BufferInfo, SpecConstantInfo, RenderModes } from '../backend.js';
+import { screenTextureFromHints } from '../backend.js';
 import { getLibraryInoutParams } from '../../lang/library-registry.js';
 import { getLibraryFunctionName } from '../library-names.js';
 import * as Ast from '../../lang/ast.js';
@@ -226,13 +227,29 @@ export class WgslCodeGen
     let bindingIndex = this.nextBinding + this.startTextureBinding;
     const samplerLines: string[] = [];
     const textures: TextureInfo[] = [];
+    let usesScreenTexture = false;
+    let usesScreenTextureMipmaps = false;
     for (const u of samplerUniforms) {
       const texType = SAMPLER_TEXTURE_MAP.get(u.type.type) ?? 'texture_2d<f32>';
       samplerLines.push(`@group(0) @binding(${bindingIndex}) var ${u.name}_tex: ${texType};`);
       bindingIndex++;
       samplerLines.push(`@group(0) @binding(${bindingIndex}) var ${u.name}_sampler: sampler;`);
       bindingIndex++;
-      textures.push({ name: u.name, type: u.type.type, texBinding: bindingIndex - 2, samplerBinding: bindingIndex - 1 });
+      // A `hint_screen_texture` sampler keeps a normal binding (WGSL has no shared base-set
+      // screen sampler like the engine's GLSL); it's flagged so the renderer binds a copy of
+      // the framebuffer here and knows to do the copy before drawing.
+      const screen = screenTextureFromHints(u.hints ?? []);
+      if (screen.isScreenTexture) {
+        usesScreenTexture = true;
+        if (screen.mipmaps) usesScreenTextureMipmaps = true;
+      }
+      textures.push({
+        name: u.name,
+        type: u.type.type,
+        texBinding: bindingIndex - 2,
+        samplerBinding: bindingIndex - 1,
+        ...(screen.isScreenTexture && { screenTexture: true, screenTextureMipmaps: screen.mipmaps }),
+      });
     }
     const samplerDeclarations = samplerLines.join('\n');
 
@@ -324,6 +341,8 @@ export class WgslCodeGen
       specConstants,
       renderModes,
       rawRenderModes,
+      usesScreenTexture,
+      usesScreenTextureMipmaps,
       diagnostics: this.diagnostics,
     };
   }
