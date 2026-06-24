@@ -64,7 +64,7 @@ export function FileExplorer(props: FileExplorerProps) {
       </div>
     );
   }
-  return <ActiveFileExplorer {...props} fs={host.fs} clipboard={host.clipboard} />;
+  return <ActiveFileExplorer {...props} fs={host.fs} clipboard={host.clipboard} os={host.os} />;
 }
 
 type Exclude = (entry: DirEntry) => boolean;
@@ -128,10 +128,11 @@ type Editing =
 interface ActiveProps extends FileExplorerProps {
   fs: Fs;
   clipboard: CarapaceHost["clipboard"];
+  os: CarapaceHost["os"];
 }
 
 function ActiveFileExplorer({
-  root, onOpen, getIcon, rowActions, onExternalDrop, extraMenuItems, exclude, showHidden = false, newFile, storageKey, ariaLabel = "Files", fs, clipboard,
+  root, onOpen, getIcon, rowActions, onExternalDrop, extraMenuItems, exclude, showHidden = false, newFile, storageKey, ariaLabel = "Files", fs, clipboard, os,
 }: ActiveProps) {
   const confirm = useOptionalConfirm();
   const ctx = useContextMenu();
@@ -387,9 +388,21 @@ function ActiveFileExplorer({
       });
       items.push({ separator: true });
       items.push({ id: "copyPath", label: "Copy Path", run: () => void clipboard.writeText(entry.path) });
+      if (os) {
+        // "Copy Absolute Path" only for virtual (scheme://) paths — for real-path apps it would
+        // just duplicate "Copy Path". `os.realpath` resolves through the main-side adapter.
+        if (entry.path.includes("://")) {
+          items.push({
+            id: "copyAbsPath",
+            label: "Copy Absolute Path",
+            run: () => void os.realpath(entry.path).then((p) => clipboard.writeText(p)),
+          });
+        }
+        items.push({ id: "reveal", label: "Open in Files", run: () => void os.reveal(entry.path) });
+      }
     }
     return items;
-  }, [extraMenuItems, root, clipboard, removeMany, startRename, startNew, selected, newFile, clip, doPaste]);
+  }, [extraMenuItems, root, clipboard, os, removeMany, startRename, startNew, selected, newFile, clip, doPaste]);
 
   const openRootMenu = useCallback((e: ReactMouseEvent) => {
     const items: MenuItem[] = [

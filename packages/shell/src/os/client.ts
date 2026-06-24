@@ -23,6 +23,7 @@ export interface OsContextBridgeLike {
 export function createIpcOs(bridge: OsBridge): OsApi {
   return {
     reveal: (path) => bridge.invoke("reveal", path) as Promise<void>,
+    realpath: (path) => bridge.invoke("realpath", path) as Promise<string>,
   };
 }
 

@@ -37,6 +37,8 @@ export function serveOs(ipcMain: OsIpcMainLike, options: ServeOsOptions): void {
       case "reveal":
         options.shell.showItemInFolder(real);
         return undefined;
+      case "realpath":
+        return real;
       default:
         throw new Error(`Unknown os op: ${String(op)}`);
     }

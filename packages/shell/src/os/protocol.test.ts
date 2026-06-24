@@ -27,6 +27,9 @@ describe("os seam", () => {
 
     await host.reveal("core://ships/zarha.sfx");
     expect(revealed).toEqual(["/project/ships/zarha.sfx"]);
+
+    // realpath returns the adapter-resolved real path (what "Copy Absolute Path" copies).
+    expect(await host.realpath("core://ships/zarha.sfx")).toBe("/project/ships/zarha.sfx");
   });
 
   test("serveOs without an adapter reveals the path as-is", async () => {
@@ -41,8 +44,10 @@ describe("os seam", () => {
     serveOs(ipcMain, { shell });
 
     const bridge: OsBridge = { invoke: (op, path) => Promise.resolve(handler({}, op, path)) };
-    await createIpcOs(bridge).reveal("/home/u/notes.txt");
+    const host = createIpcOs(bridge);
+    await host.reveal("/home/u/notes.txt");
     expect(revealed).toEqual(["/home/u/notes.txt"]);
+    expect(await host.realpath("/home/u/notes.txt")).toBe("/home/u/notes.txt");
   });
 
   test("serveOs rejects an unknown op", async () => {

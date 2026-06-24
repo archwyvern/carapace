@@ -46,6 +46,8 @@ export interface CarapaceHost {
   os?: {
     /** Reveal a path in the native file manager, selecting it in its parent folder. */
     reveal(path: string): Promise<void>;
+    /** Resolve a host path (possibly a virtual `scheme://`) to its real, absolute OS path. */
+    realpath(path: string): Promise<string>;
   };
 }
 
