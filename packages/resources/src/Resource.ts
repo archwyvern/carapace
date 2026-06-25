@@ -40,6 +40,22 @@ export interface GroupInfo {
   enabledBy?: string;
 }
 
+/**
+ * One column of a tuple-array element (e.g. a CurvePoint's Offset / Value / LeftMode). Values are
+ * stored as numbers; an `enum` column maps the number to an option index and serializes as the
+ * engine's qualified enum form `EnumType.Member`.
+ */
+export interface TupleMember {
+  name: string;
+  kind?: "number" | "enum";
+  /** For enum columns: the option names in index order (e.g. ["Free", "Linear"]). */
+  options?: string[];
+  /** For enum columns: the enum type name used to qualify the serialized member. */
+  enumType?: string;
+  /** Value treated as "unset" for trailing-default trimming. Defaults to 0 (also the default enum index). */
+  default?: number;
+}
+
 export interface FieldInfo {
   name: string;
   kind: FieldKind;
@@ -52,6 +68,17 @@ export interface FieldInfo {
   baseType?: string;
   /** For ctor / array-ctor, the typed constructor name (e.g. "Color", "Vector2"). */
   ctorName?: string;
+  /** For array-ctor, the typed members each tuple element maps to, in order. Lets the serializer
+   *  emit the engine's named struct form `{ Offset: x, Value: y }` and the inspector label/typed
+   *  each column (number or enum). */
+  tupleMembers?: TupleMember[];
+  /** A registered custom inspector view that renders this field, parallel to a resource's
+   *  type-level `view`. When set, the inspector renders the registered component instead of the
+   *  generic widget — the resource owns the field's layout (e.g. a Curve's Points group). */
+  view?: string;
+  /** For a tuple array, keep the elements sorted ascending by their first column (e.g. a Curve's
+   *  points by Offset). Normalised on load so the canonical order is always left-to-right. */
+  sorted?: boolean;
   /** For int/float with a known range, used by widgets. */
   min?: number;
   max?: number;
@@ -250,7 +277,10 @@ function createPropFactory(instance: Resource) {
       register<T>(name, "resource", def, { baseType, ...opts }),
     arrayNumber: (name: string, def: number[] = [], opts: CtorOpts = {}) => register<number[]>(name, "array-number", def, opts),
     arrayColor: (name: string, def: ColorF[] = [], opts: CtorOpts = {}) => register<ColorF[]>(name, "array-ctor", def, { ctorName: "Color", ...opts }),
-    arrayTuple: (name: string, ctorName: string, def: number[][] = [], opts: CtorOpts = {}) => register<number[][]>(name, "array-ctor", def, { ctorName, ...opts }),
+    arrayTuple: (name: string, ctorName: string, def: number[][] = [], opts: CtorOpts & { members?: TupleMember[]; view?: string; sorted?: boolean } = {}) => {
+      const { members, view, sorted, ...rest } = opts;
+      return register<number[][]>(name, "array-ctor", def, { ctorName, tupleMembers: members, view, sorted, ...rest });
+    },
     custom: <T>(name: string, def: T, opts: CtorOpts = {}) => register<T>(name, "custom", def, opts),
   };
 }

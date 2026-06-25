@@ -3,13 +3,31 @@ import {
   isFieldModified,
   resetField,
   getResourceClass,
+  getResourceView,
   instantiateResourceClass,
   isAbstractResourceClass,
 } from "@carapace/resources";
-import type { FieldInfo } from "@carapace/resources";
+import type { FieldInfo, TupleMember } from "@carapace/resources";
 import { ColorF, Vector2, Vector3, Vector4 } from "@carapace/primitives";
 import type { ReactNode } from "react";
 import type { InspectorField, InspectorSectionInfo, ObjectField, ArrayField } from "@carapace/shell";
+import { getRegisteredFieldView, getRegisteredView } from "./view-registry";
+
+/** The class-hierarchy categories for a resource's fields — concrete type first, then the inherited
+ *  `Resource` base. Used at the root and in sub-inspectors so category order respects inheritance. */
+export function resourceCategories(resource: Resource): string[] {
+  return resource.typeName === "Resource" ? ["Resource"] : [resource.typeName, "Resource"];
+}
+
+/** Resolve the bespoke whole-resource editor for an instance: a host `renderResource` override wins,
+ *  else the view the resource's type declares (`registerResourceClass(..., { view })`). Applied at
+ *  the root AND for embedded sub-resources, so widgets like the curve graph appear at any depth. */
+export function resolveResourceView(resource: Resource, renderResource?: (r: Resource) => ReactNode | null): ReactNode | undefined {
+  const fromHost = renderResource?.(resource);
+  if (fromHost) return fromHost;
+  const key = getResourceView(resource.typeName);
+  return key ? (getRegisteredView(key)?.(resource) ?? undefined) : undefined;
+}
 
 export interface ResourceAdapterOptions {
   /**
@@ -59,6 +77,16 @@ export function resourceToFields(resource: Resource, opts: ResourceAdapterOption
       overridden.category = category;
       out.push(overridden);
       return;
+    }
+    // A field that declares a custom view is rendered by the resource's own component (e.g. a
+    // Curve's Points group), not the generic per-kind widget. Falls through if no component is
+    // registered for the key.
+    if (fi.view) {
+      const render = getRegisteredFieldView(fi.view);
+      if (render) {
+        out.push({ key: fi.name, label: humanize(fi.name), kind: "custom", category, render: () => render(resource, fi) });
+        return;
+      }
     }
     const field = mapField(fi, opts);
     if (!field) return;
@@ -138,7 +166,9 @@ function mapResource(key: string, label: string, fi: FieldInfo, sub: Resource | 
     label,
     kind: "object",
     fields: sub ? resourceToFields(sub, opts) : null,
-    customRender: sub ? (opts.renderResource?.(sub) ?? undefined) : undefined,
+    customRender: sub ? resolveResourceView(sub, opts.renderResource) : undefined,
+    categories: sub ? resourceCategories(sub) : undefined,
+    sections: sub ? resourceToSections(sub) : undefined,
     typeName: sub?.typeName,
     onCreate,
     onClear: sub ? () => fi.setValue(null) : undefined,
@@ -181,8 +211,45 @@ function mapCtorArray(key: string, label: string, fi: FieldInfo, arr: unknown[],
       onRemove: (i) => set(cols.filter((_, j) => j !== i)),
     };
   }
-  // Other tuple arrays (e.g. CurvePoint) are best edited by a custom widget via `override`.
+  // Other tuple arrays (e.g. CurvePoint) aren't resources, so each element renders as a light struct
+  // card (the `struct` object variant), not a sub-resource box. A resource wanting a bespoke layout
+  // (e.g. a Curve's Points group) declares a field `view` instead, intercepted before this.
+  if (fi.tupleMembers && fi.tupleMembers.length > 0) {
+    return mapStructArray(key, label, fi.tupleMembers, arr as number[][], set as (v: number[][]) => void);
+  }
   return null;
+}
+
+function mapStructArray(key: string, label: string, members: TupleMember[], arr: number[][], set: (v: number[][]) => void): ArrayField {
+  const setMember = (row: number, col: number, value: number) =>
+    set(arr.map((t, j) => {
+      if (j !== row) return t;
+      const copy = t.slice();
+      while (copy.length <= col) copy.push(0);
+      copy[col] = value;
+      return copy;
+    }));
+  const memberField = (rowKey: string, m: TupleMember, col: number, tuple: number[], row: number): InspectorField => {
+    const base = { key: `${rowKey}.${m.name}`, label: humanize(m.name) };
+    const value = tuple[col] ?? m.default ?? 0;
+    return m.kind === "enum"
+      ? { ...base, kind: "enum", value: Math.max(0, value), options: m.options ?? [], onChange: (idx: number) => setMember(row, col, idx) }
+      : { ...base, kind: "number", value, onChange: (v: number) => setMember(row, col, v) };
+  };
+  return {
+    key,
+    label,
+    kind: "array",
+    items: arr.map((tuple, i) => ({
+      key: `${key}[${i}]`,
+      label: String(i),
+      kind: "object",
+      variant: "struct",
+      fields: members.map((m, col) => memberField(`${key}[${i}]`, m, col, tuple, i)),
+    })),
+    onAdd: () => set([...arr, members.map(m => m.default ?? 0)]),
+    onRemove: (i) => set(arr.filter((_, j) => j !== i)),
+  };
 }
 
 /** "FillFrom" -> "Fill From", "UseHDR" -> "Use HDR", "InterpolationMode" -> "Interpolation Mode". */

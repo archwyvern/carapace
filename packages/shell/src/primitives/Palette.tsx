@@ -26,6 +26,8 @@ export interface PaletteProps {
   onDragEnd?: () => void;
   /** Max columns per section grid (default 3). */
   maxColumns?: number;
+  /** Square tile edge (CSS length, default "4rem"). */
+  tileSize?: string;
   /** Extra classes on the root (positioning, shadow) — e.g. for a popover wrapper. */
   className?: string;
   style?: CSSProperties;
@@ -37,7 +39,7 @@ export interface PaletteProps {
  * the item id as payload). Generic over content: the consumer maps its own catalogue into `groups`
  * and supplies icon URLs. Wrap it in a popover/panel for an "add" affordance.
  */
-export function Palette({ groups, onPick, dragMime, onDragEnd, maxColumns = 3, className, style }: PaletteProps) {
+export function Palette({ groups, onPick, dragMime, onDragEnd, maxColumns = 3, tileSize = "4rem", className, style }: PaletteProps) {
   return (
     <div
       className={`flex items-stretch divide-x divide-border border border-border bg-surface-raised p-3${className ? ` ${className}` : ""}`}
@@ -48,13 +50,14 @@ export function Palette({ groups, onPick, dragMime, onDragEnd, maxColumns = 3, c
           <div className="mb-1.5 text-sm font-semibold uppercase tracking-wide text-fg-mid">{group.label}</div>
           <div
             className="grid gap-1.5"
-            style={{ gridTemplateColumns: `repeat(${Math.min(group.items.length, maxColumns)}, 4rem)` }}
+            style={{ gridTemplateColumns: `repeat(${Math.min(group.items.length, maxColumns)}, ${tileSize})` }}
           >
             {group.items.map((item) => (
               <button
                 key={item.id}
                 title={item.label}
-                className="flex h-16 cursor-grab items-center justify-center border border-border bg-surface-sunken p-1 transition hover:border-accent/50 hover:bg-surface"
+                style={{ height: tileSize }}
+                className="flex cursor-grab items-center justify-center border border-border bg-surface-sunken p-1 transition hover:border-accent/50 hover:bg-surface"
                 draggable={dragMime !== undefined}
                 onDragStart={dragMime !== undefined ? (e) => e.dataTransfer.setData(dragMime, item.id) : undefined}
                 onDragEnd={onDragEnd}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import type { ReactNode } from "react";
 import { SpinSlider } from "../primitives/SpinSlider";
 import { FormToggle } from "../form/FormToggle";
@@ -6,8 +6,11 @@ import { FormString } from "../form/FormString";
 import { FormEnum } from "../form/FormEnum";
 import { FormColor } from "../form/FormColor";
 import { FormVec } from "../form/FormVec";
-import { AddIcon, ChevronRightIcon, CloseIcon, ResetIcon } from "../icons";
-import type { ArrayField, BoolField, InspectorField, InspectorProps, InspectorSectionInfo, ObjectField } from "./types";
+import { ratioLocked, setAxis } from "../form/ratioLock";
+import { AddIcon, ChevronRightIcon, CloseIcon, DeleteIcon, LinkIcon, ResetIcon, UnlinkIcon } from "../icons";
+import { StructCard } from "../primitives/StructCard";
+import { useNestedSurface, SurfaceProvider } from "../primitives/Surface";
+import type { ArrayField, BoolField, InspectorField, InspectorProps, InspectorSectionInfo, ObjectField, VecField } from "./types";
 
 /**
  * Presentational, data-model-agnostic property inspector. The inspector is a TABLE: each group
@@ -24,25 +27,63 @@ import type { ArrayField, BoolField, InspectorField, InspectorProps, InspectorSe
  * SUB-INSPECTORS so it's obvious you've stepped into another object.
  */
 export function Inspector({ fields, sections = [], categories }: InspectorProps) {
-  if (categories && categories.length > 0) {
-    return (
-      <div className="flex flex-col text-fg">
-        {categories.map((cat) => {
-          const catFields = fields.filter((f) => (f.category ?? "") === cat);
-          if (catFields.length === 0) return null;
-          return (
-            <div key={cat}>
-              <CategoryBand name={cat} />
-              <FieldGroups fields={catFields} sections={sections} />
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
   return (
     <div className="flex flex-col text-fg">
-      <FieldGroups fields={fields} sections={sections} />
+      <CategorizedFields fields={fields} sections={sections} categories={categories} categoryStyle="band" />
+    </div>
+  );
+}
+
+/**
+ * Buckets fields by class-hierarchy category in the given order, then by section, then plain rows.
+ * The category header is a filled `band` at the top level, or a collapsible group `fold` inside a
+ * sub-inspector — so a sub-resource's categories read as groups while keeping inheritance order.
+ * With no categories it falls back to a flat section/row list.
+ */
+function CategorizedFields({
+  fields,
+  sections,
+  categories,
+  categoryStyle,
+}: {
+  fields: InspectorField[];
+  sections: InspectorSectionInfo[];
+  categories?: string[];
+  categoryStyle: "band" | "fold";
+}) {
+  if (!categories || categories.length === 0) {
+    return <FieldGroups fields={fields} sections={sections} />;
+  }
+  return (
+    <>
+      {categories.map((cat) => {
+        const catFields = fields.filter((f) => (f.category ?? "") === cat);
+        if (catFields.length === 0) return null;
+        if (categoryStyle === "fold") {
+          return <CategoryFold key={cat} name={cat} fields={catFields} sections={sections} />;
+        }
+        return (
+          <div key={cat}>
+            <CategoryBand name={cat} />
+            <FieldGroups fields={catFields} sections={sections} />
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+/** A category rendered as a collapsible group (for sub-inspectors): chevron header over the
+ *  category's sections + fields. */
+function CategoryFold({ name, fields, sections }: { name: string; fields: InspectorField[]; sections: InspectorSectionInfo[] }) {
+  const [open, setOpen] = useState(true);
+  return (
+    <div className="border-t border-border first:border-t-0">
+      <div className="flex items-center gap-1.5 px-2 py-1.5 select-none hover:bg-surface cursor-pointer" onClick={() => setOpen(!open)}>
+        <Chevron open={open} />
+        <span className="flex-1 text-base font-semibold text-fg">{name}</span>
+      </div>
+      {open && <FieldGroups fields={fields} sections={sections} />}
     </div>
   );
 }
@@ -142,11 +183,59 @@ function InspectorSection({ name, info, fields }: { name: string; info?: Inspect
 
 /** How an item occupies its table row. Object/array/custom always span; otherwise the item's
  *  own `layout` hint wins, else scalars are inline and vec3/4 stack. */
-function fieldMode(field: InspectorField): "inline" | "stacked" | "span" {
+function fieldMode(field: InspectorField): "inline" | "stacked" | "span" | "rows" {
   if (field.kind === "object" || field.kind === "array" || field.kind === "custom") return "span";
   if (field.layout) return field.layout;
   if (field.kind === "vec" && field.size >= 3) return "stacked";
   return "inline";
+}
+
+/** A linked vec rendered as aligned `label | value` rows (rather than one stacked control), with the
+ *  chain toggle spanning them on the right. Keeps the inspector's 50/50 label/control rhythm for
+ *  grouped scalars like a pipe's radius/radius2. */
+function VecRows({ field }: { field: VecField }) {
+  const [linked, setLinked] = useState(field.defaultLinked ?? false);
+  const labels = field.labels ?? ["X", "Y", "Z", "W"];
+  const apply = (i: number, v: number): number[] =>
+    field.link && linked ? ratioLocked(field.value, i, v) : setAxis(field.value, i, v);
+  return (
+    // subgrid so label + value line up exactly with the inspector's other rows; the chain is absolute
+    // in a thin right gutter (reserved via pr on the value cell) so it doesn't steal a column.
+    <div className="relative col-span-full grid grid-cols-subgrid items-center gap-y-1.5">
+      {field.value.map((val, i) => (
+        <Fragment key={i}>
+          <span className="flex min-h-[22px] items-center truncate text-base text-fg-mid">{labels[i]}</span>
+          <div className={`min-w-0 ${field.link ? "pr-3.5" : ""}`}>
+            <SpinSlider
+              value={val}
+              onChange={(v) => field.onChange(apply(i, v))}
+              onCommit={field.onCommit ? (v) => field.onCommit!(apply(i, v)) : undefined}
+              min={field.min}
+              max={field.max}
+              integer={field.integer}
+              spinButtons
+              hideSlider={field.min === undefined || field.max === undefined}
+            />
+          </div>
+        </Fragment>
+      ))}
+      {field.link && (
+        <button
+          type="button"
+          onClick={() => setLinked((v) => !v)}
+          aria-pressed={linked}
+          aria-label={linked ? "Unlock aspect ratio" : "Lock aspect ratio"}
+          title={linked ? "Aspect ratio locked — click to unlink" : "Lock aspect ratio"}
+          className={`absolute bottom-0 right-0 top-0 flex w-3.5 flex-col items-center justify-center gap-0.5 py-1 hover:text-fg ${linked ? "text-accent" : "text-fg-mid"}`}
+        >
+          {/* a centered vertical connector — line · icon · line — so the glyph sits on its axis */}
+          <span className="pointer-events-none w-px flex-1 bg-current opacity-70" />
+          {linked ? <LinkIcon className="h-3 w-3 shrink-0" /> : <UnlinkIcon className="h-3 w-3 shrink-0" />}
+          <span className="pointer-events-none w-px flex-1 bg-current opacity-70" />
+        </button>
+      )}
+    </div>
+  );
 }
 
 function wrapReadOnly(field: InspectorField, node: ReactNode): ReactNode {
@@ -175,7 +264,11 @@ function InspectorRow({ field, action }: { field: InspectorField; action?: React
   const mode = fieldMode(field);
 
   if (mode === "span") {
-    return <div className="col-span-full">{wrapReadOnly(field, renderControl(field))}</div>;
+    return <div className="col-span-full">{wrapReadOnly(field, renderControl(field, action))}</div>;
+  }
+
+  if (mode === "rows" && field.kind === "vec") {
+    return wrapReadOnly(field, <VecRows field={field} />);
   }
 
   const actions = action ?? resetButton(field);
@@ -239,6 +332,9 @@ function renderBareControl(field: InspectorField): ReactNode {
           min={field.min}
           max={field.max}
           integer={field.integer}
+          labels={field.labels}
+          link={field.link}
+          defaultLinked={field.defaultLinked}
           onChange={field.onChange}
           onCommit={field.onCommit}
         />
@@ -248,11 +344,12 @@ function renderBareControl(field: InspectorField): ReactNode {
   }
 }
 
-/** Span-mode controls (object / array / custom), which render their own structure. */
-function renderControl(field: InspectorField): ReactNode {
+/** Span-mode controls (object / array / custom), which render their own structure. `action` is the
+ *  right-hand affordance an array passes for an element (e.g. its delete button). */
+function renderControl(field: InspectorField, action?: ReactNode): ReactNode {
   switch (field.kind) {
     case "object":
-      return <ObjectControl field={field} />;
+      return field.variant === "struct" ? <StructControl field={field} action={action} /> : <ObjectControl field={field} />;
     case "array":
       return <ArrayControl field={field} />;
     case "custom":
@@ -272,11 +369,12 @@ const ICON_BTN = "text-fg-mid hover:text-fg text-base leading-none";
  */
 function ObjectControl({ field }: { field: ObjectField }) {
   const [open, setOpen] = useState(true);
+  const { bg, depth } = useNestedSurface();
   const has = field.fields !== null;
   const hasBody = open && (field.customRender != null || (field.fields != null && field.fields.length > 0));
 
   return (
-    <div className="overflow-hidden rounded-control border border-border bg-surface shadow-[inset_0_1px_3px_rgba(0,0,0,0.35)]">
+    <div className={`overflow-hidden rounded-control border border-border ${bg} shadow-[inset_0_1px_3px_rgba(0,0,0,0.35)]`}>
       <div className="flex items-center gap-1.5 border-b border-border bg-gradient-to-b from-accent/20 to-transparent px-2 py-1">
         <button type="button" aria-label={open ? "Collapse" : "Expand"} onClick={() => setOpen(!open)} className="flex items-center">
           <Chevron open={open} />
@@ -302,23 +400,49 @@ function ObjectControl({ field }: { field: ObjectField }) {
         </div>
       </div>
       {hasBody && (
-        <FieldGrid className="p-2">
-          {field.customRender && <div className="col-span-full">{field.customRender}</div>}
-          {field.fields?.map((f) => (
-            <InspectorRow key={f.key} field={f} />
-          ))}
-        </FieldGrid>
+        <SurfaceProvider depth={depth}>
+          {field.customRender}
+          {field.fields && (
+            <CategorizedFields
+              fields={field.fields}
+              sections={field.sections ?? []}
+              categories={field.categories}
+              categoryStyle="fold"
+            />
+          )}
+        </SurfaceProvider>
       )}
     </div>
   );
 }
 
-/** An array field — a plain (non-accent) bordered container, so it reads as a list, not a
- *  sub-object. Items are rows in their own field table; each gets a remove button in the
- *  actions column. */
-function ArrayControl({ field }: { field: ArrayField }) {
+/**
+ * A non-resource struct in an array (a CurvePoint, a keyframe, a tuple) — a quiet {@link StructCard}
+ * with its member rows, NOT the accent sub-inspector framing reserved for nested Resources. `action`
+ * (the array's delete) sits in the header.
+ */
+function StructControl({ field, action }: { field: ObjectField; action?: ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-control border border-border bg-surface">
+    <StructCard title={field.label} trailing={action}>
+      {field.customRender && <div className="p-2">{field.customRender}</div>}
+      {field.fields != null && field.fields.length > 0 && (
+        <FieldGrid className="p-2">
+          {field.fields.map((f) => (
+            <InspectorRow key={f.key} field={f} />
+          ))}
+        </FieldGrid>
+      )}
+    </StructCard>
+  );
+}
+
+/** An array field — a plain (non-accent) bordered container, so it reads as a list, not a
+ *  sub-object. Each item is a row in its own field table (struct elements render as a card), with a
+ *  remove button — in the struct card's header, else in the actions column. */
+function ArrayControl({ field }: { field: ArrayField }) {
+  const { bg, depth } = useNestedSurface();
+  return (
+    <div className={`overflow-hidden rounded-control border border-border ${bg}`}>
       <div className="flex items-center justify-between gap-2 border-b border-border bg-surface-raised px-2 py-1">
         <span className="text-base font-medium text-fg-mid">{field.label}</span>
         <div className="flex items-center gap-1.5 text-fg-mid">
@@ -331,26 +455,24 @@ function ArrayControl({ field }: { field: ArrayField }) {
         </div>
       </div>
       {field.items.length > 0 && (
-        <FieldGrid className="p-2">
-          {field.items.map((item, i) => (
-            <InspectorRow
-              key={item.key}
-              field={item}
-              action={
-                field.onRemove && (
-                  <button
-                    type="button"
-                    onClick={() => field.onRemove?.(i)}
-                    className={ICON_BTN}
-                    aria-label={`Remove item ${i + 1}`}
-                  >
-                    <CloseIcon className="h-3.5 w-3.5" />
-                  </button>
-                )
-              }
-            />
-          ))}
-        </FieldGrid>
+        <SurfaceProvider depth={depth}>
+          <FieldGrid className="p-2">
+          {field.items.map((item, i) => {
+            const isStruct = item.kind === "object" && item.variant === "struct";
+            const remove = field.onRemove && (
+              <button
+                type="button"
+                onClick={() => field.onRemove?.(i)}
+                className={ICON_BTN}
+                aria-label={`Remove item ${i + 1}`}
+              >
+                {isStruct ? <DeleteIcon className="h-3.5 w-3.5" /> : <CloseIcon className="h-3.5 w-3.5" />}
+              </button>
+            );
+            return <InspectorRow key={item.key} field={item} action={remove} />;
+          })}
+          </FieldGrid>
+        </SurfaceProvider>
       )}
     </div>
   );

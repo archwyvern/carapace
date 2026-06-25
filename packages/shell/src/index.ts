@@ -32,6 +32,9 @@ export { Spinner } from "./primitives/Spinner";
 export type { SpinnerSize } from "./primitives/Spinner";
 export { Collapsible } from "./primitives/Collapsible";
 export type { CollapsibleProps, CollapsibleVariant } from "./primitives/Collapsible";
+export { StructCard } from "./primitives/StructCard";
+export type { StructCardProps } from "./primitives/StructCard";
+export { useNestedSurface, SurfaceProvider } from "./primitives/Surface";
 export { StatusDot } from "./primitives/StatusDot";
 export type { StatusDotProps } from "./primitives/StatusDot";
 export { Select } from "./primitives/Select";
@@ -62,6 +65,10 @@ export type { EmptyStateProps, EmptyStateStatus } from "./feedback/EmptyState";
 // Hooks
 export { useGridSelection } from "./hooks/useGridSelection";
 export type { GridSelection, GridSelectionOptions, GridSelectionMods } from "./hooks/useGridSelection";
+// The `History` snapshot store is a framework-agnostic primitive in @carapace/resources (next to
+// Observable); this is just its React binding, structural so shell needn't depend on resources.
+export { useHistory } from "./history/useHistory";
+export type { HistoryState, HistoryLike } from "./history/useHistory";
 
 // Form controls
 export { FormEnum } from "./form/FormEnum";

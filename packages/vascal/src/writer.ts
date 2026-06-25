@@ -9,11 +9,19 @@ import {
 
 const INDENT = "    ";
 
+/** Lines wider than this (including indent) break their arrays / struct bodies / maps onto their own
+ *  indented lines. Keeps short values inline (`[ x, y ]`, `{ a: b }`) but lays long ones out readably,
+ *  matching the hand-authored corpus. Block-grammar treats newlines and commas alike as separators,
+ *  so a broken layout re-parses to the same AST. */
+const WRAP_WIDTH = 120;
+
+const indentOf = (depth: number): string => INDENT.repeat(depth);
+
 /**
- * Serializes a block-grammar `Document` AST back to text. The output format mirrors the C#
- * `ValueWriter` exactly: a `vdat`/`vres`/`vscn` header, hoisted `ext`/`sub` blocks, a top-level
- * `body`/`resource` block with indented members, and nested struct bodies / arrays / maps emitted
- * inline (`Type { a: b, c: d }`, `[ x, y ]`).
+ * Serializes a block-grammar `Document` AST back to text: a `vdat`/`vres`/`vscn` header, hoisted
+ * `ext`/`sub` blocks, a `body`/`resource` block with indented members, and nested values rendered
+ * fit-or-break — inline when short (`Type { a: b }`, `[ x, y ]`), broken across indented lines when
+ * the inline form would exceed {@link WRAP_WIDTH}.
  *
  * Where the C# writer drives from a CLR value graph (and always emits a struct's type name), this
  * writer drives from the parsed AST and preserves whatever the AST carries — including anonymous
@@ -98,9 +106,7 @@ export class ValueWriter {
   private writeHoistBlocks(doc: Document): void {
     if (doc.externals.length > 0) {
       for (const ext of doc.externals) {
-        this._sb += "ext " + ext.handle + ": ";
-        this.writeString(ext.path);
-        this._sb += "\n";
+        this._sb += "ext " + ext.handle + ": " + this.renderString(ext.path) + "\n";
       }
       this._sb += "\n";
     }
@@ -117,80 +123,52 @@ export class ValueWriter {
   private writeBodyMembers(members: Member[]): void {
     for (const member of members) {
       this.writeIndent();
-      this._sb += member.name + ": ";
-      this.writeValue(member.value);
-      this._sb += "\n";
+      this._sb += member.name + ": " + this.renderValue(member.value, this._indent) + "\n";
     }
   }
 
-  private writeValue(node: ValueNode): void {
+  /** Renders a value to text, breaking arrays / struct bodies / maps onto indented lines when the
+   *  inline form would exceed {@link WRAP_WIDTH}; `depth` is the indent the value sits at. */
+  private renderValue(node: ValueNode, depth: number): string {
     switch (node.kind) {
       case ValueKind.Literal:
-        this.writeLiteral(node.text, node.literalKind);
-        return;
+        return this.renderLiteral(node.text, node.literalKind);
       case ValueKind.Enum:
-        this._sb += node.terms.join(" | ");
-        return;
+        return node.terms.join(" | ");
       case ValueKind.StructCtor:
-        this._sb += node.typeName ?? "";
-        this._sb += "(";
-        for (let i = 0; i < node.args.length; i++) {
-          if (i > 0) {
-            this._sb += ", ";
-          }
-          this.writeValue(node.args[i]!);
-        }
-        this._sb += ")";
-        return;
-      case ValueKind.StructBody:
-        if (node.typeName !== null) {
-          this._sb += node.typeName + " ";
-        }
-        if (node.members.length === 0) {
-          this._sb += "{}";
-          return;
-        }
-        this._sb += "{ ";
-        this.writeInlineMemberList(node.members);
-        this._sb += " }";
-        return;
-      case ValueKind.Array:
-        if (node.items.length === 0) {
-          this._sb += "[]";
-          return;
-        }
-        this._sb += "[ ";
-        for (let i = 0; i < node.items.length; i++) {
-          if (i > 0) {
-            this._sb += ", ";
-          }
-          this.writeValue(node.items[i]!);
-        }
-        this._sb += " ]";
-        return;
-      case ValueKind.Map:
-        if (node.entries.length === 0) {
-          this._sb += "{}";
-          return;
-        }
-        this._sb += "{ ";
-        for (let i = 0; i < node.entries.length; i++) {
-          if (i > 0) {
-            this._sb += ", ";
-          }
-          this.writeValue(node.entries[i]!.key);
-          this._sb += ": ";
-          this.writeValue(node.entries[i]!.value);
-        }
-        this._sb += " }";
-        return;
+        return (node.typeName ?? "") + "(" + node.args.map(a => this.renderValue(a, depth)).join(", ") + ")";
+      case ValueKind.StructBody: {
+        const prefix = node.typeName !== null ? node.typeName + " " : "";
+        if (node.members.length === 0) return prefix + "{}";
+        const parts = node.members.map(m => m.name + ": " + this.renderValue(m.value, depth + 1));
+        const inline = prefix + "{ " + parts.join(", ") + " }";
+        if (this.fits(inline, depth)) return inline;
+        return prefix + "{\n" + parts.map(p => indentOf(depth + 1) + p).join("\n") + "\n" + indentOf(depth) + "}";
+      }
+      case ValueKind.Array: {
+        if (node.items.length === 0) return "[]";
+        const items = node.items.map(it => this.renderValue(it, depth + 1));
+        const inline = "[ " + items.join(", ") + " ]";
+        if (this.fits(inline, depth)) return inline;
+        return "[\n" + items.map(it => indentOf(depth + 1) + it).join("\n") + "\n" + indentOf(depth) + "]";
+      }
+      case ValueKind.Map: {
+        if (node.entries.length === 0) return "{}";
+        const parts = node.entries.map(e => this.renderValue(e.key, depth + 1) + ": " + this.renderValue(e.value, depth + 1));
+        const inline = "{ " + parts.join(", ") + " }";
+        if (this.fits(inline, depth)) return inline;
+        return "{\n" + parts.map(p => indentOf(depth + 1) + p).join("\n") + "\n" + indentOf(depth) + "}";
+      }
       case ValueKind.ExtRef:
-        this._sb += "ext(" + node.handle + ")";
-        return;
+        return "ext(" + node.handle + ")";
       case ValueKind.SubRef:
-        this._sb += "sub(" + node.handle + ")";
-        return;
+        return "sub(" + node.handle + ")";
     }
+  }
+
+  /** A rendered value fits inline when it has no internal break and stays within {@link WRAP_WIDTH}. */
+  private fits(inline: string, depth: number): boolean {
+    return !inline.includes("\n") && depth * INDENT.length + inline.length <= WRAP_WIDTH;
   }
 
   private writeInlineMemberList(members: Member[]): void {
@@ -198,63 +176,41 @@ export class ValueWriter {
       if (i > 0) {
         this._sb += ", ";
       }
-      this._sb += members[i]!.name + ": ";
-      this.writeValue(members[i]!.value);
+      this._sb += members[i]!.name + ": " + this.renderValue(members[i]!.value, this._indent);
     }
   }
 
-  private writeLiteral(text: string, kind: LiteralKind): void {
+  private renderLiteral(text: string, kind: LiteralKind): string {
     switch (kind) {
       case LiteralKind.String:
-        this.writeString(text);
-        return;
+        return this.renderString(text);
       case LiteralKind.True:
-        this._sb += "true";
-        return;
+        return "true";
       case LiteralKind.False:
-        this._sb += "false";
-        return;
+        return "false";
       case LiteralKind.Null:
-        this._sb += "null";
-        return;
+        return "null";
       case LiteralKind.Number:
-        this._sb += text;
-        return;
+        return text;
     }
   }
 
-  private writeString(s: string): void {
-    this._sb += '"';
+  private renderString(s: string): string {
+    let out = '"';
     for (const c of s) {
       switch (c) {
-        case "\\":
-          this._sb += "\\\\";
-          break;
-        case '"':
-          this._sb += '\\"';
-          break;
-        case "\n":
-          this._sb += "\\n";
-          break;
-        case "\r":
-          this._sb += "\\r";
-          break;
-        case "\t":
-          this._sb += "\\t";
-          break;
-        case "\0":
-          this._sb += "\\0";
-          break;
+        case "\\": out += "\\\\"; break;
+        case '"': out += '\\"'; break;
+        case "\n": out += "\\n"; break;
+        case "\r": out += "\\r"; break;
+        case "\t": out += "\\t"; break;
+        case "\0": out += "\\0"; break;
         default:
-          if (c.charCodeAt(0) < 0x20) {
-            this._sb += "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0");
-          } else {
-            this._sb += c;
-          }
+          out += c.charCodeAt(0) < 0x20 ? "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0") : c;
           break;
       }
     }
-    this._sb += '"';
+    return out + '"';
   }
 
   private writeIndent(): void {

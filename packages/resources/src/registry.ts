@@ -18,11 +18,18 @@ interface RegistrationOpts {
    * queries work, but they must be filtered from "New <Type>..." pickers.
    */
   abstract?: boolean;
+  /**
+   * Custom inspector view key this type owns. When set, the resource-inspector renders the
+   * view registered under this key (via `registerResourceView`) — the resource itself chooses
+   * its inspector layout, rather than the host hard-coding a per-type renderer.
+   */
+  view?: string;
 }
 
 const resourceClasses = new Map<string, ResourceClass>();
 const classIcons = new Map<ResourceClass, TypeIcon>();
 const abstractClasses = new Set<ResourceClass>();
+const classViews = new Map<ResourceClass, string>();
 
 const DEFAULT_ICON: TypeIcon = { codicon: "symbol-structure", color: "#7ABAD4" };
 
@@ -44,6 +51,7 @@ export function registerResourceClass(
   }
   if (iconOrOpts.icon) classIcons.set(cls, iconOrOpts.icon);
   if (iconOrOpts.abstract) abstractClasses.add(cls);
+  if (iconOrOpts.view) classViews.set(cls, iconOrOpts.view);
 }
 
 export function isAbstractResourceClass(cls: ResourceClass): boolean {
@@ -81,4 +89,21 @@ export function getTypeIcon(name: string): TypeIcon {
     current = Object.getPrototypeOf(current as object);
   }
   return DEFAULT_ICON;
+}
+
+/**
+ * The custom inspector view key a type declares (walking the prototype chain like icons), or
+ * undefined when the type uses the default field-list layout. The resource-inspector maps this
+ * to a registered view component.
+ */
+export function getResourceView(name: string): string | undefined {
+  const cls = resourceClasses.get(name);
+  if (!cls) return undefined;
+  let current: unknown = cls;
+  while (current && current !== Object) {
+    const view = classViews.get(current as ResourceClass);
+    if (view) return view;
+    current = Object.getPrototypeOf(current as object);
+  }
+  return undefined;
 }

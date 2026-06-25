@@ -24,10 +24,11 @@ export interface InspectorFieldBase {
   /**
    * Override the row layout the Inspector picks by kind. The Inspector is a table: `inline`
    * places the control beside the label in the shared control column; `stacked` drops it to a
-   * full-width line below the label. By default scalars are `inline`, vec3/4 are `stacked`, and
-   * object/array/custom always span full width regardless of this hint.
+   * full-width line below the label; `rows` (vec only) splits each component onto its own
+   * label|value row, keeping the 50/50 rhythm, with a `link` chain spanning them. By default
+   * scalars are `inline`, vec3/4 are `stacked`, and object/array/custom always span full width.
    */
-  layout?: "inline" | "stacked";
+  layout?: "inline" | "stacked" | "rows";
 }
 
 export interface NumberField extends InspectorFieldBase {
@@ -79,6 +80,14 @@ export interface VecField extends InspectorFieldBase {
   min?: number;
   max?: number;
   integer?: boolean;
+  /** Per-component text labels, overriding the X/Y/Z axis letters + colours (for non-spatial
+   *  groupings like a pipe's radius/radius2). */
+  labels?: string[];
+  /** Show a chain toggle that locks the components' aspect ratio: editing one scales the others to
+   *  preserve their current proportions. */
+  link?: boolean;
+  /** Initial lock state for `link`. Ephemeral UI state — never persisted. */
+  defaultLinked?: boolean;
   onChange: (v: number[]) => void;
   /** Fired on per-axis commit (drag-release / Enter / blur) with the full array. */
   onCommit?: (v: number[]) => void;
@@ -86,11 +95,21 @@ export interface VecField extends InspectorFieldBase {
 
 export interface ObjectField extends InspectorFieldBase {
   kind: "object";
+  /**
+   * How the object is framed. `resource` (default) = accent sub-inspector box with a type chip and
+   * assign/clear, for a nested Resource. `struct` = a quiet StructCard (header + member rows), for
+   * a non-resource struct such as an array element — data, not its own object.
+   */
+  variant?: "resource" | "struct";
   /** Sub-fields of the current value, or null when unset/empty. */
   fields: InspectorField[] | null;
-  /** A bespoke editor for this whole sub-resource (e.g. a gradient bar). When set, it
-   *  replaces the generic `fields` list under the header. */
+  /** A bespoke editor for this whole sub-resource (e.g. a curve graph), rendered above its fields. */
   customRender?: ReactNode;
+  /** Class-hierarchy categories for `fields` (e.g. `["Curve", "Resource"]`, concrete first). In a
+   *  sub-inspector these render as group-style folds, not the top-level category bands. */
+  categories?: string[];
+  /** Collapsible group metadata for `fields` (mirrors the inspector's top-level `sections`). */
+  sections?: InspectorSectionInfo[];
   /** Display name of the assigned type (e.g. "FastNoiseLite"). */
   typeName?: string;
   /** Leading icon for the assigned type. */

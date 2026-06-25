@@ -33,7 +33,7 @@ export function registerBuiltinResources(): void {
   if (registered) return;
   registered = true;
 
-  registerResourceClass("Gradient", Gradient, { icon: { codicon: "symbol-color", color: "#E29876" } });
+  registerResourceClass("Gradient", Gradient, { icon: { codicon: "symbol-color", color: "#E29876" }, view: "gradient" });
   registerResourceClass("Noise", Noise, { icon: { codicon: "symbol-constant", color: "#8CB4C4" }, abstract: true });
   registerResourceClass("FastNoiseLite", FastNoiseLite);
   registerResourceClass("Texture", Texture, { icon: { codicon: "symbol-color", color: "#7ABAD4" }, abstract: true });
@@ -44,7 +44,7 @@ export function registerBuiltinResources(): void {
   registerResourceClass("NoiseTexture2D", NoiseTexture2D);
   registerResourceClass("CurveTexture", CurveTexture);
   registerResourceClass("CurveXyzTexture", CurveXyzTexture);
-  registerResourceClass("Curve", Curve, { icon: { codicon: "symbol-operator", color: "#C786C8" } });
+  registerResourceClass("Curve", Curve, { icon: { codicon: "symbol-operator", color: "#C786C8" }, view: "curve" });
   registerResourceClass("Curve2D", Curve2D, { icon: { codicon: "graph-line", color: "#C786C8" } });
   registerResourceClass("Text", Text, { icon: { codicon: "symbol-text", color: "#7ABAD4" } });
   registerResourceClass("Shader", Shader, { icon: { codicon: "file-code", color: "#A074C4" } });

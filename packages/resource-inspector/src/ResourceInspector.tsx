@@ -1,8 +1,8 @@
-import { useEffect, useReducer } from "react";
 import { Inspector } from "@carapace/shell";
 import type { Resource } from "@carapace/resources";
-import { resourceToFields, resourceToSections } from "./adapter";
+import { resourceToFields, resourceToSections, resolveResourceView, resourceCategories } from "./adapter";
 import type { ResourceAdapterOptions } from "./adapter";
+import { useResourceChanges } from "./useResourceChanges";
 
 export interface ResourceInspectorProps extends ResourceAdapterOptions {
   resource: Resource;
@@ -15,16 +15,13 @@ export interface ResourceInspectorProps extends ResourceAdapterOptions {
  * to the resource's `Observable`s through the adapter's `setValue` handlers.
  */
 export function ResourceInspector({ resource, override, pickType, renderResource }: ResourceInspectorProps) {
-  const [, bump] = useReducer((n: number) => n + 1, 0);
-  useEffect(() => {
-    const sub = resource.onChanged(() => bump());
-    return () => sub.unsubscribe();
-  }, [resource]);
+  useResourceChanges(resource);
 
   const opts: ResourceAdapterOptions = { override, pickType, renderResource };
-  const rootCustom = renderResource?.(resource);
-  // Class-hierarchy categories: concrete type first, then the inherited Resource base.
-  const categories = resource.typeName === "Resource" ? ["Resource"] : [resource.typeName, "Resource"];
+  // The resource owns its inspector layout: a host `renderResource` wins, else the view its type
+  // declares. The same resolution + category order is used for embedded sub-resources (mapResource).
+  const rootCustom = resolveResourceView(resource, renderResource);
+  const categories = resourceCategories(resource);
   return (
     <>
       {rootCustom}

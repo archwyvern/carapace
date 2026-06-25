@@ -1,6 +1,10 @@
 // Observable model
 export { Observable, equal } from "./Observable";
 export type { Subscription, Listener } from "./Observable";
+export { History } from "./History";
+export type { HistoryOptions, CommitOptions } from "./History";
+export { SessionHistory } from "./SessionHistory";
+export type { SessionHistoryOptions, SessionHistoryEntry } from "./SessionHistory";
 
 // Resource base + field model
 export {
@@ -10,7 +14,7 @@ export {
   countModifiedFields,
   resetField,
 } from "./Resource";
-export type { FieldKind, FieldInfo, GroupInfo, ExportModeValue } from "./Resource";
+export type { FieldKind, FieldInfo, GroupInfo, ExportModeValue, TupleMember } from "./Resource";
 
 // Type registry
 export {
@@ -21,6 +25,7 @@ export {
   isAbstractResourceClass,
   resourceTypeNames,
   getTypeIcon,
+  getResourceView,
 } from "./registry";
 export type { ResourceClass, TypeIcon } from "./registry";
 
@@ -41,7 +46,7 @@ export {
   CurveTexture,
   CurveXyzTexture,
 } from "./resources/Texture";
-export { Curve } from "./resources/Curve";
+export { Curve, TangentMode } from "./resources/Curve";
 export { Curve2D } from "./resources/Curve2D";
 export { Text, Html, Css, Json, Javascript } from "./resources/Text";
 export { Shader, ShaderInclude } from "./resources/Shader";
