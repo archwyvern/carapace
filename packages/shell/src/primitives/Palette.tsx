@@ -18,10 +18,14 @@ export interface PaletteGroup {
 
 export interface PaletteProps {
   groups: PaletteGroup[];
-  /** Click a tile. */
+  /** Pick a tile (fires per `pickOn`). */
   onPick?: (id: string) => void;
+  /** Whether onPick fires on a single click (default) or a double click; the other does nothing. */
+  pickOn?: "click" | "doubleClick";
   /** Drag MIME type; the dragged item's id is the payload. Omit to disable dragging. */
   dragMime?: string;
+  /** Fired when a tile drag STARTS (e.g. to close a host popover so it doesn't obscure the drop target). */
+  onDragStart?: () => void;
   /** Fired when a tile drag ends (e.g. to close a host popover). */
   onDragEnd?: () => void;
   /** Max columns per section grid (default 3). */
@@ -39,7 +43,7 @@ export interface PaletteProps {
  * the item id as payload). Generic over content: the consumer maps its own catalogue into `groups`
  * and supplies icon URLs. Wrap it in a popover/panel for an "add" affordance.
  */
-export function Palette({ groups, onPick, dragMime, onDragEnd, maxColumns = 3, tileSize = "4rem", className, style }: PaletteProps) {
+export function Palette({ groups, onPick, pickOn = "click", dragMime, onDragStart, onDragEnd, maxColumns = 3, tileSize = "4rem", className, style }: PaletteProps) {
   return (
     <div
       className={`flex items-stretch divide-x divide-border border border-border bg-surface-raised p-3${className ? ` ${className}` : ""}`}
@@ -59,9 +63,17 @@ export function Palette({ groups, onPick, dragMime, onDragEnd, maxColumns = 3, t
                 style={{ height: tileSize }}
                 className="flex cursor-grab items-center justify-center border border-border bg-surface-sunken p-1 transition hover:border-accent/50 hover:bg-surface"
                 draggable={dragMime !== undefined}
-                onDragStart={dragMime !== undefined ? (e) => e.dataTransfer.setData(dragMime, item.id) : undefined}
+                onDragStart={
+                  dragMime !== undefined
+                    ? (e) => {
+                        e.dataTransfer.setData(dragMime, item.id);
+                        onDragStart?.();
+                      }
+                    : undefined
+                }
                 onDragEnd={onDragEnd}
-                onClick={() => onPick?.(item.id)}
+                onClick={pickOn === "click" ? () => onPick?.(item.id) : undefined}
+                onDoubleClick={pickOn === "doubleClick" ? () => onPick?.(item.id) : undefined}
               >
                 {item.icon !== undefined ? (
                   <img src={item.icon} alt={item.label} className="h-full w-full" draggable={false} />
