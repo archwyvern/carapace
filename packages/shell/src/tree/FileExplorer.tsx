@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { DragEvent as ReactDragEvent, KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, ReactNode } from "react";
+import type { DragEvent as ReactDragEvent, KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, ReactNode, RefObject } from "react";
 import { useHost } from "../host/context";
 import { useOptionalConfirm } from "../overlay/confirm";
 import { ContextMenu, useContextMenu } from "../menu/ContextMenu";
@@ -11,6 +11,12 @@ import type { TreeNode } from "./treeTypes";
 import type { CarapaceHost, DirEntry } from "../host/types";
 
 type Fs = NonNullable<CarapaceHost["fs"]>;
+
+/** Imperative handle (via `actionsRef`) so a host can drive the explorer from outside the tree. */
+export interface FileExplorerActions {
+  /** Start the inline "New File" editor under `dir` (defaults to the root). */
+  startNewFile: (dir?: string) => void;
+}
 
 export interface FileExplorerProps {
   root: string;
@@ -48,6 +54,19 @@ export interface FileExplorerProps {
    * files open via `onOpen`.
    */
   newFile?: { extension?: string; content?: string; label?: string };
+  /**
+   * Take over "New File" creation. When set, committing the inline name calls this with the intended
+   * path (the `newFile.extension` already applied) INSTEAD of writing an empty file + `onOpen` — so
+   * the consumer can defer or condition creation (e.g. open a dialog and only write on success).
+   */
+  onNewFile?: (path: string) => void;
+  /** Imperative handle: a host populates this to drive the explorer (e.g. start a new file from a menu). */
+  actionsRef?: RefObject<FileExplorerActions | null>;
+  /** Fired after an entry is renamed OR moved (a move is a rename into a new dir): old path -> new path.
+   *  Lets a host reconcile state keyed by path (e.g. open editors). */
+  onDidRename?: (from: string, to: string) => void;
+  /** Fired after entries are deleted, with their (pre-delete) paths. */
+  onDidDelete?: (paths: string[]) => void;
   ariaLabel?: string;
 }
 
@@ -141,7 +160,7 @@ interface ActiveProps extends FileExplorerProps {
 }
 
 function ActiveFileExplorer({
-  root, onOpen, getIcon, rowActions, onExternalDrop, extraMenuItems, exclude, showHidden = false, newFile, storageKey, ariaLabel = "Files", fs, clipboard, os,
+  root, onOpen, getIcon, rowActions, onExternalDrop, extraMenuItems, exclude, showHidden = false, newFile, onNewFile, actionsRef, onDidRename, onDidDelete, storageKey, ariaLabel = "Files", fs, clipboard, os,
 }: ActiveProps) {
   const confirm = useOptionalConfirm();
   const ctx = useContextMenu();
@@ -230,11 +249,13 @@ function ActiveFileExplorer({
       });
       if (result !== "confirm") return;
     }
+    const deleted: string[] = [];
     for (const e of entries) {
-      try { await fs.delete(e.path); } catch { /* already gone or in use; skip */ }
+      try { await fs.delete(e.path); deleted.push(e.path); } catch { /* already gone or in use; skip */ }
     }
+    if (deleted.length) onDidDelete?.(deleted);
     void reload();
-  }, [confirm, fs, reload]);
+  }, [confirm, fs, reload, onDidDelete]);
 
   // Destination folder for a drop: a folder target IS the dest; a file target means its
   // parent folder (VS Code drops a file beside the one you released on); null = root.
@@ -261,10 +282,14 @@ function ActiveFileExplorer({
       const p = n.data.path;
       if (p === destPath || destPath.startsWith(p + "/")) continue;
       if ((parents.current.get(p) ?? root) === destPath) continue;
-      try { await fs.rename(p, joinPath(destPath, n.data.name)); } catch { /* collision or in use; skip */ }
+      try {
+        const to = joinPath(destPath, n.data.name);
+        await fs.rename(p, to);
+        onDidRename?.(p, to);
+      } catch { /* collision or in use; skip */ }
     }
     void reload();
-  }, [fs, root, reload, destDirOf]);
+  }, [fs, root, reload, destDirOf, onDidRename]);
 
   // ── cut / copy / paste ──
   const uniqueName = useCallback(async (destDir: string, name: string): Promise<string> => {
@@ -292,7 +317,11 @@ function ActiveFileExplorer({
       if (destDir === src || destDir.startsWith(src + "/")) continue; // into self/descendant
       if (clip.cut) {
         if ((parents.current.get(src) ?? root) === destDir) continue; // already here
-        try { await fs.rename(src, joinPath(destDir, name)); } catch { /* skip */ }
+        try {
+          const to = joinPath(destDir, name);
+          await fs.rename(src, to);
+          onDidRename?.(src, to);
+        } catch { /* skip */ }
       } else {
         const entry = entries.current.get(src);
         if (entry) try { await copyRec(entry, await uniqueName(destDir, name)); } catch { /* skip */ }
@@ -300,7 +329,7 @@ function ActiveFileExplorer({
     }
     if (clip.cut) setClip(null); // a cut is consumed by the first paste
     void reload();
-  }, [clip, fs, root, reload, copyRec, uniqueName]);
+  }, [clip, fs, root, reload, copyRec, uniqueName, onDidRename]);
 
   const pasteTargetDir = useCallback((): string => {
     if (!active) return root;
@@ -346,7 +375,16 @@ function ActiveFileExplorer({
   const startNew = useCallback((kind: "newFile" | "newFolder", dir: string) => {
     if (dir !== root) setExpanded((s) => new Set(s).add(dir)); // reveal the phantom row
     setEditing({ kind, dir });
-  }, [root]);
+  }, [root, setExpanded]);
+
+  // Expose an imperative handle so a host can start the inline new-file flow from outside the tree.
+  useEffect(() => {
+    if (!actionsRef) return;
+    actionsRef.current = { startNewFile: (dir?: string) => startNew("newFile", dir ?? root) };
+    return () => {
+      actionsRef.current = null;
+    };
+  }, [actionsRef, startNew, root]);
 
   const commitEdit = useCallback(async (value: string) => {
     const e = editing;
@@ -355,7 +393,11 @@ function ActiveFileExplorer({
     if (!e || !name) return;
     try {
       if (e.kind === "rename") {
-        if (name !== e.initial) await fs.rename(e.target, joinPath(e.dir, name));
+        if (name !== e.initial) {
+          const to = joinPath(e.dir, name);
+          await fs.rename(e.target, to);
+          onDidRename?.(e.target, to);
+        }
       } else if (e.kind === "newFolder") {
         await fs.createDir(joinPath(e.dir, name));
       } else {
@@ -363,12 +405,16 @@ function ActiveFileExplorer({
         const ext = newFile?.extension;
         if (ext && !fname.endsWith(ext)) fname += ext;
         const path = joinPath(e.dir, fname);
-        await fs.createFile(path, newFile?.content ?? "");
-        onOpen?.(path);
+        if (onNewFile) {
+          onNewFile(path); // consumer owns creation (defer / condition / write-and-open)
+        } else {
+          await fs.createFile(path, newFile?.content ?? "");
+          onOpen?.(path);
+        }
       }
     } catch { /* collision / invalid name; the watch reload reflects reality */ }
     void reload();
-  }, [editing, fs, reload, newFile, onOpen]);
+  }, [editing, fs, reload, newFile, onNewFile, onOpen, onDidRename]);
 
   const buildMenu = useCallback((entry: DirEntry): MenuItem[] => {
     const items: MenuItem[] = [];

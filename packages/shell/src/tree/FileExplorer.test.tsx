@@ -62,6 +62,50 @@ test("exclude omits matching entries (and never walks into them)", async () => {
   expect(screen.queryByText("node_modules")).not.toBeInTheDocument();
 });
 
+test("rename via context menu renames the file + fires onDidRename", async () => {
+  const host = createMemoryHost({ "/proj/README.md": "z" });
+  const renameSpy = vi.spyOn(host.fs, "rename");
+  const onDidRename = vi.fn();
+  render(
+    <HostProvider host={host}>
+      <FileExplorer root="/proj" onDidRename={onDidRename} />
+    </HostProvider>,
+  );
+  const row = await screen.findByText("README.md");
+  fireEvent.contextMenu(row);
+  await userEvent.click(await screen.findByText("Rename…"));
+  const input = await screen.findByDisplayValue("README.md");
+  await userEvent.clear(input);
+  await userEvent.type(input, "DOCS.md{Enter}");
+  expect(renameSpy).toHaveBeenCalledWith("/proj/README.md", "/proj/DOCS.md");
+  expect(onDidRename).toHaveBeenCalledWith("/proj/README.md", "/proj/DOCS.md");
+  expect(await screen.findByText("DOCS.md")).toBeInTheDocument();
+});
+
+test("inline rename ignores the involuntary blur on open (closing-menu focus return)", async () => {
+  // Repro of the real-DOM bug: opening rename from the context menu closes the menu, whose focus
+  // manager returns focus to the trigger and blurs the just-mounted editor. The editor must NOT
+  // commit on that steal (which would no-op + vanish); it stays open and editable.
+  const host = createMemoryHost({ "/proj/testship.lmb": "{}" });
+  const renameSpy = vi.spyOn(host.fs, "rename");
+  render(
+    <HostProvider host={host}>
+      <FileExplorer root="/proj" />
+    </HostProvider>,
+  );
+  const row = await screen.findByText("testship.lmb");
+  fireEvent.contextMenu(row);
+  await userEvent.click(await screen.findByText("Rename…"));
+  const input = await screen.findByDisplayValue("testship.lmb");
+  fireEvent.blur(input); // the focus-return steal, before the user has typed
+  expect(renameSpy).not.toHaveBeenCalled();
+  expect(screen.getByDisplayValue("testship.lmb")).toBeInTheDocument(); // editor survived
+  // and the user can now actually rename
+  await userEvent.clear(input);
+  await userEvent.type(input, "newship.lmb{Enter}");
+  expect(renameSpy).toHaveBeenCalledWith("/proj/testship.lmb", "/proj/newship.lmb");
+});
+
 test("dropping OS files imports them into the target folder", async () => {
   const host = createMemoryHost({ "/proj/README.md": "z" });
   const createSpy = vi.spyOn(host.fs, "createFile");

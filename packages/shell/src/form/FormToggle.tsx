@@ -29,7 +29,7 @@ export function FormToggle({ label, ariaLabel, layout, value, onChange, disabled
         disabled
           ? "cursor-not-allowed border-border bg-surface-raised opacity-40"
           : value
-            ? "border-accent bg-accent"
+            ? "cursor-pointer border-accent bg-accent hover:brightness-110"
             : "cursor-pointer border-border bg-surface-sunken hover:border-fg-mid"
       }`}
     >

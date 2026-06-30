@@ -514,6 +514,12 @@ function TreeEditInput({
   const ref = useRef<HTMLInputElement>(null);
   const [value, setValue] = useState(initial);
   const done = useRef(false);
+  // Blur-to-commit is armed only once the editor has settled. When this editor is opened from a
+  // context-menu action, the menu closes and its focus manager returns focus to its trigger — that
+  // fires an involuntary blur the instant we mount, which would otherwise commit empty and vanish.
+  // Until armed (a short settle window, or the first keystroke), a blur is treated as that steal and
+  // focus is reclaimed instead of committing.
+  const armed = useRef(false);
 
   useEffect(() => {
     const el = ref.current;
@@ -522,6 +528,10 @@ function TreeEditInput({
     const dot = initial.lastIndexOf(".");
     if (dot > 0) el.setSelectionRange(0, dot);
     else el.select();
+    const id = setTimeout(() => {
+      armed.current = true;
+    }, 100);
+    return () => clearTimeout(id);
   }, [initial]);
 
   const commit = () => {
@@ -539,7 +549,10 @@ function TreeEditInput({
     <input
       ref={ref}
       value={value}
-      onChange={(e) => setValue(e.target.value)}
+      onChange={(e) => {
+        armed.current = true; // the user is editing — real blurs from here commit
+        setValue(e.target.value);
+      }}
       onClick={(e) => e.stopPropagation()}
       onDoubleClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => {
@@ -552,7 +565,14 @@ function TreeEditInput({
           cancel();
         }
       }}
-      onBlur={commit}
+      onBlur={() => {
+        if (done.current) return;
+        if (!armed.current) {
+          ref.current?.focus(); // involuntary focus-steal on open (closing menu) — reclaim, don't commit
+          return;
+        }
+        commit();
+      }}
       spellCheck={false}
       autoComplete="off"
       className="min-w-0 flex-1 rounded-control border border-border bg-surface-sunken px-1 text-base text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none focus:border-accent"

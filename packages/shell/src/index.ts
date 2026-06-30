@@ -123,7 +123,7 @@ export { CloseIcon, AddIcon, MinimizeIcon, MaximizeIcon, ResetIcon, ChevronRight
 // Tree
 export { TreeView } from "./tree/TreeView";
 export { FileExplorer } from "./tree/FileExplorer";
-export type { FileExplorerProps } from "./tree/FileExplorer";
+export type { FileExplorerProps, FileExplorerActions } from "./tree/FileExplorer";
 export { FileTypeIcon } from "./tree/fileIcons/FileTypeIcon";
 export type { FileTypeIconProps } from "./tree/fileIcons/FileTypeIcon";
 export { registerFileIcons, resolveFileIcon, FileIconRegistry } from "./tree/fileIcons/registry";
