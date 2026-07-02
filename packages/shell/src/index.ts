@@ -144,6 +144,7 @@ export type { CodeEditorProps } from "./editor/CodeEditor";
 export { configureMonacoOffline } from "./editor/monacoLoader";
 export type { MonacoOfflineOptions, MonacoWorkerFactory } from "./editor/monacoLoader";
 export { formatJs } from "./format/formatJs";
+export { RelativeTime, timeAgo } from "./format/RelativeTime";
 export type { FormatOptions } from "./format/formatJs";
 export { humanizeLabel } from "./text";
 export { parseGitPorcelainZ, scmDecoration } from "./scm/gitStatus";
