@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode, Ref } from "react";
 import { tv, type VariantProps } from "tailwind-variants";
+import { Tooltip } from "../overlay/Tooltip";
 
 const iconButton = tv({
   base: "inline-flex shrink-0 items-center justify-center rounded-control outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40",
@@ -28,6 +29,9 @@ export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
   /** Required: icon-only buttons have no visible text, so they need an accessible name. */
   label: string;
   icon: ReactNode;
+  /** Styled hover/focus hint via <Tooltip> — replaces the native `title` (suppressed when set).
+   *  `true` uses the label as the content. */
+  tooltip?: ReactNode | boolean;
   ref?: Ref<HTMLButtonElement>;
 }
 
@@ -35,6 +39,7 @@ export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
 export function IconButton({
   label,
   icon,
+  tooltip,
   variant,
   size,
   active,
@@ -43,12 +48,13 @@ export function IconButton({
   ref,
   ...rest
 }: IconButtonProps) {
-  return (
+  const tip = tooltip === true ? label : tooltip === false ? undefined : tooltip;
+  const button = (
     <button
       ref={ref}
       type="button"
       aria-label={label}
-      title={title ?? label}
+      title={tip ? undefined : (title ?? label)}
       aria-pressed={active || undefined}
       className={iconButton({ variant, size, active, className })}
       {...rest}
@@ -56,4 +62,5 @@ export function IconButton({
       {icon}
     </button>
   );
+  return tip ? <Tooltip content={tip}>{button}</Tooltip> : button;
 }

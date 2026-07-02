@@ -26,6 +26,8 @@ export { Breadcrumb } from "./primitives/Breadcrumb";
 export type { BreadcrumbItem, BreadcrumbProps } from "./primitives/Breadcrumb";
 export { IconButton } from "./primitives/IconButton";
 export type { IconButtonProps, IconButtonVariant, IconButtonSize } from "./primitives/IconButton";
+export { Segmented, ToggleButton } from "./primitives/ToggleButton";
+export type { SegmentedOption, SegmentedProps, ToggleButtonProps } from "./primitives/ToggleButton";
 export { TextInput } from "./primitives/TextInput";
 export type { TextInputProps } from "./primitives/TextInput";
 export { Spinner } from "./primitives/Spinner";
@@ -143,6 +145,9 @@ export { configureMonacoOffline } from "./editor/monacoLoader";
 export type { MonacoOfflineOptions, MonacoWorkerFactory } from "./editor/monacoLoader";
 export { formatJs } from "./format/formatJs";
 export type { FormatOptions } from "./format/formatJs";
+export { humanizeLabel } from "./text";
+export { parseGitPorcelainZ, scmDecoration } from "./scm/gitStatus";
+export type { GitFileStatus, ScmDecoration } from "./scm/gitStatus";
 
 // Persisted UI state (memento pattern): a backend-agnostic StateService behind a
 // StateProvider, consumed via useMemento. Apps inject the service (localStorage by
@@ -253,7 +258,7 @@ export type { PopoverProps, PopoverPlacement } from "./overlay/Popover";
 export { ImageLightbox } from "./overlay/ImageLightbox";
 export type { ImageLightboxProps, LightboxImage } from "./overlay/ImageLightbox";
 export { ShortcutGuide } from "./overlay/ShortcutGuide";
-export type { ShortcutGuideProps, ShortcutItem, ShortcutCorner } from "./overlay/ShortcutGuide";
+export type { ShortcutGuideProps, ShortcutItem, ShortcutSection, ShortcutCorner } from "./overlay/ShortcutGuide";
 
 // Viewport / canvas chrome
 export { Rulers } from "./viewport/Rulers";

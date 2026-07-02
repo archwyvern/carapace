@@ -28,6 +28,9 @@ export interface PaletteProps {
   onDragStart?: () => void;
   /** Fired when a tile drag ends (e.g. to close a host popover). */
   onDragEnd?: () => void;
+  /** Right-click on a tile — e.g. a rename/delete menu for user-defined items. Suppresses the
+   *  browser's default menu when supplied. */
+  onItemContextMenu?: (id: string, e: React.MouseEvent) => void;
   /** Max columns per section grid (default 3). */
   maxColumns?: number;
   /** Square tile edge (CSS length, default "4rem"). */
@@ -43,7 +46,7 @@ export interface PaletteProps {
  * the item id as payload). Generic over content: the consumer maps its own catalogue into `groups`
  * and supplies icon URLs. Wrap it in a popover/panel for an "add" affordance.
  */
-export function Palette({ groups, onPick, pickOn = "click", dragMime, onDragStart, onDragEnd, maxColumns = 3, tileSize = "4rem", className, style }: PaletteProps) {
+export function Palette({ groups, onPick, pickOn = "click", dragMime, onDragStart, onDragEnd, onItemContextMenu, maxColumns = 3, tileSize = "4rem", className, style }: PaletteProps) {
   return (
     <div
       className={`flex items-stretch divide-x divide-border border border-border bg-surface-raised p-3${className ? ` ${className}` : ""}`}
@@ -74,6 +77,14 @@ export function Palette({ groups, onPick, pickOn = "click", dragMime, onDragStar
                 onDragEnd={onDragEnd}
                 onClick={pickOn === "click" ? () => onPick?.(item.id) : undefined}
                 onDoubleClick={pickOn === "doubleClick" ? () => onPick?.(item.id) : undefined}
+                onContextMenu={
+                  onItemContextMenu
+                    ? (e) => {
+                        e.preventDefault();
+                        onItemContextMenu(item.id, e);
+                      }
+                    : undefined
+                }
               >
                 {item.icon !== undefined ? (
                   <img src={item.icon} alt={item.label} className="h-full w-full" draggable={false} />

@@ -7,15 +7,27 @@ export interface ShortcutItem {
   label: string;
 }
 
+/** A titled group of shortcuts — for contextual guides with per-tool/per-mode sections. */
+export interface ShortcutSection {
+  title: string;
+  items: ShortcutItem[];
+}
+
 export type ShortcutCorner = "bottom-right" | "bottom-left" | "top-right" | "top-left";
 
 export interface ShortcutGuideProps {
-  items: ShortcutItem[];
+  /** Flat shortcut list; use `sections` instead (or as well) for grouped guides. */
+  items?: ShortcutItem[];
+  /** Titled groups rendered after `items`, each under a small section header. */
+  sections?: ShortcutSection[];
   title?: string;
   corner?: ShortcutCorner;
   defaultOpen?: boolean;
   /** Persist the open/closed state under this localStorage key. */
   storageKey?: string;
+  /** `fixed` anchors to the viewport (default); `absolute` anchors to the nearest positioned
+   *  ancestor — for a guide docked inside one pane of a multi-pane layout. */
+  position?: "fixed" | "absolute";
 }
 
 const CORNER: Record<ShortcutCorner, string> = {
@@ -35,17 +47,34 @@ function load(key: string | undefined, fallback: boolean): boolean {
   }
 }
 
+function Rows({ items }: { items: ShortcutItem[] }) {
+  return (
+    <>
+      {items.map((it, i) => (
+        <li key={i} className="flex items-center justify-between gap-3 px-1 py-0.5 text-base">
+          <span className="text-fg-mid">{it.label}</span>
+          <kbd className="shrink-0 rounded-sm border border-border bg-surface-sunken px-1 font-mono text-sm text-fg">
+            {it.keys}
+          </kbd>
+        </li>
+      ))}
+    </>
+  );
+}
+
 /**
- * Viewport-anchored, collapsible keyboard cheat-sheet. Sits in a corner as a small pill;
- * expands to a key/label panel. Pointer + wheel events are stopped so a canvas behind it keeps
- * receiving drags/zoom. Open state optionally persists to localStorage.
+ * Collapsible keyboard cheat-sheet docked in a corner: a small pill that expands to a key/label
+ * panel (flat `items` and/or titled `sections`). Pointer + wheel events are stopped so a canvas
+ * behind it keeps receiving drags/zoom. Open state optionally persists to localStorage.
  */
 export function ShortcutGuide({
-  items,
+  items = [],
+  sections = [],
   title = "Shortcuts",
   corner = "bottom-right",
   defaultOpen = false,
   storageKey,
+  position = "fixed",
 }: ShortcutGuideProps) {
   const [open, setOpen] = useState(() => load(storageKey, defaultOpen));
 
@@ -62,7 +91,7 @@ export function ShortcutGuide({
 
   return (
     <div
-      className={cx("pointer-events-none fixed z-[110] flex flex-col gap-1", CORNER[corner])}
+      className={cx("pointer-events-none z-[110] flex flex-col gap-1", position, CORNER[corner])}
       onPointerDown={(e) => e.stopPropagation()}
       onWheel={(e) => e.stopPropagation()}
     >
@@ -80,12 +109,13 @@ export function ShortcutGuide({
             </button>
           </div>
           <ul className="max-h-[60vh] overflow-auto p-1.5">
-            {items.map((it, i) => (
-              <li key={i} className="flex items-center justify-between gap-3 px-1 py-0.5 text-base">
-                <span className="text-fg-mid">{it.label}</span>
-                <kbd className="shrink-0 rounded-sm border border-border bg-surface-sunken px-1 font-mono text-2xs text-fg">
-                  {it.keys}
-                </kbd>
+            <Rows items={items} />
+            {sections.map((s) => (
+              <li key={s.title} className="mt-1 first:mt-0">
+                <div className="px-1 pb-0.5 text-sm font-semibold tracking-wide text-accent uppercase">{s.title}</div>
+                <ul>
+                  <Rows items={s.items} />
+                </ul>
               </li>
             ))}
           </ul>
@@ -97,7 +127,7 @@ export function ShortcutGuide({
           aria-label="Show keyboard shortcuts"
           className="pointer-events-auto flex items-center gap-1 rounded-control border border-border bg-surface-raised/95 px-2 py-1 text-base text-fg-mid shadow-lg backdrop-blur-sm hover:text-fg"
         >
-          <kbd className="rounded-sm border border-border bg-surface-sunken px-1 font-mono text-2xs">?</kbd>
+          <kbd className="rounded-sm border border-border bg-surface-sunken px-1 font-mono text-sm">?</kbd>
           {title}
         </button>
       )}

@@ -29,6 +29,9 @@ export interface FileExplorerProps {
   /** Right-aligned per-row actions (e.g. a hover play button). The row carries `group`,
    *  so `group-hover:` can reveal hover-only actions. */
   rowActions?: (entry: DirEntry) => ReactNode;
+  /** Per-entry SCM-style decoration: tint the name + show a single-letter status badge (see
+   *  `scmDecoration` in the scm module for the conventional git mapping). Undefined = undecorated. */
+  getDecoration?: (entry: DirEntry) => { color?: string; badge?: string } | undefined;
   /** A drop from outside the explorer (e.g. dragging an item in from another view).
    *  Fires with the drag's dataTransfer and the resolved destination folder (absolute;
    *  a folder target IS the dest, a file target means its parent, background = root). */
@@ -160,7 +163,7 @@ interface ActiveProps extends FileExplorerProps {
 }
 
 function ActiveFileExplorer({
-  root, onOpen, getIcon, rowActions, onExternalDrop, extraMenuItems, exclude, showHidden = false, newFile, onNewFile, actionsRef, onDidRename, onDidDelete, storageKey, ariaLabel = "Files", fs, clipboard, os,
+  root, onOpen, getIcon, getDecoration, rowActions, onExternalDrop, extraMenuItems, exclude, showHidden = false, newFile, onNewFile, actionsRef, onDidRename, onDidDelete, storageKey, ariaLabel = "Files", fs, clipboard, os,
 }: ActiveProps) {
   const confirm = useOptionalConfirm();
   const ctx = useContextMenu();
@@ -498,12 +501,22 @@ function ActiveFileExplorer({
           ctx.open(e);
         }}
         onBackgroundContextMenu={openRootMenu}
-        renderItem={(c) => (
-          <span className="flex items-center gap-1.5">
-            {(getIcon ?? defaultGetIcon)(c.node.data)}
-            <span className="truncate">{c.node.data.name}</span>
-          </span>
-        )}
+        renderItem={(c) => {
+          const deco = getDecoration?.(c.node.data);
+          return (
+            <span className="flex min-w-0 items-center gap-1.5">
+              {(getIcon ?? defaultGetIcon)(c.node.data)}
+              <span className="truncate" style={deco?.color ? { color: deco.color } : undefined}>
+                {c.node.data.name}
+              </span>
+              {deco?.badge ? (
+                <span className="ml-auto shrink-0 pr-1 font-mono text-sm" style={deco.color ? { color: deco.color } : undefined}>
+                  {deco.badge}
+                </span>
+              ) : null}
+            </span>
+          );
+        }}
         renderTrailing={rowActions ? (c) => rowActions(c.node.data) : undefined}
       />
       {ctx.state && <ContextMenu items={menuItems} anchor={{ x: ctx.state.x, y: ctx.state.y }} onClose={ctx.close} />}
