@@ -1,4 +1,5 @@
 import { Fragment, useState } from "react";
+import { ucwords } from "../text";
 import type { ReactNode } from "react";
 import { SpinSlider } from "../primitives/SpinSlider";
 import { FormToggle } from "../form/FormToggle";
@@ -81,7 +82,7 @@ function CategoryFold({ name, fields, sections }: { name: string; fields: Inspec
     <div className="border-t border-border first:border-t-0">
       <div className="flex items-center gap-1.5 px-2 py-1.5 select-none hover:bg-surface cursor-pointer" onClick={() => setOpen(!open)}>
         <Chevron open={open} />
-        <span className="flex-1 text-base font-semibold text-fg">{name}</span>
+        <span className="flex-1 text-base font-semibold text-fg">{ucwords(name)}</span>
       </div>
       {open && <FieldGroups fields={fields} sections={sections} />}
     </div>
@@ -90,7 +91,7 @@ function CategoryFold({ name, fields, sections }: { name: string; fields: Inspec
 
 /** The shared 3-column table grid (`label | control | actions`). Field rows are subgrids of this,
  *  so they align across the whole group. Exported so bespoke editors can drop into the same table. */
-const GRID_COLS = "grid grid-cols-2 items-start gap-x-2 gap-y-1.5";
+const GRID_COLS = "grid grid-cols-2 items-start gap-x-2 gap-y-2";
 
 export function FieldGrid({ children, className = "" }: { children: ReactNode; className?: string }) {
   return <div className={`${GRID_COLS} ${className}`}>{children}</div>;
@@ -100,7 +101,7 @@ export function FieldGrid({ children, className = "" }: { children: ReactNode; c
 function CategoryBand({ name }: { name: string }) {
   return (
     <div className="border-y border-border bg-surface-raised px-2 py-1.5 text-center">
-      <span className="text-base font-bold text-fg">{name}</span>
+      <span className="text-base font-bold text-fg">{ucwords(name)}</span>
     </div>
   );
 }
@@ -162,7 +163,7 @@ function InspectorSection({ name, info, fields }: { name: string; info?: Inspect
           />
         )}
         <span className="flex-1 cursor-pointer text-base font-semibold text-fg" onClick={() => setOpen(!open)}>
-          {name}
+          {ucwords(name)}
         </span>
         {!open && changes > 0 && (
           <span className="text-base text-fg-mid">
@@ -201,10 +202,10 @@ function VecRows({ field }: { field: VecField }) {
   return (
     // subgrid so label + value line up exactly with the inspector's other rows; the chain is absolute
     // in a thin right gutter (reserved via pr on the value cell) so it doesn't steal a column.
-    <div className="relative col-span-full grid grid-cols-subgrid items-center gap-y-1.5">
+    <div className="relative col-span-full grid grid-cols-subgrid items-center gap-y-2">
       {field.value.map((val, i) => (
         <Fragment key={i}>
-          <span className="flex min-h-[22px] items-center truncate text-base text-fg-mid">{labels[i]}</span>
+          <span className="flex min-h-[22px] items-center truncate text-base text-fg-mid">{ucwords(labels[i]!)}</span>
           <div className={`min-w-0 ${field.link ? "pr-3.5" : ""}`}>
             <SpinSlider
               value={val}
@@ -278,7 +279,7 @@ function InspectorRow({ field, action }: { field: InspectorField; action?: React
     return (
       <div className="group/row col-span-full flex flex-col gap-0.5">
         <div className="flex items-center justify-between gap-1">
-          <span className="truncate text-base text-fg-mid">{field.label}</span>
+          <span className="truncate text-base text-fg-mid">{ucwords(field.label)}</span>
           {actions && <span className="flex w-4 shrink-0 justify-center">{actions}</span>}
         </div>
         {control}
@@ -291,7 +292,7 @@ function InspectorRow({ field, action }: { field: InspectorField; action?: React
   const tall = field.kind === "vec";
   return (
     <div className={`group/row col-span-full grid grid-cols-subgrid ${tall ? "items-start" : "items-center"}`}>
-      <span className={`truncate text-base text-fg-mid ${tall ? "flex min-h-[22px] items-center" : ""}`}>{field.label}</span>
+      <span className={`truncate text-base text-fg-mid ${tall ? "flex min-h-[22px] items-center" : ""}`}>{ucwords(field.label)}</span>
       <div className={`flex min-w-0 gap-1 ${tall ? "items-start" : "items-center"}`}>
         <div className="min-w-0 flex-1">{control}</div>
         {actions && <span className={`flex shrink-0 justify-center ${tall ? "min-h-[22px] items-center" : ""}`}>{actions}</span>}
@@ -379,7 +380,7 @@ function ObjectControl({ field }: { field: ObjectField }) {
         <button type="button" aria-label={open ? "Collapse" : "Expand"} onClick={() => setOpen(!open)} className="flex items-center">
           <Chevron open={open} />
         </button>
-        <span className="flex-1 truncate text-base font-semibold text-fg-mid">{field.label}</span>
+        <span className="flex-1 truncate text-base font-semibold text-fg-mid">{ucwords(field.label)}</span>
         <div className="flex items-center gap-1.5 text-fg-mid">
           {field.icon}
           {field.typeName ? (

@@ -7,7 +7,7 @@ const toggleButton = tv({
   variants: {
     pressed: {
       true: "bg-list-active text-fg",
-      false: "text-fg-mid hover:bg-surface-raised hover:text-fg",
+      false: "text-fg-mid hover:bg-surface-raised hover:text-accent",
     },
   },
 });
@@ -70,7 +70,7 @@ export function Segmented<V extends string>({ options, value, onChange, label, c
           onClick={() => onChange(o.value)}
           className={cx(
             "border-r border-border px-3 text-base capitalize outline-none transition-colors last:border-r-0 focus-visible:ring-1 focus-visible:ring-ring",
-            value === o.value ? "bg-list-active text-fg" : "text-fg-mid hover:bg-surface-raised hover:text-fg",
+            value === o.value ? "bg-list-active text-fg" : "text-fg-mid hover:bg-surface-raised hover:text-accent",
             segmentClassName,
           )}
         >

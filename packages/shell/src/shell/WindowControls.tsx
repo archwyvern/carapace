@@ -10,14 +10,14 @@ export function WindowControls() {
     <div className="flex gap-1">
       <button
         aria-label="Minimize"
-        className="flex items-center px-2 hover:bg-surface-raised"
+        className="flex items-center px-2 hover:bg-surface-raised hover:text-accent"
         onClick={() => host.window.minimize()}
       >
         <MinimizeIcon className="h-3.5 w-3.5" />
       </button>
       <button
         aria-label="Maximize"
-        className="flex items-center px-2 hover:bg-surface-raised"
+        className="flex items-center px-2 hover:bg-surface-raised hover:text-accent"
         onClick={() => void host.window.toggleMaximize()}
       >
         <MaximizeIcon className="h-3.5 w-3.5" />

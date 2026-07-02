@@ -6,7 +6,7 @@ const iconButton = tv({
   base: "inline-flex shrink-0 items-center justify-center rounded-control outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40",
   variants: {
     variant: {
-      ghost: "text-fg-mid hover:bg-surface-raised hover:text-fg",
+      ghost: "text-fg-mid hover:bg-surface-raised hover:text-accent",
       default: "bg-surface-raised text-fg hover:bg-border",
       accent: "bg-accent text-accent-fg hover:brightness-110",
       danger: "text-fg-mid hover:bg-error/15 hover:text-error",
