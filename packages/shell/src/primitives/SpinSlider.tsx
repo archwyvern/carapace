@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDownIcon } from "../icons";
 
 export interface SpinSliderProps {
@@ -9,8 +9,11 @@ export interface SpinSliderProps {
   onCommit?: (value: number) => void;
   min?: number;
   max?: number;
-  /** Integer field — the step is always 1.0 (the float Shift/Ctrl tiers don't apply). */
+  /** Integer field — the drag step is always 1.0 (the float Shift/Ctrl tiers don't apply). */
   integer?: boolean;
+  /** Discrete increment for arrow keys, spin buttons, and wheel (default 1; Shift = ×10).
+   *  Added unrounded — 0.2 steps to 1.2, not 1.0. Drag scrubbing keeps the universal fine tiers. */
+  step?: number;
   /** Soft max — drag/type may exceed `max`. */
   orGreater?: boolean;
   /** Soft min — drag/type may go below `min`. */
@@ -38,9 +41,9 @@ function format(value: number, integer?: boolean): string {
 type Mod = { shiftKey: boolean; ctrlKey: boolean };
 
 /**
- * The universal, non-customizable step. Float fields step by 0.01; Shift coarsens to 0.1, Ctrl to
- * 1.0. Integer fields always step by 1.0. The same granularity drives keyboard, wheel, the spin
- * buttons, AND drag (per pixel) — so a SpinSlider behaves identically everywhere it appears.
+ * The universal DRAG step (per pixel of scrub). Float fields step by 0.01; Shift coarsens to 0.1,
+ * Ctrl to 1.0. Integer fields always step by 1.0. Keyboard arrows, spin buttons, and wheel use the
+ * discrete `step` prop instead (default 1, Shift ×10) — see `discrete` below.
  */
 function stepFor(integer: boolean | undefined, mod: Mod): number {
   if (integer) return 1;
@@ -66,13 +69,19 @@ function evaluate(text: string): number | null {
 
 export function SpinSlider({
   value, onChange, onCommit,
-  min, max, integer,
+  min, max, integer, step,
   orGreater, orLess, exp, hideSlider, spinButtons, suffix, wheel, readOnly,
 }: SpinSliderProps) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState("");
   // acc = accumulated movementX since pointer-down; startVal captured so drags don't compound.
   const drag = useRef<{ startVal: number; acc: number; moved: boolean } | null>(null);
+  // Discrete steps base on the last value WE sent until the prop catches up — key-repeat outruns
+  // the parent's re-render, and stepping from the stale prop silently drops every other press.
+  const pending = useRef<number | null>(null);
+  useEffect(() => {
+    pending.current = null;
+  }, [value]);
 
   const hasRange = min !== undefined && max !== undefined && max > min;
   const lo = min ?? 0;
@@ -89,10 +98,18 @@ export function SpinSlider({
     if (integer) return Math.round(x);
     return parseFloat(x.toFixed(6));
   };
-  const nudge = (dir: number, mod: Mod) => onChange(clamp(value + dir * stepFor(integer, mod)));
+  // Arrow keys / spin buttons / wheel move by the WHOLE discrete step (default 1, Shift ×10),
+  // added unrounded; only drag-scrubbing uses the fine stepFor tiers.
+  const discrete = (mod: Mod): number => (step ?? 1) * (mod.shiftKey ? 10 : 1);
+  const nudge = (dir: number, mod: Mod) => {
+    const v = clamp((pending.current ?? value) + dir * discrete(mod));
+    pending.current = v;
+    onChange(v);
+  };
   // Like nudge but also commits — used by the inc/dec spin buttons (each click is discrete).
   const stepBy = (dir: number, mod: Mod) => {
-    const v = clamp(value + dir * stepFor(integer, mod));
+    const v = clamp((pending.current ?? value) + dir * discrete(mod));
+    pending.current = v;
     onChange(v);
     onCommit?.(v);
   };
@@ -132,9 +149,7 @@ export function SpinSlider({
 
   const onWheel = (e: React.WheelEvent) => {
     if (wheel !== true || readOnly || editing) return;
-    const next = clamp(value + (e.deltaY < 0 ? 1 : -1) * stepFor(integer, e));
-    onChange(next);
-    onCommit?.(next);
+    stepBy(e.deltaY < 0 ? 1 : -1, e);
   };
 
   const commit = () => {
@@ -178,7 +193,7 @@ export function SpinSlider({
         else if (e.key === "ArrowUp") { e.preventDefault(); nudge(1, e); }
         else if (e.key === "ArrowDown") { e.preventDefault(); nudge(-1, e); }
       }}
-      title="Drag to scrub · click or Enter to type · up/down to step · Shift = fine"
+      title="Drag to scrub (Shift = fine) · click or Enter to type · up/down step ±1 (Shift ±10)"
       className={`relative flex h-[22px] w-full cursor-ew-resize select-none items-center gap-1 overflow-hidden rounded-control border border-border bg-surface-sunken px-1.5 font-mono text-base text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none hover:border-accent focus-visible:border-accent focus-visible:outline-none ${
         readOnly ? "opacity-60" : ""
       }`}

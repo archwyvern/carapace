@@ -18,6 +18,8 @@ export interface FormVecProps {
   min?: number;
   max?: number;
   integer?: boolean;
+  /** Discrete arrow/spin/wheel increment for every axis (default 1; Shift = ×10). */
+  step?: number;
   /** Per-component text labels, replacing the X/Y/Z axis letters + colours (for non-spatial
    *  groupings like radius/radius2). */
   labels?: string[];
@@ -39,7 +41,7 @@ export interface FormVecProps {
 /** Labelled multi-axis number field (vec2/3/4). Each axis is a full SpinSlider (drag-scrub,
  *  click-to-type, expression eval) — consistent with every other scalar field in the inspector.
  *  With `link`, a chain toggle locks the components' ratio so editing one scales the rest. */
-export function FormVec({ label, layout, value, size, min, max, integer, labels, link, defaultLinked, axes, onChange, onCommit }: FormVecProps) {
+export function FormVec({ label, layout, value, size, min, max, integer, step, labels, link, defaultLinked, axes, onChange, onCommit }: FormVecProps) {
   const [linked, setLinked] = useState(defaultLinked ?? false);
 
   const applyAxis = (index: number, v: number): number[] =>
@@ -71,6 +73,7 @@ export function FormVec({ label, layout, value, size, min, max, integer, labels,
               min={min}
               max={max}
               integer={integer}
+              step={step}
             />
           </div>
         </div>

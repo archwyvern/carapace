@@ -214,6 +214,7 @@ function VecRows({ field }: { field: VecField }) {
               min={field.min}
               max={field.max}
               integer={field.integer}
+              step={field.step}
               spinButtons
               hideSlider={field.min === undefined || field.max === undefined}
             />
@@ -313,6 +314,7 @@ function renderBareControl(field: InspectorField): ReactNode {
           min={field.min}
           max={field.max}
           integer={field.integer}
+          step={field.step}
           spinButtons
           hideSlider={field.min === undefined || field.max === undefined}
         />
@@ -333,6 +335,7 @@ function renderBareControl(field: InspectorField): ReactNode {
           min={field.min}
           max={field.max}
           integer={field.integer}
+          step={field.step}
           labels={field.labels}
           link={field.link}
           defaultLinked={field.defaultLinked}

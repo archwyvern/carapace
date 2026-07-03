@@ -80,6 +80,8 @@ export interface VecField extends InspectorFieldBase {
   min?: number;
   max?: number;
   integer?: boolean;
+  /** Discrete arrow/spin/wheel increment for every axis (default 1; Shift = ×10). */
+  step?: number;
   /** Per-component text labels, overriding the X/Y/Z axis letters + colours (for non-spatial
    *  groupings like a pipe's radius/radius2). */
   labels?: string[];

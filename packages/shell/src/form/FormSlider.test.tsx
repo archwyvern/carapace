@@ -13,5 +13,5 @@ test("arrow-stepping the slider reports a change", async () => {
   render(<FormSlider label="Opacity" value={0.5} min={0} max={1} onChange={onChange} />);
   screen.getByText("0.5").closest("div")!.focus();
   await userEvent.keyboard("{ArrowUp}");
-  expect(onChange).toHaveBeenCalledWith(0.51); // universal float step = 0.01
+  expect(onChange).toHaveBeenCalledWith(0.51); // 1% of the range
 });
