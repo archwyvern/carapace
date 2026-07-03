@@ -24,3 +24,16 @@ test("empty content never shows a bubble", async () => {
   // the dwell timer still fires (a state update) — waitFor keeps it inside act while we assert no bubble
   await waitFor(() => expect(screen.queryByRole("tooltip")).not.toBeInTheDocument());
 });
+
+test("a top-placed tooltip against the window edge flips below the trigger", async () => {
+  // jsdom rects are all-zero => the trigger sits at the very top edge, the title-bar case
+  render(
+    <Tooltip content="tip" delay={0}>
+      <button>t</button>
+    </Tooltip>,
+  );
+  fireEvent.mouseEnter(screen.getByText("t").parentElement!);
+  await waitFor(() => expect(screen.getByRole("tooltip")).toBeInTheDocument());
+  // flipped to bottom, not rendered off-screen above the window
+  expect(screen.getByRole("tooltip").style.transform).toBe("translate(-50%, 0)");
+});

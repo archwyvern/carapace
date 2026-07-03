@@ -21,7 +21,7 @@ export interface TooltipProps {
 export function Tooltip({ content, children, placement = "top", delay = 400, className }: TooltipProps) {
   const ref = useRef<HTMLSpanElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
+  const [coords, setCoords] = useState<{ x: number; y: number; place: TooltipPlacement } | null>(null);
   const id = useId();
 
   const show = () => {
@@ -33,14 +33,23 @@ export function Tooltip({ content, children, placement = "top", delay = 400, cla
       const cx2 = r.left + r.width / 2;
       const cy = r.top + r.height / 2;
       const pad = 8;
+      // viewport-aware flip: a "top" tooltip on a title-bar button would render above the window
+      // edge (invisible — the class of silent failure that hid every top-bar tooltip). CLEAR is a
+      // conservative bubble-size estimate; exact measurement isn't worth a second layout pass.
+      const CLEAR = 40;
+      let place = placement;
+      if (place === "top" && r.top < CLEAR) place = "bottom";
+      else if (place === "bottom" && r.bottom > window.innerHeight - CLEAR) place = "top";
+      else if (place === "left" && r.left < 300) place = "right";
+      else if (place === "right" && r.right > window.innerWidth - 300) place = "left";
       setCoords(
-        placement === "top"
-          ? { x: cx2, y: r.top - pad }
-          : placement === "bottom"
-            ? { x: cx2, y: r.bottom + pad }
-            : placement === "left"
-              ? { x: r.left - pad, y: cy }
-              : { x: r.right + pad, y: cy },
+        place === "top"
+          ? { x: cx2, y: r.top - pad, place }
+          : place === "bottom"
+            ? { x: cx2, y: r.bottom + pad, place }
+            : place === "left"
+              ? { x: r.left - pad, y: cy, place }
+              : { x: r.right + pad, y: cy, place },
       );
     }, delay);
   };
@@ -52,11 +61,11 @@ export function Tooltip({ content, children, placement = "top", delay = 400, cla
   };
 
   const transform =
-    placement === "top"
+    coords?.place === "top"
       ? "translate(-50%, -100%)"
-      : placement === "bottom"
+      : coords?.place === "bottom"
         ? "translate(-50%, 0)"
-        : placement === "left"
+        : coords?.place === "left"
           ? "translate(-100%, -50%)"
           : "translate(0, -50%)";
 
