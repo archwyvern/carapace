@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { createEvent, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { SpinSlider } from "./SpinSlider";
@@ -7,6 +7,8 @@ function Harness(props: {
   initial?: number;
   integer?: boolean;
   suffix?: string;
+  min?: number;
+  max?: number;
   onCommit?: (v: number) => void;
 }) {
   const [v, setV] = useState(props.initial ?? 0);
@@ -17,6 +19,8 @@ function Harness(props: {
       onCommit={props.onCommit}
       integer={props.integer}
       suffix={props.suffix}
+      min={props.min}
+      max={props.max}
     />
   );
 }
@@ -126,4 +130,18 @@ test("onCommit fires with the committed value", async () => {
   await userEvent.clear(input);
   await userEvent.type(input, "42{Enter}");
   expect(onCommit).toHaveBeenCalledWith(42);
+});
+
+test("bounded integer drag is range-scaled: a small range does NOT sweep 1 unit per pixel", () => {
+  render(<Harness initial={4} integer min={1} max={8} />);
+  const el = screen.getByText("4").closest("div")!;
+  fireEvent.pointerDown(el);
+  // 60px at (8-1)/150 per px = +2.8 -> rounds to 7; the old 1 unit/px would have slammed to max.
+  // movementX must be defineProperty'd on a createEvent event — jsdom's readonly getter swallows
+  // the plain fireEvent property.
+  const ev = createEvent.pointerMove(el);
+  Object.defineProperty(ev, "movementX", { value: 60 });
+  fireEvent(el, ev);
+  expect(screen.getByText("7")).toBeInTheDocument();
+  fireEvent.pointerUp(el);
 });

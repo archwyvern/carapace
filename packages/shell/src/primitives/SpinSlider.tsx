@@ -42,11 +42,13 @@ type Mod = { shiftKey: boolean; ctrlKey: boolean };
 
 /**
  * The universal DRAG step (per pixel of scrub). Float fields step by 0.01; Shift coarsens to 0.1,
- * Ctrl to 1.0. Integer fields always step by 1.0. Keyboard arrows, spin buttons, and wheel use the
- * discrete `step` prop instead (default 1, Shift ×10) — see `discrete` below.
+ * Ctrl to 1.0. Integer fields step 1.0 — except when the field has a bounded range, where the
+ * step is scaled so the FULL RANGE takes ~150px of drag (capped at 1/px): a 1..8 field must not
+ * sweep its whole range in 7 pixels. Keyboard arrows, spin buttons, and wheel use the discrete
+ * `step` prop instead (default 1, Shift ×10) — see `discrete` below.
  */
-function stepFor(integer: boolean | undefined, mod: Mod): number {
-  if (integer) return 1;
+function stepFor(integer: boolean | undefined, mod: Mod, range?: number): number {
+  if (integer) return range !== undefined ? Math.min(1, range / 150) : 1;
   if (mod.ctrlKey) return 1;
   if (mod.shiftKey) return 0.1;
   return 0.01;
@@ -133,8 +135,8 @@ export function SpinSlider({
       onChange(clamp(d.startVal * Math.exp((d.acc / 300) * logSpan)));
     } else {
       // Per-pixel granularity = the active step tier: 0.01/px (float), 0.1 with Shift, 1.0 with
-      // Ctrl, 1.0 (int). Hold Ctrl to scrub large unbounded fields quickly.
-      onChange(clamp(d.startVal + d.acc * stepFor(integer, e)));
+      // Ctrl, 1.0 (int, range-scaled when bounded). Hold Ctrl to scrub large unbounded fields.
+      onChange(clamp(d.startVal + d.acc * stepFor(integer, e, hasRange ? hi - lo : undefined)));
     }
   };
   const onPointerUp = (e: React.PointerEvent) => {
