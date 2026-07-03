@@ -43,6 +43,20 @@ test("Escape and the close button both close", async () => {
   expect(onClose).toHaveBeenCalledTimes(2);
 });
 
+test("search filters the nav by label and keywords (JetBrains-style setting lookup)", async () => {
+  const withKeywords: SettingsScreen[] = [
+    { id: "normals", label: "Normal Directions", group: "Project", keywords: ["green", "red", "rotation"], render: () => <div /> },
+    { id: "output", label: "Output Format", group: "Project", keywords: ["bit depth", "png"], render: () => <div /> },
+  ];
+  render(<SettingsModal screens={withKeywords} onClose={() => {}} />);
+  await userEvent.type(screen.getByLabelText("Search settings"), "rotation");
+  expect(screen.getByRole("tab", { name: "Normal Directions" })).toBeInTheDocument();
+  expect(screen.queryByRole("tab", { name: "Output Format" })).not.toBeInTheDocument();
+  await userEvent.clear(screen.getByLabelText("Search settings"));
+  await userEvent.type(screen.getByLabelText("Search settings"), "zzz");
+  expect(screen.getByText("No matches")).toBeInTheDocument();
+});
+
 test("arrow keys walk the screen list", async () => {
   render(<SettingsModal screens={screens} onClose={() => {}} />);
   screen.getByRole("tab", { name: "General" }).focus();
