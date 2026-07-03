@@ -20,7 +20,10 @@ export function CommandPalette({ open, onClose, placeholder = "Type a command…
       .all()
       .filter((c) => registry.isEnabled(c.id))
       .filter((c) => !q || `${c.category ?? ""} ${parseMnemonic(c.label).text}`.toLowerCase().includes(q));
-  }, [registry, query]);
+    // `open` is a real dependency: isEnabled() is dynamic, so the list must re-evaluate every time
+    // the palette opens — memoizing on registry+query alone serves stale enablement.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [registry, query, open]);
 
   useEffect(() => {
     if (open) {
