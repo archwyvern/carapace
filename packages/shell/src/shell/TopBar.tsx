@@ -41,7 +41,8 @@ export function TopBar({ logo, menu, title, center, actions, showWindowControls 
         </div>
       )}
       {showWindowControls && (
-        <div style={noDrag} className="flex shrink-0 items-center">
+        // -mr-2 bleeds through the bar padding so the close button reaches the window edge
+        <div style={noDrag} className="-mr-2 flex shrink-0 items-center">
           <WindowControls />
         </div>
       )}
