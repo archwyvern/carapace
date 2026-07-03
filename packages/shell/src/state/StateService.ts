@@ -2,7 +2,7 @@
 // debounced sync to an injected remote. A generic primitive — it must NOT know about
 // any specific app. The remote adapter and the localStorage key prefix are supplied by
 // the consumer, so the shell has zero dependency on a particular app's data gateway.
-// (Ported from Skyrat's @archwyvern/ui so the ecosystem shares one pattern.)
+// (Ported from an earlier in-house UI package so the ecosystem shares one pattern.)
 
 const REMOTE_META_KEYS = new Set(["id", "updatedAt", "createdAt"]);
 

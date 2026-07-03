@@ -4,4 +4,7 @@ dist
 .DS_Store
 playground/node_modules
 playground/dist
+# agentic planning docs — local-only, never tracked
+docs/plans/
+docs/specs/
 docs/superpowers/

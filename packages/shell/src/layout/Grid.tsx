@@ -15,7 +15,7 @@ export interface GridProps {
 
 /**
  * Responsive auto-fill card grid. `repeat(auto-fill, minmax(minColWidth, 1fr))` —
- * the copy-pasted grid shape behind skyrat's lore/texture/collection grids and
+ * the copy-pasted grid shape behind asset-browser and collection grids and
  * foley's sound grid, parameterised once.
  */
 export function Grid({ children, minColWidth = 240, gap = 12, fit = false, className, style }: GridProps) {

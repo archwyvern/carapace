@@ -6,7 +6,7 @@ import type { MenuItem, TreeNode } from "@carapace/shell";
 /*
  * TreeView demos — TreeView is a GENERIC hierarchy widget, not a file explorer. These show it
  * driving real content domains:
- *   · Entity — a skyrat entity → layer → component tree, fully interactive (multiselect, drag-
+ *   · Entity — a game entity → layer → component tree, fully interactive (multiselect, drag-
  *     reorder, inline rename, delete, right-click menu, per-row visibility toggle, type icons).
  *   · Scene  — a Godot-style node tree (type icons + selection).
  *   · Lore   — a knowledge tree with child-count badges (renderTrailing).
@@ -132,7 +132,7 @@ function Dock({ title, subtitle, footer, children }: { title: string; subtitle: 
   );
 }
 
-/* ------------------------------------------------- 1. Entity hierarchy (skyrat) */
+/* ------------------------------------------------- 1. Entity hierarchy (game) */
 
 type Ent = { name: string; kind: keyof typeof ICON; sub?: string; visible: boolean };
 const ent = (name: string, kind: Ent["kind"], sub: string | undefined, children?: TreeNode<Ent>[]): TreeNode<Ent> => ({
@@ -200,7 +200,7 @@ function EntityTreeDemo() {
   };
 
   return (
-    <Dock title="Entity" subtitle="skyrat · layers + components" footer={`${selCount} selected · drag to reorder · F2 rename · Del · right-click`}>
+    <Dock title="Entity" subtitle="game entity · layers + components" footer={`${selCount} selected · drag to reorder · F2 rename · Del · right-click`}>
       <TreeView<Ent>
         roots={tree}
         ariaLabel="Entity hierarchy"
@@ -330,7 +330,7 @@ export function TreeViewPage() {
         <h1 className="text-base font-bold text-fg">TreeView showcase</h1>
         <p className="mt-0.5 text-xs text-fg-mid">
           TreeView is a generic hierarchy widget — not everything is a file explorer. An interactive
-          skyrat entity/layer/component tree (multiselect, drag-reorder, inline rename, delete,
+          game entity/layer/component tree (multiselect, drag-reorder, inline rename, delete,
           right-click menu, per-row visibility), a Godot scene tree, and a lore tree with count badges.
         </p>
       </div>

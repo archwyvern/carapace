@@ -3,7 +3,7 @@ import type { ShaderBackendFactory } from '../backend.js';
 import type { CompilationResult } from '../../index.js';
 import { GLSL_LIBRARIES } from './libs.generated.js';
 
-// WebGL2 / GLSL ES 3.00 backend — Skyrat's in-browser preview path.
+// WebGL2 / GLSL ES 3.00 backend — the in-browser preview path.
 export const webglBackend: ShaderBackendFactory = (ast, options) => new Glsl300EsCodeGen(ast, options);
 
 export { Glsl300EsCodeGen };

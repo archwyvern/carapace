@@ -1,43 +1,39 @@
-# @archwyvern/carapace
+# carapace
 
-Batteries-included React editor-shell: a theme, primitive components, a workbench
-shell, and a platform **host** seam. One import gives a new tool its chrome, theme,
-and base components so you can start on the actual idea.
+A build-your-own-editor toolkit for React: theme, primitives, workbench chrome, and the
+supporting models (commands, resources, shaders) that desktop-style tools keep reinventing.
+Everything is designed for dark, dense, keyboard-driven editors — the kind you build in
+Electron or ship as a web app.
 
-> Single-author library. Not published to npm — consumed as a GitHub
-> git-dependency. See the design doc in `docs/superpowers/specs/`.
+Single-author toolkit, open source under MIT. Not published to npm — consume it as a git
+dependency or a `pnpm link` while iterating.
 
-## Install
+## Packages
 
-Pin a tag or commit:
-
-```jsonc
-// package.json
-{
-  "dependencies": {
-    "@archwyvern/carapace": "github:archwyvern/carapace#v0.0.1"
-  }
-}
-```
-
-For local iteration across repos, `pnpm link` Carapace into the consumer instead.
+| Package | What it is |
+|---|---|
+| **@carapace/shell** | The big one: theme tokens + base CSS, primitive components (buttons, spin-sliders, selects, tooltips, modals), the workbench (top bar, window controls, editor tabs with drag-reorder, panels, sashes), a command system (registry, rebindable keybindings, palette, vscode-style shortcut editor), a JetBrains-style settings modal with search, menus (context/submenu via floating-ui), tree views, inspector scaffolding, forms, and a platform **host** seam so the same UI runs on Electron IPC, a virtual FS, or in-memory for tests. |
+| **@carapace/primitives** | Immutable value types — `Vector2/3/4`, colors, rects, AABBs, arcs — a TypeScript mirror of a C# numerics library. |
+| **@carapace/resources** | A Godot-derived engine resource type hierarchy as a standalone TypeScript model, with observability and undo history. |
+| **@carapace/resource-inspector** | The glue binding `@carapace/resources` to the shell's Inspector — the only package that knows both worlds. |
+| **@carapace/vascal** | Lexer/parser/reader for the VascaL resource text format, with a decorator-based type registry. |
+| **@carapace/vlsl** | The VLSL shader-language compiler with WGSL and WebGL (GLSL) backends. |
 
 ## Set up the theme
 
-Carapace ships **tokens only** — you import Tailwind yourself (every consumer
-already runs Tailwind v4). In your app's CSS entry:
+`@carapace/shell` ships **tokens only** — you import Tailwind (v4) yourself:
 
 ```css
 @import "tailwindcss";
-@import "@archwyvern/carapace/theme.css";
-/* Let Tailwind detect the classes Carapace's components use: */
-@source "../node_modules/@archwyvern/carapace/dist";
+@import "@carapace/shell/theme.css";
+/* Let Tailwind detect the classes the components use: */
+@source "../node_modules/@carapace/shell/dist";
 ```
 
 ## Mount the shell
 
 ```tsx
-import { HostProvider, WorkbenchFrame, createMemoryHost } from "@archwyvern/carapace";
+import { HostProvider, WorkbenchFrame, createMemoryHost } from "@carapace/shell";
 
 const host = createMemoryHost(); // replace with your Electron / vfs host
 
@@ -51,24 +47,18 @@ const host = createMemoryHost(); // replace with your Electron / vfs host
 The shell never touches the platform directly — it goes through a `CarapaceHost`
 (`window`, `fs`, `dialog`, `clipboard`). Provide one per environment:
 
-- **Electron** — implement over IPC (your preload `window.editor` surface maps 1:1).
-- **Browser (e.g. skyrat)** — `fs` over a virtual file system, `window` controls
-  as no-ops, `dialog` as in-app modals, `clipboard` via `navigator.clipboard`.
+- **Electron** — implement over IPC (a preload surface maps 1:1).
+- **Browser** — `fs` over a virtual file system, window controls as no-ops,
+  `dialog` as in-app modals, `clipboard` via `navigator.clipboard`.
 - **Tests / demos** — `createMemoryHost()`, shipped with the package.
-
-## What's here
-
-Walking skeleton (plan 1): theme tokens, the `CarapaceHost` seam + in-memory host,
-`Button`, `SpinSlider` (drag-to-scrub numeric with expression eval + `onCommit`),
-`TitleBar`, and `WorkbenchFrame`. The full primitive set, the full shell
-(activity bar, file tree, tabs, console, command palette), an optional `/monaco`
-entry, and a presentational inspector are later plans.
 
 ## Develop
 
 ```bash
 pnpm install
-pnpm test                              # vitest
-pnpm --filter carapace-playground dev  # reference app (in-memory host)
-pnpm build                             # emit dist/
+pnpm test                              # vitest, all packages
+pnpm --filter carapace-playground dev  # reference gallery app (in-memory host)
+pnpm -r build                          # emit each package's dist/
 ```
+
+License: MIT

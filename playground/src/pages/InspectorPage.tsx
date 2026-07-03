@@ -5,11 +5,11 @@ import type { InspectorField, InspectorSectionInfo } from "@carapace/shell";
 
 /*
  * The inspector showcase, rebuilt from the REAL properties the three carapace consumers edit:
- *   · Sprite2D       — a skyrat entity (Texture/Modulate, transform, lighting), grouped by class.
+ *   · Sprite2D       — a game entity (Texture/Modulate, transform, lighting), grouped by class.
  *   · NoiseTexture2D — a drydock resource: scalars + a nested FastNoiseLite + a ColorRamp gradient.
  *   · Plateau        — a lambert shape: transform, ring params, grid-snap, normal directions.
  *   · ShaderMaterial — a drydock material: shader uniforms + blend/light mode.
- *   · Thruster       — a skyrat component: transform + gated Bloom / Light sections.
+ *   · Thruster       — a game component: transform + gated Bloom / Light sections.
  * Field names, kinds, options, and example values mirror each app's actual inspector.
  */
 
@@ -39,7 +39,7 @@ function Dock({ title, subtitle, children }: { title: string; subtitle: string; 
 
 const rgb = (c: number[]) => `rgb(${c.slice(0, 3).map((x) => Math.round(x * 255)).join(",")})`;
 
-/* ------------------------------------------------ 1. Sprite2D (skyrat entity) */
+/* ------------------------------------------------ 1. Sprite2D (game entity) */
 
 function SpriteEntityColumn() {
   const texture = useTracked("hull_main");
@@ -71,7 +71,7 @@ function SpriteEntityColumn() {
   ];
 
   return (
-    <Dock title="Sprite2D" subtitle="skyrat entity · class hierarchy">
+    <Dock title="Sprite2D" subtitle="game entity · class hierarchy">
       <Inspector fields={fields} categories={["Sprite2D", "Node2D", "CanvasItem"]} />
     </Dock>
   );
@@ -223,7 +223,7 @@ function ShaderMaterialColumn() {
   );
 }
 
-/* ----------------------------------------------- 5. Thruster (skyrat component) */
+/* ----------------------------------------------- 5. Thruster (game component) */
 
 function ThrusterColumn() {
   const position = useTracked([0, 0]);
@@ -267,7 +267,7 @@ function ThrusterColumn() {
   ];
 
   return (
-    <Dock title="Thruster" subtitle="skyrat component · gated sections">
+    <Dock title="Thruster" subtitle="game component · gated sections">
       <Inspector fields={fields} sections={sections} />
     </Dock>
   );
@@ -282,8 +282,8 @@ export function InspectorPage() {
         <div className="text-xs font-medium uppercase tracking-widest text-accent">Carapace · Inspector</div>
         <h1 className="text-base font-bold text-fg">Inspector showcase</h1>
         <p className="mt-0.5 text-sm text-fg-mid">
-          Five real inspectors, with the actual properties lambert, drydock, and skyrat edit — a
-          skyrat entity, a drydock NoiseTexture2D + Gradient, a lambert Plateau, a ShaderMaterial,
+          Five real inspectors, with the actual properties consuming editors edit — a
+          game entity, a drydock NoiseTexture2D + Gradient, a lambert Plateau, a ShaderMaterial,
           and a Thruster component. Drag a number to scrub (Shift = 0.1, Ctrl = 1.0); hover a
           modified row for the revert.
         </p>

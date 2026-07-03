@@ -19,7 +19,7 @@ export interface ContextBridgeLike {
 /**
  * Renderer-side filesystem provider: implements `CarapaceHost.fs` by forwarding to
  * a preload-exposed {@link FsBridge}. Browser-safe (no node, no electron). The
- * desktop counterpart to a web adapter (e.g. skyrat's GCS-over-API). Mirrors VS
+ * desktop counterpart to a web adapter (e.g. cloud-storage-over-API). Mirrors VS
  * Code's `DiskFileSystemProviderClient`.
  */
 export function createIpcFs(bridge: FsBridge): Fs {
