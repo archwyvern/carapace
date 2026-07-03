@@ -231,6 +231,8 @@ export type { Chord } from "./command/keybinding";
 // Overlay
 export { Modal } from "./overlay/Modal";
 export type { ModalProps } from "./overlay/Modal";
+export { SettingsModal } from "./settings/SettingsModal";
+export type { SettingsModalProps, SettingsScreen } from "./settings/SettingsModal";
 export { ConfirmDialog } from "./overlay/ConfirmDialog";
 export type { ConfirmDialogProps } from "./overlay/ConfirmDialog";
 export { ConfirmProvider, useConfirm, useOptionalConfirm } from "./overlay/confirm";
