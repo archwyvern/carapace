@@ -34,7 +34,23 @@ const MODS: Record<string, ModFlag> = {
 };
 
 function normalizeKey(key: string): string {
+  if (key === " ") return "Space"; // the event's literal space, named for display/parse symmetry
   return key.length === 1 ? key.toUpperCase() : key;
+}
+
+/**
+ * Serialize a keydown into a chord string ("Ctrl+Shift+P"), or null while only modifiers are
+ * held — the shortcut-recorder building block.
+ */
+export function chordFromEvent(e: Pick<KeyboardEvent, "key" | "ctrlKey" | "shiftKey" | "altKey" | "metaKey">): string | null {
+  if (e.key === "Control" || e.key === "Shift" || e.key === "Alt" || e.key === "Meta") return null;
+  const parts: string[] = [];
+  if (e.ctrlKey) parts.push("Ctrl");
+  if (e.shiftKey) parts.push("Shift");
+  if (e.altKey) parts.push("Alt");
+  if (e.metaKey) parts.push("Meta");
+  parts.push(normalizeKey(e.key));
+  return parts.join("+");
 }
 
 export function parseChord(spec: string): Chord {
@@ -49,7 +65,7 @@ export function parseChord(spec: string): Chord {
   return chord;
 }
 
-export function matchEvent(chord: Chord, e: KeyboardEvent): boolean {
+export function matchEvent(chord: Chord, e: Pick<KeyboardEvent, "key" | "ctrlKey" | "shiftKey" | "altKey" | "metaKey">): boolean {
   return (
     e.ctrlKey === chord.ctrl &&
     e.shiftKey === chord.shift &&

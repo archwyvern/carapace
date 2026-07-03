@@ -18,6 +18,7 @@ export {
   Warning16Regular as WarningIcon,
   ErrorCircle16Regular as ErrorIcon,
   Search16Regular as SearchIcon,
+  Edit16Regular as EditIcon,
   Link16Regular as LinkIcon,
   LinkDismiss16Regular as UnlinkIcon,
   Delete16Regular as DeleteIcon,

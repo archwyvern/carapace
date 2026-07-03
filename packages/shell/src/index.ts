@@ -225,7 +225,9 @@ export { CommandPalette } from "./command/CommandPalette";
 export type { CommandPaletteProps } from "./command/CommandPalette";
 export { ShortcutOverlay } from "./command/ShortcutOverlay";
 export type { ShortcutOverlayProps } from "./command/ShortcutOverlay";
-export { parseChord, matchEvent, formatKeys } from "./command/keybinding";
+export { ShortcutEditor } from "./command/ShortcutEditor";
+export type { ShortcutEditorProps, ShortcutRow } from "./command/ShortcutEditor";
+export { parseChord, matchEvent, formatKeys, chordFromEvent } from "./command/keybinding";
 export type { Chord } from "./command/keybinding";
 
 // Overlay
