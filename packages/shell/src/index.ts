@@ -228,6 +228,14 @@ export type { ShortcutOverlayProps } from "./command/ShortcutOverlay";
 export { ShortcutEditor } from "./command/ShortcutEditor";
 export type { ShortcutEditorProps, ShortcutRow } from "./command/ShortcutEditor";
 export { parseChord, matchEvent, matchStep, formatKeys, chordFromEvent, createChordMatcher } from "./command/keybinding";
+export {
+  defineComponentBindings,
+  allComponentBindings,
+  effectiveComponentKeys,
+  KeybindingProvider,
+  useKeybinding,
+} from "./command/componentBindings";
+export type { ComponentBindingDef, KeybindingsConfig } from "./command/componentBindings";
 export type { Chord, ChordStep, ChordMatch } from "./command/keybinding";
 
 // Overlay

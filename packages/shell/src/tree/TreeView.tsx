@@ -1,7 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent, KeyboardEvent } from "react";
 import { ChevronRightIcon } from "../icons";
+import { defineComponentBindings, useKeybinding } from "../command/componentBindings";
+import { matchStep } from "../command/keybinding";
 import type { DropPosition, TreeItemContext, TreeNode, TreeViewProps } from "./treeTypes";
+
+// Rebindable tree verbs — resolved through the host's KeybindingProvider (factory defaults here).
+// Navigation (arrows/Home/End/Enter/Ctrl+A) stays fixed by design.
+defineComponentBindings([
+  { id: "tree.rename", label: "Rename", when: "tree focus", keys: "F2" },
+  { id: "tree.delete", label: "Delete", when: "tree focus", keys: "Delete" },
+]);
 import {
   findFirstChildIndex,
   findNextFocusable,
@@ -43,6 +52,8 @@ export function TreeView<T>({
   ariaLabel,
   className,
 }: TreeViewProps<T>) {
+  const renameChord = useKeybinding("tree.rename");
+  const deleteChord = useKeybinding("tree.delete");
   const isControlled = controlledExpanded !== undefined;
   const [internalExpanded, setInternalExpanded] = useState<Set<string>>(
     () => defaultExpanded ?? new Set(),
@@ -141,6 +152,17 @@ export function TreeView<T>({
       commitSelection(new Set(flat.map((f) => f.node.id)), current, current);
       return;
     }
+    // rebindable verbs (single-step chords via the component-binding cascade)
+    if (onRename && renameChord && matchStep(renameChord.steps[0]!, e)) {
+      e.preventDefault();
+      onRename(cur.node);
+      return;
+    }
+    if (onDelete && deleteChord && matchStep(deleteChord.steps[0]!, e)) {
+      e.preventDefault();
+      onDelete(selectionNodes(cur.node));
+      return;
+    }
     switch (e.key) {
       case "Home":
         e.preventDefault();
@@ -149,18 +171,6 @@ export function TreeView<T>({
       case "End":
         e.preventDefault();
         select(flat.length - 1);
-        break;
-      case "F2":
-        if (onRename) {
-          e.preventDefault();
-          onRename(cur.node);
-        }
-        break;
-      case "Delete":
-        if (onDelete) {
-          e.preventDefault();
-          onDelete(selectionNodes(cur.node));
-        }
         break;
       case "Backspace":
         if (onDelete && (e.metaKey || e.ctrlKey)) {
