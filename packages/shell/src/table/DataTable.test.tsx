@@ -1,7 +1,24 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { DataTable } from "./DataTable";
 import type { DataTableColumn } from "./tableTypes";
+
+// jsdom has no PointerEvent (so fireEvent.pointer* can't construct one and React never dispatches the
+// handlers) and its setPointerCapture throws on synthetic ids. Polyfill PointerEvent as a MouseEvent
+// subclass (clientX/button/buttons flow through) and stub capture to a no-op. (Same rig as Sash.test.tsx.)
+class PointerEventPolyfill extends MouseEvent {
+  pointerId: number;
+  constructor(type: string, props: PointerEventInit = {}) {
+    super(type, props);
+    this.pointerId = props.pointerId ?? 1;
+  }
+}
+beforeAll(() => {
+  (globalThis as { PointerEvent: typeof PointerEvent }).PointerEvent =
+    PointerEventPolyfill as unknown as typeof PointerEvent;
+  Element.prototype.setPointerCapture = () => {};
+  Element.prototype.releasePointerCapture = () => {};
+});
 
 export interface User {
   id: string;
@@ -316,5 +333,49 @@ describe("DataTable virtualization", () => {
   it("small tables stay fully materialized", () => {
     render(<DataTable rows={users} columns={userColumns} rowId={(u) => u.id} ariaLabel="Users" />);
     expect(screen.getAllByRole("row").slice(1)).toHaveLength(3);
+  });
+});
+
+describe("DataTable column resize", () => {
+  function dragSash(sash: HTMLElement, dx: number) {
+    fireEvent.pointerDown(sash, { button: 0, clientX: 100, pointerId: 1 });
+    fireEvent.pointerMove(sash, { buttons: 1, clientX: 100 + dx, pointerId: 1 });
+    fireEvent.pointerUp(sash, { pointerId: 1 });
+  }
+
+  it("dragging pins the column to px and fires onColumnWidthsChange on drag end", () => {
+    const onColumnWidthsChange = vi.fn();
+    render(
+      <DataTable
+        rows={users}
+        columns={userColumns}
+        rowId={(u) => u.id}
+        ariaLabel="Users"
+        defaultColumnWidths={{ name: 150 }}
+        onColumnWidthsChange={onColumnWidthsChange}
+      />,
+    );
+    const grid = screen.getByRole("grid", { name: "Users" });
+    expect(grid.style.getPropertyValue("--dt-cols")).toBe("150px 100px");
+    const sash = screen.getAllByRole("separator")[0]!;
+    dragSash(sash, 30);
+    expect(grid.style.getPropertyValue("--dt-cols")).toBe("180px 100px");
+    expect(onColumnWidthsChange).toHaveBeenCalledTimes(1);
+    expect(onColumnWidthsChange).toHaveBeenCalledWith({ name: 180 });
+  });
+
+  it("clamps at minWidth", () => {
+    render(
+      <DataTable
+        rows={users}
+        columns={userColumns}
+        rowId={(u) => u.id}
+        ariaLabel="Users"
+        defaultColumnWidths={{ name: 80 }}
+      />,
+    );
+    const grid = screen.getByRole("grid", { name: "Users" });
+    dragSash(screen.getAllByRole("separator")[0]!, -100);
+    expect(grid.style.getPropertyValue("--dt-cols")).toBe("60px 100px"); // default minWidth 60
   });
 });

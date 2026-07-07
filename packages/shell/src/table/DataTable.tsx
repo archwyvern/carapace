@@ -5,8 +5,9 @@ import { cx } from "../cx";
 import { ChevronDownIcon, ChevronUpIcon, MoreIcon } from "../icons";
 import { ContextMenu } from "../menu/ContextMenu";
 import { IconButton } from "../primitives/IconButton";
+import { Sash } from "../primitives/Sash";
 import { Spinner } from "../primitives/Spinner";
-import { applySort, gridTemplate, nextSort } from "./tableModel";
+import { applySort, clampWidth, DEFAULT_MIN_WIDTH, gridTemplate, nextSort } from "./tableModel";
 import type { DataTableColumn, DataTableProps } from "./tableTypes";
 
 const table = tv({
@@ -55,6 +56,8 @@ export function DataTable<T>({
   multiSelect = true,
   onActivate,
   rowMenu,
+  defaultColumnWidths,
+  onColumnWidthsChange,
   emptyState,
   loading,
   virtualizeAt = 100,
@@ -67,7 +70,26 @@ export function DataTable<T>({
   const [internalSort, setInternalSort] = useState(defaultSort ?? null);
   const sort = isSortControlled ? controlledSort : internalSort;
 
-  const [widths] = useState<Record<string, number>>({});
+  const [widths, setWidths] = useState<Record<string, number>>(() => defaultColumnWidths ?? {});
+  const headerRowRef = useRef<HTMLDivElement>(null);
+  const dragWidth = useRef(0);
+
+  const startResize = (col: DataTableColumn<T>, headerIndex: number) => {
+    // Flex columns have no px width yet — measure the rendered header cell.
+    dragWidth.current =
+      widths[col.id] ??
+      col.width ??
+      (headerRowRef.current?.children[headerIndex] as HTMLElement | undefined)?.getBoundingClientRect().width ??
+      col.minWidth ??
+      DEFAULT_MIN_WIDTH;
+  };
+  const resizeBy = (col: DataTableColumn<T>, delta: number) => {
+    dragWidth.current += delta;
+    setWidths((w) => ({ ...w, [col.id]: clampWidth(col, Math.round(dragWidth.current)) }));
+  };
+  const endResize = (col: DataTableColumn<T>) => {
+    onColumnWidthsChange?.({ ...widths, [col.id]: clampWidth(col, Math.round(dragWidth.current)) });
+  };
 
   const commitSort = (columnId: string) => {
     const next = nextSort(sort ?? null, columnId);
@@ -194,26 +216,44 @@ export function DataTable<T>({
           : undefined
       }
     >
-      <div role="row" className={s.headerRow()} style={{ gridTemplateColumns: "var(--dt-cols)" }}>
-        {columns.map((col) => {
+      <div
+        role="row"
+        ref={headerRowRef}
+        className={s.headerRow()}
+        style={{ gridTemplateColumns: "var(--dt-cols)" }}
+      >
+        {columns.map((col, i) => {
           const active = sort?.columnId === col.id ? sort.direction : undefined;
           const sortable = !!(col.sortBy || col.compare);
-          return sortable ? (
-            <button
-              key={col.id}
-              type="button"
-              role="columnheader"
-              aria-sort={active === "asc" ? "ascending" : active === "desc" ? "descending" : undefined}
-              className={cx(s.headerButton(), ALIGN[col.align ?? "left"])}
-              onClick={() => commitSort(col.id)}
-            >
-              {col.header}
-              {active === "asc" && <ChevronUpIcon />}
-              {active === "desc" && <ChevronDownIcon />}
-            </button>
-          ) : (
-            <div key={col.id} role="columnheader" className={cx(s.headerCell(), ALIGN[col.align ?? "left"])}>
-              {col.header}
+          return (
+            <div key={col.id} role="presentation" className="relative flex min-w-0">
+              {sortable ? (
+                <button
+                  type="button"
+                  role="columnheader"
+                  aria-sort={active === "asc" ? "ascending" : active === "desc" ? "descending" : undefined}
+                  className={cx(s.headerButton(), ALIGN[col.align ?? "left"], "w-full")}
+                  onClick={() => commitSort(col.id)}
+                >
+                  {col.header}
+                  {active === "asc" && <ChevronUpIcon />}
+                  {active === "desc" && <ChevronDownIcon />}
+                </button>
+              ) : (
+                <div role="columnheader" className={cx(s.headerCell(), ALIGN[col.align ?? "left"], "w-full")}>
+                  {col.header}
+                </div>
+              )}
+              {(rowMenu || i < columns.length - 1) && (
+                <span className="absolute inset-y-0 -right-px z-10 flex">
+                  <Sash
+                    orientation="vertical"
+                    onDragStart={() => startResize(col, i)}
+                    onDrag={(d) => resizeBy(col, d)}
+                    onDragEnd={() => endResize(col)}
+                  />
+                </span>
+              )}
             </div>
           );
         })}
