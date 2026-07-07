@@ -294,3 +294,6 @@ export type {
   ArrayField,
   CustomField,
 } from "./inspector/types";
+export { DataTable } from "./table/DataTable";
+export type { DataTableProps, DataTableColumn, SortState } from "./table/tableTypes";
+export { applySort, nextSort, gridTemplate } from "./table/tableModel";
