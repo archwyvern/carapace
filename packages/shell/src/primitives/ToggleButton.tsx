@@ -40,7 +40,15 @@ export interface SegmentedOption<V extends string> {
   value: V;
   /** Visible segment text; defaults to the value. */
   label?: ReactNode;
+  /** Selected tint: danger (deny-style) or accent (privileged); neutral otherwise. */
+  tone?: "danger" | "accent";
 }
+
+const SELECTED_TONE: Record<"neutral" | "danger" | "accent", string> = {
+  neutral: "bg-list-active text-fg",
+  danger: "bg-error/15 text-error",
+  accent: "bg-list-active text-accent",
+};
 
 export interface SegmentedProps<V extends string> {
   options: readonly SegmentedOption<V>[] | readonly V[];
@@ -70,7 +78,9 @@ export function Segmented<V extends string>({ options, value, onChange, label, c
           onClick={() => onChange(o.value)}
           className={cx(
             "border-r border-border px-3 text-base capitalize outline-none transition-colors last:border-r-0 focus-visible:ring-1 focus-visible:ring-ring",
-            value === o.value ? "bg-list-active text-fg" : "text-fg-mid hover:bg-surface-raised hover:text-accent",
+            value === o.value
+              ? (SELECTED_TONE[o.tone ?? "neutral"])
+              : "text-fg-mid hover:bg-surface-raised hover:text-accent",
             segmentClassName,
           )}
         >

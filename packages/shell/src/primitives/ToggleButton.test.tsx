@@ -23,3 +23,19 @@ test("Segmented renders a group; exactly the active segment is pressed; click re
   fireEvent.click(screen.getByRole("button", { name: "normal" }));
   expect(onChange).toHaveBeenCalledWith("normal");
 });
+
+test("Segmented option tones tint only the selected segment", () => {
+  const options = [
+    { value: "none", tone: "danger" as const },
+    { value: "view" },
+    { value: "manage", tone: "accent" as const },
+  ];
+  const classes = (name: string) => Array.from(screen.getByRole("button", { name }).classList);
+  const { rerender } = render(<Segmented options={options} value="none" onChange={() => {}} label="Level" />);
+  expect(classes("none")).toContain("text-error");
+  // Unselected toned options stay neutral (hover:text-accent is a different token).
+  expect(classes("manage")).not.toContain("text-accent");
+  rerender(<Segmented options={options} value="manage" onChange={() => {}} label="Level" />);
+  expect(classes("manage")).toContain("text-accent");
+  expect(classes("none")).not.toContain("text-error");
+});
