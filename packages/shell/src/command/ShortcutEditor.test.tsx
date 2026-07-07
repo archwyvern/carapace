@@ -65,3 +65,32 @@ test("conflicting chords in the same scope are flagged; different scopes are not
   render(<ShortcutEditor rows={conflicted} onChange={() => {}} onReset={() => {}} />);
   expect(screen.getAllByLabelText(/Conflicts with another command/)).toHaveLength(2);
 });
+
+test("recording two combinations then Enter accepts a two-step chord", async () => {
+  const onChange = vi.fn();
+  render(<ShortcutEditor rows={rows} onChange={onChange} onReset={() => {}} />);
+  await userEvent.click(screen.getByRole("button", { name: "Change keybinding for File: Save" }));
+  const box = screen.getByRole("textbox", { name: /Recording keybinding/ });
+  await userEvent.keyboard("{Control>}k{/Control}");
+  await userEvent.keyboard("u");
+  expect(box).toHaveTextContent("Ctrl+K U");
+  await userEvent.keyboard("{Enter}");
+  expect(onChange).toHaveBeenCalledWith("save", "Ctrl+K U");
+});
+
+test("a third combination restarts the recording", async () => {
+  const onChange = vi.fn();
+  render(<ShortcutEditor rows={rows} onChange={onChange} onReset={() => {}} />);
+  await userEvent.click(screen.getByRole("button", { name: "Change keybinding for File: Save" }));
+  await userEvent.keyboard("{Control>}k{/Control}u{Control>}w{/Control}{Enter}");
+  expect(onChange).toHaveBeenCalledWith("save", "Ctrl+W");
+});
+
+test("a binding equal to another binding's chord prefix is flagged", () => {
+  const shadowed: ShortcutRow[] = [
+    { id: "a", command: "A", keys: "Ctrl+K", source: "default" },
+    { id: "b", command: "B", keys: "Ctrl+K U", source: "user" },
+  ];
+  render(<ShortcutEditor rows={shadowed} onChange={() => {}} onReset={() => {}} />);
+  expect(screen.getAllByLabelText(/Conflicts with another command/)).toHaveLength(2);
+});

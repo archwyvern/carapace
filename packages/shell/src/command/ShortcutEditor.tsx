@@ -42,7 +42,8 @@ function Kbd({ keys }: { keys: string }) {
  */
 export function ShortcutEditor({ rows, onChange, onReset }: ShortcutEditorProps) {
   const [query, setQuery] = useState("");
-  const [recording, setRecording] = useState<{ id: string; chord: string | null } | null>(null);
+  // steps: captured combinations (max 2 = a two-step chord); a third capture restarts.
+  const [recording, setRecording] = useState<{ id: string; steps: string[] } | null>(null);
   const recordRef = useRef<HTMLDivElement>(null);
 
   const visible = useMemo(() => {
@@ -51,15 +52,29 @@ export function ShortcutEditor({ rows, onChange, onReset }: ShortcutEditorProps)
     return rows.filter((r) => `${r.command} ${r.keys ?? ""} ${r.when ?? ""}`.toLowerCase().includes(q));
   }, [rows, query]);
 
-  // conflicts: same chord in the same scope (unbound rows can't conflict)
+  // conflicts: same chord in the same scope, or a binding equal to a same-scope chord's PREFIX
+  // (the prefix waits for a second step, shadowing the single-step binding). Unbound rows can't conflict.
   const conflicts = useMemo(() => {
     const seen = new Map<string, number>();
+    const prefixes = new Set<string>();
     for (const r of rows) {
       if (!r.keys) continue;
-      const key = `${r.when ?? ""}\0${r.keys}`;
-      seen.set(key, (seen.get(key) ?? 0) + 1);
+      seen.set(`${r.when ?? ""}\0${r.keys}`, (seen.get(`${r.when ?? ""}\0${r.keys}`) ?? 0) + 1);
+      const steps = r.keys.split(" ");
+      if (steps.length > 1) prefixes.add(`${r.when ?? ""}\0${steps[0]}`);
     }
-    return new Set(rows.filter((r) => r.keys && (seen.get(`${r.when ?? ""}\0${r.keys}`) ?? 0) > 1).map((r) => r.id));
+    return new Set(
+      rows
+        .filter((r) => {
+          if (!r.keys) return false;
+          if ((seen.get(`${r.when ?? ""}\0${r.keys}`) ?? 0) > 1) return true;
+          // a single-step binding shadowed by a chord's prefix — or the chord doing the shadowing
+          if (prefixes.has(`${r.when ?? ""}\0${r.keys}`)) return true;
+          const steps = r.keys.split(" ");
+          return steps.length > 1 && rows.some((o) => o.id !== r.id && o.keys === steps[0] && (o.when ?? "") === (r.when ?? ""));
+        })
+        .map((r) => r.id),
+    );
   }, [rows]);
 
   const onRecordKey = (e: React.KeyboardEvent): void => {
@@ -70,13 +85,14 @@ export function ShortcutEditor({ rows, onChange, onReset }: ShortcutEditorProps)
       setRecording(null);
       return;
     }
-    if (e.key === "Enter" && recording.chord) {
-      onChange(recording.id, recording.chord);
+    if (e.key === "Enter" && recording.steps.length > 0) {
+      onChange(recording.id, recording.steps.join(" "));
       setRecording(null);
       return;
     }
     const chord = chordFromEvent(e.nativeEvent);
-    if (chord) setRecording({ ...recording, chord });
+    // a second capture makes a two-step chord; a third restarts with the new key as step one
+    if (chord) setRecording({ ...recording, steps: recording.steps.length >= 2 ? [chord] : [...recording.steps, chord] });
   };
 
   return (
@@ -111,9 +127,11 @@ export function ShortcutEditor({ rows, onChange, onReset }: ShortcutEditorProps)
                       onKeyDown={onRecordKey}
                       onBlur={() => setRecording(null)}
                     >
-                      {recording.chord ? <Kbd keys={recording.chord} /> : null}
+                      {recording.steps.length > 0 ? <Kbd keys={recording.steps.join(" ")} /> : null}
                       <span className="text-sm text-fg-mid">
-                        {recording.chord ? "Enter to accept · Esc to cancel" : "Press the key combination…"}
+                        {recording.steps.length > 0
+                          ? "Enter to accept · Esc to cancel · another combination adds a step"
+                          : "Press the key combination…"}
                       </span>
                     </div>
                   ) : (
@@ -142,7 +160,7 @@ export function ShortcutEditor({ rows, onChange, onReset }: ShortcutEditorProps)
                         size="sm"
                         icon={<EditIcon />}
                         onClick={() => {
-                          setRecording({ id: r.id, chord: null });
+                          setRecording({ id: r.id, steps: [] });
                           setTimeout(() => recordRef.current?.focus(), 0);
                         }}
                       />
