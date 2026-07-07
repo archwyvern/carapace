@@ -137,8 +137,8 @@ export type { TreeFindProps } from "./tree/TreeFind";
 export { treeFilter } from "./tree/treeFilter";
 
 // Editor
-export { EditorTabs } from "./editor/EditorTabs";
-export type { EditorTab, EditorTabsProps } from "./editor/EditorTabs";
+export { EditorTabs, tabVerbIds } from "./editor/EditorTabs";
+export type { EditorTab, EditorTabsProps, TabMenuVerb } from "./editor/EditorTabs";
 export { CodeEditor, CARAPACE_DARK_THEME } from "./editor/CodeEditor";
 export type { CodeEditorProps } from "./editor/CodeEditor";
 export { configureMonacoOffline } from "./editor/monacoLoader";
