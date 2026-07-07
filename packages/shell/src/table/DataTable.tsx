@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, KeyboardEvent } from "react";
 import { tv } from "tailwind-variants";
 import { cx } from "../cx";
 import { ChevronDownIcon, ChevronUpIcon } from "../icons";
@@ -20,6 +20,13 @@ const table = tv({
     empty: "flex flex-1 items-center justify-center p-8 text-sm text-fg-mid",
     loading: "absolute inset-0 z-20 flex items-center justify-center bg-surface/60",
   },
+  variants: {
+    selected: {
+      true: {
+        row: "bg-list-active outline outline-1 -outline-offset-1 outline-accent hover:bg-list-active",
+      },
+    },
+  },
 });
 
 const ALIGN: Record<NonNullable<DataTableColumn<unknown>["align"]>, string> = {
@@ -38,6 +45,11 @@ export function DataTable<T>({
   sort: controlledSort,
   defaultSort,
   onSortChange,
+  selectedIds,
+  onSelectionChange,
+  onSelectedChange,
+  multiSelect = true,
+  onActivate,
   emptyState,
   loading,
   ariaLabel,
@@ -61,6 +73,77 @@ export function DataTable<T>({
   const template = useMemo(() => gridTemplate(columns, widths, false), [columns, widths]);
   const rowStyle: CSSProperties = { gridTemplateColumns: "var(--dt-cols)", height: rowHeight };
 
+  const isSelControlled = selectedIds !== undefined;
+  const [internalSelected, setInternalSelected] = useState<Set<string>>(() => new Set());
+  const selected = isSelControlled ? selectedIds : internalSelected;
+  const [anchor, setAnchor] = useState<number | null>(null);
+  const [focusedIndex, setFocusedIndex] = useState(0);
+
+  const ids = useMemo(() => sorted.map(rowId), [sorted, rowId]);
+
+  // Commit a selection: update state, move focus, notify (primary + full set).
+  const commitSelection = (next: Set<string>, activeIndex: number, anchorIndex: number | null) => {
+    if (!isSelControlled) setInternalSelected(next);
+    setFocusedIndex(activeIndex);
+    setAnchor(anchorIndex);
+    onSelectionChange?.(sorted[activeIndex] ?? null);
+    onSelectedChange?.(sorted.filter((_, i) => next.has(ids[i]!)));
+  };
+
+  const select = (index: number) => {
+    if (!sorted[index]) return;
+    commitSelection(new Set([ids[index]!]), index, index);
+  };
+
+  const handleRowClick = (index: number, e: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean }) => {
+    const id = ids[index]!;
+    if (multiSelect && e.shiftKey && anchor !== null) {
+      const lo = Math.min(anchor, index);
+      const hi = Math.max(anchor, index);
+      commitSelection(new Set(ids.slice(lo, hi + 1)), index, anchor); // keep the existing anchor
+    } else if (multiSelect && (e.ctrlKey || e.metaKey)) {
+      const next = new Set(selected);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      commitSelection(next, index, index);
+    } else {
+      select(index);
+    }
+  };
+
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (sorted.length === 0) return;
+    const current = Math.min(Math.max(focusedIndex, 0), sorted.length - 1);
+    if (multiSelect && (e.ctrlKey || e.metaKey) && (e.key === "a" || e.key === "A")) {
+      e.preventDefault();
+      commitSelection(new Set(ids), current, current);
+      return;
+    }
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        select(Math.min(current + 1, sorted.length - 1));
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        select(Math.max(current - 1, 0));
+        break;
+      case "Home":
+        e.preventDefault();
+        select(0);
+        break;
+      case "End":
+        e.preventDefault();
+        select(sorted.length - 1);
+        break;
+      case "Enter":
+      case " ":
+        e.preventDefault();
+        onActivate?.(sorted[current]!);
+        break;
+    }
+  };
+
   return (
     <div
       role="grid"
@@ -69,6 +152,7 @@ export function DataTable<T>({
       tabIndex={0}
       className={s.root({ className })}
       style={{ "--dt-cols": template } as CSSProperties}
+      onKeyDown={onKeyDown}
     >
       <div role="row" className={s.headerRow()} style={{ gridTemplateColumns: "var(--dt-cols)" }}>
         {columns.map((col) => {
@@ -97,8 +181,16 @@ export function DataTable<T>({
       {sorted.length === 0 && !loading ? (
         <div className={s.empty()}>{emptyState}</div>
       ) : (
-        sorted.map((row) => (
-          <div key={rowId(row)} role="row" className={s.row()} style={rowStyle}>
+        sorted.map((row, index) => (
+          <div
+            key={ids[index]}
+            role="row"
+            aria-selected={selected.has(ids[index]!)}
+            className={s.row({ selected: selected.has(ids[index]!) })}
+            style={rowStyle}
+            onClick={(e) => handleRowClick(index, e)}
+            onDoubleClick={() => onActivate?.(row)}
+          >
             {columns.map((col) => (
               <div key={col.id} role="gridcell" className={cx(s.cell(), ALIGN[col.align ?? "left"])}>
                 {col.cell(row)}

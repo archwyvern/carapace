@@ -112,3 +112,131 @@ describe("DataTable sorting", () => {
     expect(screen.getByRole("columnheader", { name: /name/i })).toHaveAttribute("aria-sort", "descending");
   });
 });
+
+describe("DataTable selection", () => {
+  it("click selects a single row and reports primary + set", () => {
+    const onSelectionChange = vi.fn();
+    const onSelectedChange = vi.fn();
+    render(
+      <DataTable
+        rows={users}
+        columns={userColumns}
+        rowId={(u) => u.id}
+        ariaLabel="Users"
+        onSelectionChange={onSelectionChange}
+        onSelectedChange={onSelectedChange}
+      />,
+    );
+    fireEvent.click(screen.getByText("alice"));
+    expect(onSelectionChange).toHaveBeenCalledWith(users[1]);
+    expect(onSelectedChange).toHaveBeenCalledWith([users[1]]);
+    const rows = screen.getAllByRole("row").slice(1);
+    expect(rows[1]).toHaveAttribute("aria-selected", "true");
+    expect(rows[0]).toHaveAttribute("aria-selected", "false");
+  });
+
+  it("ctrl-click toggles, shift-click ranges from the anchor", () => {
+    const onSelectedChange = vi.fn();
+    render(
+      <DataTable
+        rows={users}
+        columns={userColumns}
+        rowId={(u) => u.id}
+        ariaLabel="Users"
+        onSelectedChange={onSelectedChange}
+      />,
+    );
+    fireEvent.click(screen.getByText("charlie"));
+    fireEvent.click(screen.getByText("bob"), { ctrlKey: true });
+    expect(onSelectedChange).toHaveBeenLastCalledWith([users[0], users[2]]);
+    fireEvent.click(screen.getByText("bob"), { ctrlKey: true }); // toggle off — anchor moves to bob
+    expect(onSelectedChange).toHaveBeenLastCalledWith([users[0]]);
+    // shift-click ranges from the anchor (bob, per TreeView/VS Code semantics), replacing the set
+    fireEvent.click(screen.getByText("alice"), { shiftKey: true });
+    expect(onSelectedChange).toHaveBeenLastCalledWith([users[1], users[2]]);
+  });
+
+  it("multiSelect=false degrades modifiers to plain select", () => {
+    const onSelectedChange = vi.fn();
+    render(
+      <DataTable
+        rows={users}
+        columns={userColumns}
+        rowId={(u) => u.id}
+        ariaLabel="Users"
+        multiSelect={false}
+        onSelectedChange={onSelectedChange}
+      />,
+    );
+    fireEvent.click(screen.getByText("charlie"));
+    fireEvent.click(screen.getByText("bob"), { ctrlKey: true });
+    expect(onSelectedChange).toHaveBeenLastCalledWith([users[2]]);
+  });
+
+  it("controlled selection renders selectedIds and does not self-update", () => {
+    render(
+      <DataTable
+        rows={users}
+        columns={userColumns}
+        rowId={(u) => u.id}
+        ariaLabel="Users"
+        selectedIds={new Set(["u3"])}
+      />,
+    );
+    const rows = screen.getAllByRole("row").slice(1);
+    expect(rows[2]).toHaveAttribute("aria-selected", "true");
+    fireEvent.click(screen.getByText("alice"));
+    expect(rows[2]).toHaveAttribute("aria-selected", "true");
+    expect(rows[1]).toHaveAttribute("aria-selected", "false");
+  });
+
+  it("keyboard: arrows move selection in SORTED order, Home/End jump, Enter activates", () => {
+    const onActivate = vi.fn();
+    const onSelectionChange = vi.fn();
+    render(
+      <DataTable
+        rows={users}
+        columns={userColumns}
+        rowId={(u) => u.id}
+        ariaLabel="Users"
+        defaultSort={{ columnId: "name", direction: "asc" }}
+        onActivate={onActivate}
+        onSelectionChange={onSelectionChange}
+      />,
+    );
+    const grid = screen.getByRole("grid", { name: "Users" });
+    fireEvent.click(screen.getByText("alice")); // sorted index 0
+    fireEvent.keyDown(grid, { key: "ArrowDown" });
+    expect(onSelectionChange).toHaveBeenLastCalledWith(users[2]); // bob is sorted index 1
+    fireEvent.keyDown(grid, { key: "End" });
+    expect(onSelectionChange).toHaveBeenLastCalledWith(users[0]); // charlie sorted last
+    fireEvent.keyDown(grid, { key: "Enter" });
+    expect(onActivate).toHaveBeenCalledWith(users[0]);
+  });
+
+  it("ctrl+A selects all when multiSelect", () => {
+    const onSelectedChange = vi.fn();
+    render(
+      <DataTable
+        rows={users}
+        columns={userColumns}
+        rowId={(u) => u.id}
+        ariaLabel="Users"
+        onSelectedChange={onSelectedChange}
+      />,
+    );
+    const grid = screen.getByRole("grid", { name: "Users" });
+    fireEvent.click(screen.getByText("alice"));
+    fireEvent.keyDown(grid, { key: "a", ctrlKey: true });
+    expect(onSelectedChange).toHaveBeenLastCalledWith(users);
+  });
+
+  it("double-click activates", () => {
+    const onActivate = vi.fn();
+    render(
+      <DataTable rows={users} columns={userColumns} rowId={(u) => u.id} ariaLabel="Users" onActivate={onActivate} />,
+    );
+    fireEvent.doubleClick(screen.getByText("bob"));
+    expect(onActivate).toHaveBeenCalledWith(users[2]);
+  });
+});
