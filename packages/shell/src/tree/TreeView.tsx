@@ -117,16 +117,20 @@ export function TreeView<T>({
     commitSelection(new Set([f.node.id]), index, index);
   };
 
-  // Programmatic reveal (seq-bumped): select the row and scroll it into view. Runs after render,
-  // so ancestors expanded in the same update are already flattened in.
+  // Programmatic reveal (seq-bumped): select the row and scroll it into view. The ancestor
+  // expansion may land a render LATER than the reveal target (e.g. a memento-backed expanded
+  // set), so the seq is consumed only once the row actually exists — until then every flat
+  // change retries.
+  const revealedSeq = useRef(0);
   useEffect(() => {
-    if (!reveal) return;
+    if (!reveal || reveal.seq === revealedSeq.current) return;
     const index = flat.findIndex((f) => f.node.id === reveal.id);
-    if (index < 0) return;
+    if (index < 0) return; // not visible yet — retry on the next flat change
+    revealedSeq.current = reveal.seq;
     select(index);
     treeRef.current?.querySelectorAll('[role="treeitem"]')[index]?.scrollIntoView?.({ block: "nearest" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reveal?.seq]);
+  }, [reveal, flat]);
 
   const handleClick = (index: number, e: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean }) => {
     const id = flat[index]!.node.id;
