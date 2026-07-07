@@ -24,6 +24,26 @@ export function applySort<T>(rows: T[], columns: DataTableColumn<T>[], sort: Sor
   return decorated.map((d) => d.row);
 }
 
+/** grid-template-columns for the data columns (+ trailing menu column). */
+export function gridTemplate<T>(
+  columns: DataTableColumn<T>[],
+  overrides: Record<string, number>,
+  menuColumn: boolean,
+): string {
+  const tracks = columns.map((c) => {
+    const min = c.minWidth ?? DEFAULT_MIN_WIDTH;
+    const px = overrides[c.id] ?? c.width;
+    if (px != null) return `${Math.max(px, min)}px`;
+    return `minmax(${min}px,${c.flex ?? 1}fr)`;
+  });
+  if (menuColumn) tracks.push(`${MENU_COLUMN_WIDTH}px`);
+  return tracks.join(" ");
+}
+
+export function clampWidth<T>(column: DataTableColumn<T>, px: number): number {
+  return Math.max(px, column.minWidth ?? DEFAULT_MIN_WIDTH);
+}
+
 // Nulls sort last regardless of direction, so the null branch skips the dir flip.
 function compareBy<T>(
   by: (row: T) => string | number | null | undefined,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applySort, nextSort } from "./tableModel";
+import { applySort, clampWidth, gridTemplate, nextSort } from "./tableModel";
 import type { DataTableColumn } from "./tableTypes";
 
 interface Row {
@@ -86,5 +86,33 @@ describe("applySort", () => {
     const copy = [...rows];
     applySort(rows, columns, { columnId: "name", direction: "asc" });
     expect(rows).toEqual(copy);
+  });
+});
+
+describe("gridTemplate", () => {
+  const cols: DataTableColumn<Row>[] = [
+    { id: "a", header: "A", cell: (r) => r.id, width: 120 },
+    { id: "b", header: "B", cell: (r) => r.id, flex: 2, minWidth: 80 },
+    { id: "c", header: "C", cell: (r) => r.id },
+  ];
+
+  it("fixed px, flex minmax with weight/min, defaults flex 1 min 60", () => {
+    expect(gridTemplate(cols, {}, false)).toBe("120px minmax(80px,2fr) minmax(60px,1fr)");
+  });
+
+  it("overrides pin a column to px and clamp to minWidth", () => {
+    expect(gridTemplate(cols, { b: 40, c: 200 }, false)).toBe("120px 80px 200px");
+  });
+
+  it("appends the menu column track", () => {
+    expect(gridTemplate(cols, {}, true)).toBe("120px minmax(80px,2fr) minmax(60px,1fr) 36px");
+  });
+});
+
+describe("clampWidth", () => {
+  it("clamps to the column minWidth, defaulting 60", () => {
+    expect(clampWidth({ id: "x", header: "", cell: () => null, minWidth: 100 }, 50)).toBe(100);
+    expect(clampWidth({ id: "x", header: "", cell: () => null }, 50)).toBe(60);
+    expect(clampWidth({ id: "x", header: "", cell: () => null }, 500)).toBe(500);
   });
 });
