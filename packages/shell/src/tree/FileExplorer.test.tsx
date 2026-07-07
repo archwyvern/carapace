@@ -136,3 +136,21 @@ test("a consumer onExternalDrop overrides the built-in import", async () => {
   expect(onExternalDrop).toHaveBeenCalledTimes(1);
   expect(createSpy).not.toHaveBeenCalled();
 });
+
+test("reveal(path) expands ancestors and selects the entry", async () => {
+  const host = createMemoryHost({
+    "/proj/src/deep/nested.ts": "n",
+    "/proj/README.md": "z",
+  });
+  const actionsRef = { current: null } as React.RefObject<import("./FileExplorer").FileExplorerActions | null>;
+  render(
+    <HostProvider host={host}>
+      <FileExplorer root="/proj" actionsRef={actionsRef} />
+    </HostProvider>,
+  );
+  await screen.findByText("src");
+  expect(screen.queryByText("nested.ts")).not.toBeInTheDocument(); // collapsed
+  actionsRef.current!.reveal("/proj/src/deep/nested.ts");
+  const row = (await screen.findByText("nested.ts")).closest('[role="treeitem"]');
+  expect(row).toHaveAttribute("aria-selected", "true");
+});

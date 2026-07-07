@@ -16,6 +16,9 @@ type Fs = NonNullable<CarapaceHost["fs"]>;
 export interface FileExplorerActions {
   /** Start the inline "New File" editor under `dir` (defaults to the root). */
   startNewFile: (dir?: string) => void;
+  /** Expand ancestors, select, and scroll `path` into view ("Reveal in Explorer"). No-op when the
+   *  path isn't in the tree (excluded/hidden/outside the root). */
+  reveal: (path: string) => void;
 }
 
 export interface FileExplorerProps {
@@ -180,6 +183,7 @@ function ActiveFileExplorer({
   const [editing, setEditing] = useState<Editing | null>(null);
   const [selected, setSelected] = useState<DirEntry[]>([]);
   const [active, setActive] = useState<DirEntry | null>(null);
+  const [revealTarget, setRevealTarget] = useState<{ id: string; seq: number } | null>(null);
   const [clip, setClip] = useState<{ paths: string[]; cut: boolean } | null>(null);
   const parents = useRef<Map<string, string>>(new Map());
   const entries = useRef<Map<string, DirEntry>>(new Map());
@@ -380,14 +384,32 @@ function ActiveFileExplorer({
     setEditing({ kind, dir });
   }, [root, setExpanded]);
 
-  // Expose an imperative handle so a host can start the inline new-file flow from outside the tree.
+  // Reveal a path: expand every ancestor dir, then select + scroll its row (TreeView `reveal`).
+  // Both state updates land in one render, so the row exists by the time TreeView's effect runs.
+  const revealPath = useCallback(
+    (path: string) => {
+      if (!entries.current.has(path)) return; // outside the tree (excluded/hidden/foreign)
+      setExpanded((prev) => {
+        const next = new Set(prev);
+        for (let dir = parents.current.get(path); dir && dir !== root; dir = parents.current.get(dir)) next.add(dir);
+        return next;
+      });
+      setRevealTarget((prev) => ({ id: path, seq: (prev?.seq ?? 0) + 1 }));
+    },
+    [setExpanded, root],
+  );
+
+  // Expose an imperative handle so a host can drive the explorer from outside the tree.
   useEffect(() => {
     if (!actionsRef) return;
-    actionsRef.current = { startNewFile: (dir?: string) => startNew("newFile", dir ?? root) };
+    actionsRef.current = {
+      startNewFile: (dir?: string) => startNew("newFile", dir ?? root),
+      reveal: revealPath,
+    };
     return () => {
       actionsRef.current = null;
     };
-  }, [actionsRef, startNew, root]);
+  }, [actionsRef, startNew, root, revealPath]);
 
   const commitEdit = useCallback(async (value: string) => {
     const e = editing;
@@ -501,6 +523,7 @@ function ActiveFileExplorer({
           ctx.open(e);
         }}
         onBackgroundContextMenu={openRootMenu}
+        reveal={revealTarget ?? undefined}
         renderItem={(c) => {
           const deco = getDecoration?.(c.node.data);
           return (

@@ -48,6 +48,7 @@ export function TreeView<T>({
   onEditCancel,
   onContextMenu,
   onBackgroundContextMenu,
+  reveal,
   rowStyle,
   ariaLabel,
   className,
@@ -115,6 +116,17 @@ export function TreeView<T>({
     if (!f) return;
     commitSelection(new Set([f.node.id]), index, index);
   };
+
+  // Programmatic reveal (seq-bumped): select the row and scroll it into view. Runs after render,
+  // so ancestors expanded in the same update are already flattened in.
+  useEffect(() => {
+    if (!reveal) return;
+    const index = flat.findIndex((f) => f.node.id === reveal.id);
+    if (index < 0) return;
+    select(index);
+    treeRef.current?.querySelectorAll('[role="treeitem"]')[index]?.scrollIntoView?.({ block: "nearest" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reveal?.seq]);
 
   const handleClick = (index: number, e: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean }) => {
     const id = flat[index]!.node.id;

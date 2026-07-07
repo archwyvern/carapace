@@ -103,6 +103,9 @@ export interface TreeViewProps<T = unknown> {
   onContextMenu?: (node: TreeNode<T>, e: MouseEvent) => void;
   /** Right-click on empty tree area (not on any row). */
   onBackgroundContextMenu?: (e: MouseEvent) => void;
+  /** Programmatic reveal: when `seq` bumps, single-select the node and scroll its row into view.
+   *  The node must be VISIBLE — expand its ancestors (via `expanded`) in the same update. */
+  reveal?: { id: string; seq: number };
   rowStyle?: (ctx: TreeItemContext<T>) => CSSProperties;
   ariaLabel?: string;
   className?: string;
