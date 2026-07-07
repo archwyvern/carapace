@@ -13,6 +13,7 @@ export {
   ArrowCounterclockwise16Regular as ResetIcon,
   ChevronRight16Regular as ChevronRightIcon,
   ChevronDown16Regular as ChevronDownIcon,
+  ChevronUp16Regular as ChevronUpIcon,
   Checkmark16Regular as CheckIcon,
   Info16Regular as InfoIcon,
   Warning16Regular as WarningIcon,

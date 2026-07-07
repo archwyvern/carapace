@@ -1,5 +1,5 @@
-import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { DataTable } from "./DataTable";
 import type { DataTableColumn } from "./tableTypes";
 
@@ -51,5 +51,64 @@ describe("DataTable render", () => {
     render(<DataTable rows={users} columns={userColumns} rowId={(u) => u.id} loading />);
     expect(screen.getByRole("status")).toBeInTheDocument();
     expect(screen.getAllByRole("columnheader")).toHaveLength(2);
+  });
+});
+
+describe("DataTable sorting", () => {
+  it("header click cycles asc -> desc -> none and reorders rows", () => {
+    render(<DataTable rows={users} columns={userColumns} rowId={(u) => u.id} ariaLabel="Users" />);
+    const nameHeader = screen.getByRole("columnheader", { name: /name/i });
+    const names = () =>
+      screen
+        .getAllByRole("row")
+        .slice(1)
+        .map((r) => within(r).getAllByRole("gridcell")[0]!.textContent);
+
+    fireEvent.click(nameHeader);
+    expect(nameHeader).toHaveAttribute("aria-sort", "ascending");
+    expect(names()).toEqual(["alice", "bob", "charlie"]);
+    fireEvent.click(nameHeader);
+    expect(nameHeader).toHaveAttribute("aria-sort", "descending");
+    expect(names()).toEqual(["charlie", "bob", "alice"]);
+    fireEvent.click(nameHeader);
+    expect(nameHeader).not.toHaveAttribute("aria-sort");
+    expect(names()).toEqual(["charlie", "alice", "bob"]); // input order restored
+  });
+
+  it("unsortable headers are not buttons", () => {
+    render(<DataTable rows={users} columns={userColumns} rowId={(u) => u.id} ariaLabel="Users" />);
+    expect(screen.getByRole("columnheader", { name: /role/i }).tagName).not.toBe("BUTTON");
+  });
+
+  it("controlled sort: renders the prop and only notifies", () => {
+    const onSortChange = vi.fn();
+    render(
+      <DataTable
+        rows={users}
+        columns={userColumns}
+        rowId={(u) => u.id}
+        ariaLabel="Users"
+        sort={{ columnId: "name", direction: "asc" }}
+        onSortChange={onSortChange}
+      />,
+    );
+    const nameHeader = screen.getByRole("columnheader", { name: /name/i });
+    fireEvent.click(nameHeader);
+    expect(onSortChange).toHaveBeenCalledWith({ columnId: "name", direction: "desc" });
+    // still ascending — parent didn't re-render with a new prop
+    expect(nameHeader).toHaveAttribute("aria-sort", "ascending");
+  });
+
+  it("defaultSort applies on mount", () => {
+    render(
+      <DataTable
+        rows={users}
+        columns={userColumns}
+        rowId={(u) => u.id}
+        ariaLabel="Users"
+        defaultSort={{ columnId: "name", direction: "desc" }}
+      />,
+    );
+    expect(screen.getByRole("columnheader", { name: /name/i })).toHaveAttribute("aria-sort", "descending");
   });
 });
