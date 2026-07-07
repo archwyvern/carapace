@@ -25,4 +25,6 @@ export {
   Delete16Regular as DeleteIcon,
   MoreHorizontal16Regular as MoreIcon,
   Pin16Regular as PinIcon,
+  ArrowLeft16Regular as BackIcon,
+  History16Regular as HistoryIcon,
 } from "@fluentui/react-icons";

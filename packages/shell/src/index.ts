@@ -303,3 +303,5 @@ export { LockBanner } from "./collab/LockBanner";
 export type { LockBannerProps } from "./collab/LockBanner";
 export { HistoryTimeline } from "./collab/HistoryTimeline";
 export type { HistoryTimelineProps, HistoryTimelineItem, HistoryItemKind } from "./collab/HistoryTimeline";
+export { ResourceShell } from "./collab/ResourceShell";
+export type { ResourceShellProps } from "./collab/ResourceShell";
