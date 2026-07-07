@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
-import type { CSSProperties, KeyboardEvent } from "react";
+import type { CSSProperties, KeyboardEvent, MouseEvent as ReactMouseEvent } from "react";
 import { tv } from "tailwind-variants";
 import { cx } from "../cx";
-import { ChevronDownIcon, ChevronUpIcon } from "../icons";
+import { ChevronDownIcon, ChevronUpIcon, MoreIcon } from "../icons";
+import { ContextMenu } from "../menu/ContextMenu";
+import { IconButton } from "../primitives/IconButton";
 import { Spinner } from "../primitives/Spinner";
 import { applySort, gridTemplate, nextSort } from "./tableModel";
 import type { DataTableColumn, DataTableProps } from "./tableTypes";
@@ -50,6 +52,7 @@ export function DataTable<T>({
   onSelectedChange,
   multiSelect = true,
   onActivate,
+  rowMenu,
   emptyState,
   loading,
   ariaLabel,
@@ -70,7 +73,7 @@ export function DataTable<T>({
   };
 
   const sorted = useMemo(() => applySort(rows, columns, sort), [rows, columns, sort]);
-  const template = useMemo(() => gridTemplate(columns, widths, false), [columns, widths]);
+  const template = useMemo(() => gridTemplate(columns, widths, !!rowMenu), [columns, widths, rowMenu]);
   const rowStyle: CSSProperties = { gridTemplateColumns: "var(--dt-cols)", height: rowHeight };
 
   const isSelControlled = selectedIds !== undefined;
@@ -94,6 +97,8 @@ export function DataTable<T>({
     if (!sorted[index]) return;
     commitSelection(new Set([ids[index]!]), index, index);
   };
+
+  const [menu, setMenu] = useState<{ row: T; anchor: { x: number; y: number } | HTMLElement } | null>(null);
 
   const handleRowClick = (index: number, e: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean }) => {
     const id = ids[index]!;
@@ -177,6 +182,7 @@ export function DataTable<T>({
             </div>
           );
         })}
+        {rowMenu && <div role="columnheader" className={s.headerCell()} />}
       </div>
       {sorted.length === 0 && !loading ? (
         <div className={s.empty()}>{emptyState}</div>
@@ -190,12 +196,33 @@ export function DataTable<T>({
             style={rowStyle}
             onClick={(e) => handleRowClick(index, e)}
             onDoubleClick={() => onActivate?.(row)}
+            onContextMenu={
+              rowMenu &&
+              ((e: ReactMouseEvent) => {
+                e.preventDefault();
+                if (!selected.has(ids[index]!)) select(index);
+                setMenu({ row, anchor: { x: e.clientX, y: e.clientY } });
+              })
+            }
           >
             {columns.map((col) => (
               <div key={col.id} role="gridcell" className={cx(s.cell(), ALIGN[col.align ?? "left"])}>
                 {col.cell(row)}
               </div>
             ))}
+            {rowMenu && (
+              <div role="gridcell" className={s.cell({ className: "justify-center px-0" })}>
+                <IconButton
+                  label="Row actions"
+                  icon={<MoreIcon />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!selected.has(ids[index]!)) select(index);
+                    setMenu({ row, anchor: e.currentTarget });
+                  }}
+                />
+              </div>
+            )}
           </div>
         ))
       )}
@@ -203,6 +230,9 @@ export function DataTable<T>({
         <div className={s.loading()}>
           <Spinner />
         </div>
+      )}
+      {menu && rowMenu && (
+        <ContextMenu items={rowMenu(menu.row)} anchor={menu.anchor} onClose={() => setMenu(null)} />
       )}
     </div>
   );

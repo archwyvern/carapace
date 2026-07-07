@@ -240,3 +240,42 @@ describe("DataTable selection", () => {
     expect(onActivate).toHaveBeenCalledWith(users[2]);
   });
 });
+
+describe("DataTable row menu", () => {
+  const rowMenu = (u: User) => [{ label: `Delete ${u.name}`, run: vi.fn() }];
+
+  it("renders a trailing menu button per row and opens with the right row", () => {
+    render(
+      <DataTable rows={users} columns={userColumns} rowId={(u) => u.id} ariaLabel="Users" rowMenu={rowMenu} />,
+    );
+    const buttons = screen.getAllByRole("button", { name: "Row actions" });
+    expect(buttons).toHaveLength(3);
+    fireEvent.click(buttons[1]!);
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+    expect(screen.getByText("Delete alice")).toBeInTheDocument();
+  });
+
+  it("right-click opens the context menu and selects the row first", () => {
+    const onSelectionChange = vi.fn();
+    render(
+      <DataTable
+        rows={users}
+        columns={userColumns}
+        rowId={(u) => u.id}
+        ariaLabel="Users"
+        rowMenu={rowMenu}
+        onSelectionChange={onSelectionChange}
+      />,
+    );
+    fireEvent.contextMenu(screen.getByText("bob"));
+    expect(screen.getByText("Delete bob")).toBeInTheDocument();
+    expect(onSelectionChange).toHaveBeenCalledWith(users[2]);
+  });
+
+  it("no rowMenu -> no trailing buttons, no context menu", () => {
+    render(<DataTable rows={users} columns={userColumns} rowId={(u) => u.id} ariaLabel="Users" />);
+    expect(screen.queryByRole("button", { name: "Row actions" })).not.toBeInTheDocument();
+    fireEvent.contextMenu(screen.getByText("bob"));
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+});
