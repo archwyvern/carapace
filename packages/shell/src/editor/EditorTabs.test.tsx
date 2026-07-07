@@ -51,3 +51,60 @@ test("without onReorder, tabs are not draggable", () => {
   render(<EditorTabs tabs={tabs} activeId="a" onSelect={() => {}} />);
   expect(screen.getByRole("tab", { name: /main\.tsx/ })).toHaveAttribute("draggable", "false");
 });
+
+// --- tab context menu + pin ---
+import { tabVerbIds } from "./EditorTabs";
+
+const four: EditorTab[] = [
+  { id: "p", title: "pinned.ts", pinned: true },
+  { id: "a2", title: "one.ts", dirty: true },
+  { id: "b2", title: "two.ts" },
+  { id: "c2", title: "three.ts" },
+];
+
+test("verb id math: others/right/saved skip pinned; close-all includes pinned", () => {
+  expect(tabVerbIds("close", four, "b2")).toEqual(["b2"]);
+  expect(tabVerbIds("close-others", four, "b2")).toEqual(["a2", "c2"]);
+  expect(tabVerbIds("close-right", four, "a2")).toEqual(["b2", "c2"]);
+  expect(tabVerbIds("close-saved", four, "b2")).toEqual(["b2", "c2"]);
+  expect(tabVerbIds("close-all", four, "b2")).toEqual(["p", "a2", "b2", "c2"]);
+});
+
+test("right-click opens the verb menu; Close Others closes the others", async () => {
+  const onCloseMany = vi.fn();
+  render(<EditorTabs tabs={four} activeId="a2" onSelect={() => {}} onCloseMany={onCloseMany} />);
+  fireEvent.contextMenu(screen.getByRole("tab", { name: /two\.ts/ }));
+  await userEvent.click(await screen.findByRole("menuitem", { name: /Close Others/ }));
+  expect(onCloseMany).toHaveBeenCalledWith(["a2", "c2"]);
+});
+
+test("menu shows the host shortcut hint and extra items; Pin flips to Unpin when pinned", async () => {
+  const onPin = vi.fn();
+  render(
+    <EditorTabs
+      tabs={four}
+      activeId="a2"
+      onSelect={() => {}}
+      onCloseMany={() => {}}
+      onPin={onPin}
+      menuShortcut={(v) => (v === "close" ? "Ctrl+W" : undefined)}
+      extraMenuItems={(tab) => [{ label: `Copy Path ${tab.id}`, run: () => {} }]}
+    />,
+  );
+  fireEvent.contextMenu(screen.getByRole("tab", { name: /pinned\.ts/ }));
+  expect(await screen.findByRole("menuitem", { name: /Unpin/ })).toBeInTheDocument();
+  expect(screen.getByRole("menuitem", { name: /Copy Path p/ })).toBeInTheDocument();
+  expect(screen.getByText("Ctrl+W")).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("menuitem", { name: /Unpin/ }));
+  expect(onPin).toHaveBeenCalledWith("p", false);
+});
+
+test("a pinned tab renders compact: no title text, no close button, middle-click ignored", () => {
+  const onClose = vi.fn();
+  render(<EditorTabs tabs={four} activeId="a2" onSelect={() => {}} onClose={onClose} />);
+  const pinnedTab = screen.getByRole("tab", { name: /pinned\.ts/ });
+  expect(pinnedTab.querySelector("span.truncate")).toBeNull(); // no title span
+  expect(screen.queryByRole("button", { name: "Close pinned.ts" })).not.toBeInTheDocument();
+  fireEvent(pinnedTab, new MouseEvent("auxclick", { bubbles: true, button: 1 }));
+  expect(onClose).not.toHaveBeenCalled();
+});

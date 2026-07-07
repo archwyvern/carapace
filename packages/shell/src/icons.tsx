@@ -24,4 +24,5 @@ export {
   LinkDismiss16Regular as UnlinkIcon,
   Delete16Regular as DeleteIcon,
   MoreHorizontal16Regular as MoreIcon,
+  Pin16Regular as PinIcon,
 } from "@fluentui/react-icons";
