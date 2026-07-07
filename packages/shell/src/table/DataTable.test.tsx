@@ -279,3 +279,42 @@ describe("DataTable row menu", () => {
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 });
+
+describe("DataTable virtualization", () => {
+  const many: User[] = Array.from({ length: 500 }, (_, i) => ({
+    id: `u${i}`,
+    name: `user ${i}`,
+    role: "viewer",
+  }));
+
+  function renderVirtual() {
+    render(
+      <DataTable rows={many} columns={userColumns} rowId={(u) => u.id} ariaLabel="Users" rowHeight={28} />,
+    );
+    const grid = screen.getByRole("grid", { name: "Users" });
+    // jsdom has no layout: give the scroll container a viewport height.
+    Object.defineProperty(grid, "clientHeight", { value: 280, configurable: true });
+    fireEvent.scroll(grid, { target: { scrollTop: 0 } });
+    return grid;
+  }
+
+  it("renders a bounded slice, not all 500 rows", () => {
+    renderVirtual();
+    const rows = screen.getAllByRole("row").slice(1);
+    expect(rows.length).toBeLessThan(50);
+    expect(screen.getByText("user 0")).toBeInTheDocument();
+    expect(screen.queryByText("user 499")).not.toBeInTheDocument();
+  });
+
+  it("scrolling moves the window", () => {
+    const grid = renderVirtual();
+    fireEvent.scroll(grid, { target: { scrollTop: 250 * 28 } });
+    expect(screen.getByText("user 250")).toBeInTheDocument();
+    expect(screen.queryByText("user 0")).not.toBeInTheDocument();
+  });
+
+  it("small tables stay fully materialized", () => {
+    render(<DataTable rows={users} columns={userColumns} rowId={(u) => u.id} ariaLabel="Users" />);
+    expect(screen.getAllByRole("row").slice(1)).toHaveLength(3);
+  });
+});

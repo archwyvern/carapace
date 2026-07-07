@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent, MouseEvent as ReactMouseEvent } from "react";
 import { tv } from "tailwind-variants";
 import { cx } from "../cx";
@@ -31,6 +31,8 @@ const table = tv({
   },
 });
 
+const OVERSCAN = 10;
+
 const ALIGN: Record<NonNullable<DataTableColumn<unknown>["align"]>, string> = {
   left: "justify-start",
   center: "justify-center",
@@ -55,6 +57,7 @@ export function DataTable<T>({
   rowMenu,
   emptyState,
   loading,
+  virtualizeAt = 100,
   ariaLabel,
   className,
 }: DataTableProps<T>) {
@@ -84,6 +87,20 @@ export function DataTable<T>({
 
   const ids = useMemo(() => sorted.map(rowId), [sorted, rowId]);
 
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewportH, setViewportH] = useState(0);
+  const virtual = sorted.length >= virtualizeAt;
+
+  useLayoutEffect(() => {
+    if (virtual && rootRef.current) setViewportH(rootRef.current.clientHeight);
+  }, [virtual]);
+
+  const start = virtual ? Math.max(0, Math.floor(scrollTop / rowHeight) - OVERSCAN) : 0;
+  const end = virtual
+    ? Math.min(sorted.length, Math.ceil((scrollTop + viewportH) / rowHeight) + OVERSCAN)
+    : sorted.length;
+
   // Commit a selection: update state, move focus, notify (primary + full set).
   const commitSelection = (next: Set<string>, activeIndex: number, anchorIndex: number | null) => {
     if (!isSelControlled) setInternalSelected(next);
@@ -96,6 +113,15 @@ export function DataTable<T>({
   const select = (index: number) => {
     if (!sorted[index]) return;
     commitSelection(new Set([ids[index]!]), index, index);
+    // Keyboard focus keeps the row visible when the body is windowed.
+    const el = rootRef.current;
+    if (el && virtual) {
+      const top = index * rowHeight;
+      const headerH = el.firstElementChild instanceof HTMLElement ? el.firstElementChild.offsetHeight : 0;
+      if (top < el.scrollTop) el.scrollTop = top;
+      else if (top + rowHeight > el.scrollTop + el.clientHeight - headerH)
+        el.scrollTop = top + rowHeight - el.clientHeight + headerH;
+    }
   };
 
   const [menu, setMenu] = useState<{ row: T; anchor: { x: number; y: number } | HTMLElement } | null>(null);
@@ -155,9 +181,18 @@ export function DataTable<T>({
       aria-label={ariaLabel}
       aria-rowcount={sorted.length + 1}
       tabIndex={0}
+      ref={rootRef}
       className={s.root({ className })}
       style={{ "--dt-cols": template } as CSSProperties}
       onKeyDown={onKeyDown}
+      onScroll={
+        virtual
+          ? (e) => {
+              setScrollTop(e.currentTarget.scrollTop);
+              setViewportH(e.currentTarget.clientHeight);
+            }
+          : undefined
+      }
     >
       <div role="row" className={s.headerRow()} style={{ gridTemplateColumns: "var(--dt-cols)" }}>
         {columns.map((col) => {
@@ -187,7 +222,11 @@ export function DataTable<T>({
       {sorted.length === 0 && !loading ? (
         <div className={s.empty()}>{emptyState}</div>
       ) : (
-        sorted.map((row, index) => (
+        <>
+          {virtual && start > 0 && <div style={{ height: start * rowHeight }} className="shrink-0" />}
+          {sorted.slice(start, end).map((row, sliceIndex) => {
+            const index = start + sliceIndex;
+            return (
           <div
             key={ids[index]}
             role="row"
@@ -224,7 +263,12 @@ export function DataTable<T>({
               </div>
             )}
           </div>
-        ))
+            );
+          })}
+          {virtual && end < sorted.length && (
+            <div style={{ height: (sorted.length - end) * rowHeight }} className="shrink-0" />
+          )}
+        </>
       )}
       {loading && (
         <div className={s.loading()}>
