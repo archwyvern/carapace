@@ -297,3 +297,9 @@ export type {
 export { DataTable } from "./table/DataTable";
 export type { DataTableProps, DataTableColumn, SortState } from "./table/tableTypes";
 export { applySort, nextSort, gridTemplate } from "./table/tableModel";
+export { PresenceStack } from "./collab/PresenceStack";
+export type { PresenceStackProps, PresenceUser } from "./collab/PresenceStack";
+export { LockBanner } from "./collab/LockBanner";
+export type { LockBannerProps } from "./collab/LockBanner";
+export { HistoryTimeline } from "./collab/HistoryTimeline";
+export type { HistoryTimelineProps, HistoryTimelineItem, HistoryItemKind } from "./collab/HistoryTimeline";
