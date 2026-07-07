@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect } from "react";
 import type { ReactNode } from "react";
 import type { CommandRegistry } from "./registry";
-import { matchEvent, parseChord } from "./keybinding";
+import { createChordMatcher, parseChord } from "./keybinding";
 
 const CommandContext = createContext<CommandRegistry | null>(null);
 
@@ -26,22 +26,32 @@ export function useOptionalCommands(): CommandRegistry | null {
   return useContext(CommandContext);
 }
 
-/** Global keydown → run the first command whose keybinding chord matches. */
+/** Global keydown → run the command whose keybinding matches (two-step chords included). */
 export function useCommandKeybindings(registry: CommandRegistry): void {
   useEffect(() => {
+    const matcher = createChordMatcher();
     const onKey = (e: KeyboardEvent) => {
       // A focused handler (e.g. a tree row's F2/Delete, an editor binding) that already
       // consumed the key wins — don't also fire a global command for the same chord.
       if (e.defaultPrevented) return;
-      for (const cmd of registry.all()) {
-        if (cmd.keybinding && matchEvent(parseChord(cmd.keybinding), e)) {
-          e.preventDefault();
-          registry.run(cmd.id);
-          return;
-        }
+      const bindings = registry
+        .all()
+        .filter((c) => c.keybinding)
+        .map((c) => ({ id: c.id, chord: parseChord(c.keybinding!) }));
+      const m = matcher.feed(bindings, e);
+      if (m.type === "run") {
+        e.preventDefault();
+        registry.run(m.id);
+      } else if (m.type === "pending" || m.type === "cancel") {
+        e.preventDefault(); // mid-sequence keys never leak into widgets
       }
     };
+    const onBlur = () => matcher.reset();
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("blur", onBlur);
+    };
   }, [registry]);
 }
