@@ -9,6 +9,8 @@ function Harness(props: {
   suffix?: string;
   min?: number;
   max?: number;
+  orGreater?: boolean;
+  orLess?: boolean;
   onCommit?: (v: number) => void;
 }) {
   const [v, setV] = useState(props.initial ?? 0);
@@ -21,6 +23,8 @@ function Harness(props: {
       suffix={props.suffix}
       min={props.min}
       max={props.max}
+      orGreater={props.orGreater}
+      orLess={props.orLess}
     />
   );
 }
@@ -144,4 +148,24 @@ test("bounded integer drag is range-scaled: a small range does NOT sweep 1 unit 
   fireEvent(el, ev);
   expect(screen.getByText("7")).toBeInTheDocument();
   fireEvent.pointerUp(el);
+});
+
+test("hard max clamps a typed value", async () => {
+  render(<Harness initial={0} min={-1} max={1} />);
+  focusControl("0");
+  await userEvent.keyboard("{Enter}");
+  const input = screen.getByRole("textbox");
+  await userEvent.clear(input);
+  await userEvent.type(input, "5{Enter}");
+  expect(screen.getByText("1")).toBeInTheDocument(); // clamped to max
+});
+
+test("orGreater lets a typed value exceed max (soft bound)", async () => {
+  render(<Harness initial={0} min={-1} max={1} orGreater />);
+  focusControl("0");
+  await userEvent.keyboard("{Enter}");
+  const input = screen.getByRole("textbox");
+  await userEvent.clear(input);
+  await userEvent.type(input, "5{Enter}");
+  expect(screen.getByText("5")).toBeInTheDocument(); // soft max: exceeded
 });

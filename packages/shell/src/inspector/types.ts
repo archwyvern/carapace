@@ -39,6 +39,10 @@ export interface NumberField extends InspectorFieldBase {
   onCommit?: (v: number) => void;
   min?: number;
   max?: number;
+  /** Treat min/max as SOFT: the slider bar spans them, but drag/type may go below/above (an
+   *  unbounded value with a sane default scrub range — e.g. a slope that can approach vertical). */
+  softMin?: boolean;
+  softMax?: boolean;
   integer?: boolean;
   /** Increment for spin buttons / arrow keys (defaults to 1, or a value-scaled step). */
   step?: number;
@@ -79,6 +83,9 @@ export interface VecField extends InspectorFieldBase {
   size: 2 | 3 | 4;
   min?: number;
   max?: number;
+  /** Soft min/max (see NumberField): the bar spans min..max but drag/type may exceed them. */
+  softMin?: boolean;
+  softMax?: boolean;
   integer?: boolean;
   /** Discrete arrow/spin/wheel increment for every axis (default 1; Shift = ×10). */
   step?: number;

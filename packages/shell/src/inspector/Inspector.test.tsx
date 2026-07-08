@@ -113,3 +113,26 @@ test("custom field renders its node", () => {
   render(<Inspector fields={fields} />);
   expect(screen.getByText("CUSTOM-WIDGET")).toBeInTheDocument();
 });
+
+test("number softMax lets a typed value exceed max (-> SpinSlider orGreater)", async () => {
+  const soft = vi.fn();
+  render(<Inspector fields={[{ kind: "number", key: "s", label: "Slope", value: 0, min: -1, max: 1, softMax: true, onChange: soft }]} />);
+  const control = document.querySelector<HTMLElement>('[tabindex="0"]')!;
+  control.focus();
+  await userEvent.keyboard("{Enter}");
+  const input = screen.getByRole("textbox");
+  await userEvent.clear(input);
+  await userEvent.type(input, "5{Enter}");
+  expect(soft).toHaveBeenLastCalledWith(5); // soft: not clamped to 1
+
+  // control: without softMax the same field clamps
+  const hard = vi.fn();
+  render(<Inspector fields={[{ kind: "number", key: "h", label: "Hard", value: 0, min: -1, max: 1, onChange: hard }]} />);
+  const controls = document.querySelectorAll<HTMLElement>('[tabindex="0"]');
+  controls[controls.length - 1]!.focus();
+  await userEvent.keyboard("{Enter}");
+  const input2 = screen.getByRole("textbox");
+  await userEvent.clear(input2);
+  await userEvent.type(input2, "5{Enter}");
+  expect(hard).toHaveBeenLastCalledWith(1); // clamped to max
+});

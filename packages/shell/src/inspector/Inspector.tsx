@@ -213,6 +213,8 @@ function VecRows({ field }: { field: VecField }) {
               onCommit={field.onCommit ? (v) => field.onCommit!(apply(i, v)) : undefined}
               min={field.min}
               max={field.max}
+              orLess={field.softMin}
+              orGreater={field.softMax}
               integer={field.integer}
               step={field.step}
               spinButtons
@@ -313,6 +315,8 @@ function renderBareControl(field: InspectorField): ReactNode {
           onCommit={field.onCommit}
           min={field.min}
           max={field.max}
+          orLess={field.softMin}
+          orGreater={field.softMax}
           integer={field.integer}
           step={field.step}
           spinButtons
