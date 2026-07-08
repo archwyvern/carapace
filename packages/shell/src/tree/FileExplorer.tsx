@@ -152,6 +152,18 @@ function defaultGetIcon(entry: DirEntry): ReactNode {
   return <FileTypeIcon name={entry.name} isDir={entry.isDir} />;
 }
 
+/** Fixed-size icon slot: every icon (Seti glyph, consumer SVG, whatever) centers in the same
+ *  box so row text aligns regardless of an icon's intrinsic width. Null icons (folders under
+ *  the default set) render no slot at all — the bare-folder look stays. */
+function IconSlot({ icon }: { icon: ReactNode }) {
+  if (icon === null || icon === undefined) return null;
+  return (
+    <span aria-hidden className="flex h-[1.5em] w-[1.5em] shrink-0 items-center justify-center">
+      {icon}
+    </span>
+  );
+}
+
 function baseExt(name: string): [string, string] {
   const dot = name.lastIndexOf(".");
   return dot > 0 ? [name.slice(0, dot), name.slice(dot)] : [name, ""];
@@ -594,7 +606,7 @@ function ActiveFileExplorer({
           if (rootNode && c.node.data.path === root) {
             return (
               <span className="flex min-w-0 items-center gap-1.5 font-semibold">
-                {(getIcon ?? defaultGetIcon)(c.node.data)}
+                <IconSlot icon={(getIcon ?? defaultGetIcon)(c.node.data)} />
                 <span className="truncate">{c.node.data.name}</span>
               </span>
             );
@@ -602,7 +614,7 @@ function ActiveFileExplorer({
           const deco = getDecoration?.(c.node.data);
           return (
             <span className="flex min-w-0 items-center gap-1.5">
-              {(getIcon ?? defaultGetIcon)(c.node.data)}
+              <IconSlot icon={(getIcon ?? defaultGetIcon)(c.node.data)} />
               <span className="truncate" style={deco?.color ? { color: deco.color } : undefined}>
                 {c.node.data.name}
               </span>

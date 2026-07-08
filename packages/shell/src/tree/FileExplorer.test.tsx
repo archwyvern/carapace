@@ -251,3 +251,20 @@ test("New File from the root row's menu creates at the top level", async () => {
   await userEvent.type(input, "notes.txt{Enter}");
   expect(createSpy).toHaveBeenCalledWith("/proj/notes.txt", "");
 });
+
+test("every row's icon sits in a fixed-width box so text aligns across icon types", async () => {
+  const host = createMemoryHost({ "/proj/a.lmb": "x", "/proj/b.png": "y" });
+  render(
+    <HostProvider host={host}>
+      <FileExplorer
+        root="/proj"
+        // wildly different intrinsic widths — the slot must normalize them
+        getIcon={(e) => (e.name.endsWith(".lmb") ? <svg width={40} height={10} /> : <svg width={8} height={8} />)}
+      />
+    </HostProvider>,
+  );
+  const a = (await screen.findByText("a.lmb")).previousElementSibling as HTMLElement;
+  const b = screen.getByText("b.png").previousElementSibling as HTMLElement;
+  expect(a.className).toContain("w-[1.5em]");
+  expect(b.className).toContain("w-[1.5em]");
+});
