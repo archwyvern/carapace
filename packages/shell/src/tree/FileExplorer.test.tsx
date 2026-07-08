@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HostProvider } from "../host/context";
 import { createMemoryHost } from "../host/memoryHost";
@@ -151,6 +151,103 @@ test("reveal(path) expands ancestors and selects the entry", async () => {
   await screen.findByText("src");
   expect(screen.queryByText("nested.ts")).not.toBeInTheDocument(); // collapsed
   actionsRef.current!.reveal("/proj/src/deep/nested.ts");
+  // The row can render a tick before the reveal effect applies the selection
+  // (expansion and reveal-seq may land in separate act flushes) — poll for it.
   const row = (await screen.findByText("nested.ts")).closest('[role="treeitem"]');
-  expect(row).toHaveAttribute("aria-selected", "true");
+  await waitFor(() => expect(row).toHaveAttribute("aria-selected", "true"));
+});
+
+// ── rootNode: fixed project row above the tree ──
+
+function setupRootNode(opts: { onRename?: (name: string) => void } = {}) {
+  const host = createMemoryHost({
+    "/proj/src/main.tsx": "x",
+    "/proj/README.md": "z",
+  });
+  render(
+    <HostProvider host={host}>
+      <FileExplorer root="/proj" rootNode={{ label: "My Project", onRename: opts.onRename }} />
+    </HostProvider>,
+  );
+  return host;
+}
+
+test("rootNode renders a fixed root row, expanded by default, with entries nested under it", async () => {
+  setupRootNode();
+  expect(await screen.findByText("My Project")).toBeInTheDocument();
+  // children visible without any interaction (root defaults to expanded)
+  expect(screen.getByText("src")).toBeInTheDocument();
+  expect(screen.getByText("README.md")).toBeInTheDocument();
+  // the root row sits at depth 0, entries indent one level deeper (paddingLeft = depth * indent)
+  const rootRow = screen.getByText("My Project").closest('[role="treeitem"]') as HTMLElement;
+  const childRow = screen.getByText("README.md").closest('[role="treeitem"]') as HTMLElement;
+  expect(parseInt(childRow.style.paddingLeft || "0")).toBeGreaterThan(parseInt(rootRow.style.paddingLeft || "0"));
+});
+
+test("collapsing the root row hides the whole tree", async () => {
+  setupRootNode();
+  await screen.findByText("README.md");
+  // the root is the only expanded row, so the only Collapse twistie is its
+  await userEvent.click(screen.getByRole("button", { name: "Collapse" }));
+  expect(screen.queryByText("README.md")).not.toBeInTheDocument();
+  expect(screen.getByText("My Project")).toBeInTheDocument();
+});
+
+test("root context menu has folder verbs but never Cut/Copy/Delete; Rename only with onRename", async () => {
+  setupRootNode(); // no onRename
+  fireEvent.contextMenu(await screen.findByText("My Project"));
+  expect(await screen.findByText("New File…")).toBeInTheDocument();
+  expect(screen.getByText("New Folder…")).toBeInTheDocument();
+  expect(screen.getByText("Copy Path")).toBeInTheDocument();
+  expect(screen.queryByText("Delete")).not.toBeInTheDocument();
+  expect(screen.queryByText("Cut")).not.toBeInTheDocument();
+  expect(screen.queryByText("Copy")).not.toBeInTheDocument();
+  expect(screen.queryByText("Rename…")).not.toBeInTheDocument();
+});
+
+test("root Rename edits the LABEL: fires onRename, never touches the fs", async () => {
+  const onRename = vi.fn();
+  const host = setupRootNode({ onRename });
+  const renameSpy = vi.spyOn(host.fs, "rename");
+  fireEvent.contextMenu(await screen.findByText("My Project"));
+  await userEvent.click(await screen.findByText("Rename…"));
+  const input = await screen.findByDisplayValue("My Project");
+  await userEvent.clear(input);
+  await userEvent.type(input, "Zarha{Enter}");
+  expect(onRename).toHaveBeenCalledWith("Zarha");
+  expect(renameSpy).not.toHaveBeenCalled();
+});
+
+test("committing an EMPTY root rename still fires onRename (host clears back to default)", async () => {
+  const onRename = vi.fn();
+  setupRootNode({ onRename });
+  fireEvent.contextMenu(await screen.findByText("My Project"));
+  await userEvent.click(await screen.findByText("Rename…"));
+  const input = await screen.findByDisplayValue("My Project");
+  await userEvent.clear(input);
+  await userEvent.type(input, "{Enter}");
+  expect(onRename).toHaveBeenCalledWith("");
+});
+
+test("Delete key on the root row is a no-op", async () => {
+  const host = setupRootNode();
+  const deleteSpy = vi.spyOn(host.fs, "delete");
+  const rootLabel = await screen.findByText("My Project");
+  await userEvent.click(rootLabel); // selects (and, VS Code-style, toggles) the root row
+  fireEvent.keyDown(rootLabel.closest('[role="tree"]')!, { key: "Delete" });
+  expect(deleteSpy).not.toHaveBeenCalled();
+  // the row survived; re-expanding shows the intact tree
+  await userEvent.click(screen.getByText("My Project"));
+  expect(await screen.findByText("README.md")).toBeInTheDocument();
+  expect(deleteSpy).not.toHaveBeenCalled();
+});
+
+test("New File from the root row's menu creates at the top level", async () => {
+  const host = setupRootNode();
+  const createSpy = vi.spyOn(host.fs, "createFile");
+  fireEvent.contextMenu(await screen.findByText("My Project"));
+  await userEvent.click(await screen.findByText("New File…"));
+  const input = await screen.findByRole("textbox");
+  await userEvent.type(input, "notes.txt{Enter}");
+  expect(createSpy).toHaveBeenCalledWith("/proj/notes.txt", "");
 });

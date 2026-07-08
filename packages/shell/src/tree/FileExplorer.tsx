@@ -73,6 +73,16 @@ export interface FileExplorerProps {
   onDidRename?: (from: string, to: string) => void;
   /** Fired after entries are deleted, with their (pre-delete) paths. */
   onDidDelete?: (paths: string[]) => void;
+  /**
+   * Render a fixed root row above the tree (the "project" row): entries nest one level
+   * under it and its chevron collapses the whole tree (expanded by default; state
+   * persisted with `storageKey`). Its context menu carries the folder verbs (New File /
+   * New Folder / Paste / path + reveal) but never Cut/Copy/Delete. `onRename` adds a
+   * Rename item that inline-edits the LABEL and reports it — the directory is never
+   * touched, and an empty commit is passed through (hosts treat it as "clear back to
+   * the default name"). Omit `onRename` for roots the host doesn't own the name of.
+   */
+  rootNode?: { label: string; onRename?: (name: string) => void };
   ariaLabel?: string;
 }
 
@@ -157,7 +167,8 @@ const NEW_ID = "__carapace_new__";
 type Editing =
   | { kind: "newFile"; dir: string }
   | { kind: "newFolder"; dir: string }
-  | { kind: "rename"; target: string; dir: string; initial: string };
+  | { kind: "rename"; target: string; dir: string; initial: string }
+  | { kind: "renameRoot" };
 
 interface ActiveProps extends FileExplorerProps {
   fs: Fs;
@@ -166,19 +177,35 @@ interface ActiveProps extends FileExplorerProps {
 }
 
 function ActiveFileExplorer({
-  root, onOpen, getIcon, getDecoration, rowActions, onExternalDrop, extraMenuItems, exclude, showHidden = false, newFile, onNewFile, actionsRef, onDidRename, onDidDelete, storageKey, ariaLabel = "Files", fs, clipboard, os,
+  root, onOpen, getIcon, getDecoration, rowActions, onExternalDrop, extraMenuItems, exclude, showHidden = false, newFile, onNewFile, actionsRef, onDidRename, onDidDelete, storageKey, rootNode, ariaLabel = "Files", fs, clipboard, os,
 }: ActiveProps) {
   const confirm = useOptionalConfirm();
   const ctx = useContextMenu();
   const [roots, setRoots] = useState<TreeNode<DirEntry>[]>([]);
   // Expanded-folder state persists via the memento StateService when storageKey is set
   // (ephemeral otherwise). Stored as a string[] bag the consumer's StateService owns.
-  const expandedMemento = useMemento<{ expanded: string[] }>(storageKey ?? null, { expanded: [] });
+  // `rootCollapsed` (rootNode mode only) is separate so the root can default to expanded
+  // without a sentinel in the list — absent = expanded, which old stored values satisfy.
+  const expandedMemento = useMemento<{ expanded: string[]; rootCollapsed?: boolean }>(storageKey ?? null, { expanded: [] });
   const expanded = useMemo(() => new Set(expandedMemento.value.expanded), [expandedMemento.value.expanded]);
   const setExpanded = useCallback((next: Set<string> | ((prev: Set<string>) => Set<string>)) => {
     const value = typeof next === "function" ? next(expanded) : next;
-    expandedMemento.update({ expanded: [...value] });
+    expandedMemento.update({ ...expandedMemento.value, expanded: [...value] });
   }, [expandedMemento, expanded]);
+  // The set handed to TreeView: in rootNode mode the root id rides along unless collapsed.
+  const treeExpanded = useMemo(() => {
+    if (!rootNode) return expanded;
+    const s = new Set(expanded);
+    if (expandedMemento.value.rootCollapsed) s.delete(root);
+    else s.add(root);
+    return s;
+  }, [rootNode, expanded, expandedMemento.value.rootCollapsed, root]);
+  const handleExpandedChange = useCallback((next: Set<string>) => {
+    if (!rootNode) return void expandedMemento.update({ ...expandedMemento.value, expanded: [...next] });
+    const rest = new Set(next);
+    rest.delete(root);
+    expandedMemento.update({ expanded: [...rest], rootCollapsed: next.has(root) ? undefined : true });
+  }, [rootNode, root, expandedMemento]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [editing, setEditing] = useState<Editing | null>(null);
   const [selected, setSelected] = useState<DirEntry[]>([]);
@@ -189,8 +216,8 @@ function ActiveFileExplorer({
   const entries = useRef<Map<string, DirEntry>>(new Map());
 
   // While creating, splice a phantom row (the inline editor) under the target dir.
-  const displayRoots = useMemo<TreeNode<DirEntry>[]>(() => {
-    if (!editing || editing.kind === "rename") return roots;
+  const phantomRoots = useMemo<TreeNode<DirEntry>[]>(() => {
+    if (!editing || editing.kind === "rename" || editing.kind === "renameRoot") return roots;
     const phantom: TreeNode<DirEntry> = {
       id: NEW_ID,
       data: { name: "", path: joinPath(editing.dir, NEW_ID), isDir: editing.kind === "newFolder" },
@@ -205,6 +232,12 @@ function ActiveFileExplorer({
       );
     return insert(roots);
   }, [roots, editing, root]);
+
+  // rootNode mode wraps everything under a fixed project row (id/path = root).
+  const displayRoots = useMemo<TreeNode<DirEntry>[]>(() => {
+    if (!rootNode) return phantomRoots;
+    return [{ id: root, data: { name: rootNode.label, path: root, isDir: true }, children: phantomRoots }];
+  }, [rootNode, phantomRoots, root]);
 
   const reload = useCallback(async () => {
     const tree = await buildTree(fs, root, showHidden, exclude);
@@ -368,35 +401,41 @@ function ActiveFileExplorer({
   const handleClipKeys = useCallback((e: ReactKeyboardEvent) => {
     if (!(e.ctrlKey || e.metaKey)) return;
     const k = e.key.toLowerCase();
-    if (k === "x" && selected.length) { e.preventDefault(); setClip({ paths: selected.map((s) => s.path), cut: true }); }
-    else if (k === "c" && selected.length) { e.preventDefault(); setClip({ paths: selected.map((s) => s.path), cut: false }); }
+    // The root row is never cut/copied — it isn't a movable entry, just the project chrome.
+    const clippable = selected.filter((s) => s.path !== root);
+    if (k === "x" && clippable.length) { e.preventDefault(); setClip({ paths: clippable.map((s) => s.path), cut: true }); }
+    else if (k === "c" && clippable.length) { e.preventDefault(); setClip({ paths: clippable.map((s) => s.path), cut: false }); }
     else if (k === "v" && clip) { e.preventDefault(); void doPaste(pasteTargetDir()); }
-  }, [selected, clip, doPaste, pasteTargetDir]);
+  }, [selected, clip, doPaste, pasteTargetDir, root]);
 
   const startRename = useCallback((entry: DirEntry) => {
-    if (entry.path === root) return;
+    if (entry.path === root) {
+      // Root rename edits the label, not the directory — only when the host owns the name.
+      if (rootNode?.onRename) setEditing({ kind: "renameRoot" });
+      return;
+    }
     const dir = parents.current.get(entry.path) ?? root;
     setEditing({ kind: "rename", target: entry.path, dir, initial: entry.name });
-  }, [root]);
+  }, [root, rootNode]);
 
   const startNew = useCallback((kind: "newFile" | "newFolder", dir: string) => {
     if (dir !== root) setExpanded((s) => new Set(s).add(dir)); // reveal the phantom row
+    else if (rootNode) expandedMemento.update({ ...expandedMemento.value, rootCollapsed: undefined }); // phantom lives under the root row
     setEditing({ kind, dir });
-  }, [root, setExpanded]);
+  }, [root, setExpanded, rootNode, expandedMemento]);
 
   // Reveal a path: expand every ancestor dir, then select + scroll its row (TreeView `reveal`).
   // Both state updates land in one render, so the row exists by the time TreeView's effect runs.
   const revealPath = useCallback(
     (path: string) => {
       if (!entries.current.has(path)) return; // outside the tree (excluded/hidden/foreign)
-      setExpanded((prev) => {
-        const next = new Set(prev);
-        for (let dir = parents.current.get(path); dir && dir !== root; dir = parents.current.get(dir)) next.add(dir);
-        return next;
-      });
+      const next = new Set(expanded);
+      for (let dir = parents.current.get(path); dir && dir !== root; dir = parents.current.get(dir)) next.add(dir);
+      // One write: the ancestors, plus (rootNode mode) un-collapsing the root the path lives under.
+      expandedMemento.update({ expanded: [...next], rootCollapsed: undefined });
       setRevealTarget((prev) => ({ id: path, seq: (prev?.seq ?? 0) + 1 }));
     },
-    [setExpanded, root],
+    [expanded, expandedMemento, root],
   );
 
   // Expose an imperative handle so a host can drive the explorer from outside the tree.
@@ -415,7 +454,13 @@ function ActiveFileExplorer({
     const e = editing;
     setEditing(null);
     const name = value.trim();
-    if (!e || !name) return;
+    if (!e) return;
+    if (e.kind === "renameRoot") {
+      // Label-only rename; empty passes through (host semantics: clear back to the default).
+      rootNode?.onRename?.(name);
+      return;
+    }
+    if (!name) return;
     try {
       if (e.kind === "rename") {
         if (name !== e.initial) {
@@ -439,7 +484,7 @@ function ActiveFileExplorer({
       }
     } catch { /* collision / invalid name; the watch reload reflects reality */ }
     void reload();
-  }, [editing, fs, reload, newFile, onNewFile, onOpen, onDidRename]);
+  }, [editing, fs, reload, newFile, onNewFile, onOpen, onDidRename, rootNode]);
 
   const buildMenu = useCallback((entry: DirEntry): MenuItem[] => {
     const items: MenuItem[] = [];
@@ -449,6 +494,20 @@ function ActiveFileExplorer({
     }
     const extra = extraMenuItems?.(entry) ?? [];
     if (extra.length) items.push(...extra);
+    if (entry.path === root && rootNode) {
+      // The project row: folder verbs, path verbs, label rename — never Cut/Copy/Delete.
+      if (clip) {
+        items.push({ separator: true });
+        items.push({ id: "paste", label: "Paste", run: () => void doPaste(root) });
+      }
+      if (rootNode.onRename) {
+        items.push({ separator: true });
+        items.push({ id: "rename", label: "Rename…", run: () => startRename(entry) });
+      }
+      items.push({ separator: true });
+      items.push({ id: "copyPath", label: "Copy Path", run: () => void clipboard.writeText(entry.path) });
+      if (os) items.push({ id: "reveal", label: "Open in Files", run: () => void os.reveal(entry.path) });
+    }
     if (entry.path !== root) {
       if (items.length) items.push({ separator: true });
       // If the right-clicked entry is part of a multi-selection, act on the whole set.
@@ -482,7 +541,7 @@ function ActiveFileExplorer({
       }
     }
     return items;
-  }, [extraMenuItems, root, clipboard, os, removeMany, startRename, startNew, selected, newFile, clip, doPaste]);
+  }, [extraMenuItems, root, rootNode, clipboard, os, removeMany, startRename, startNew, selected, newFile, clip, doPaste]);
 
   const openRootMenu = useCallback((e: ReactMouseEvent) => {
     const items: MenuItem[] = [
@@ -494,21 +553,28 @@ function ActiveFileExplorer({
     ctx.open(e);
   }, [root, ctx, newFile, startNew, clip, doPaste]);
 
-  const editingId = editing ? (editing.kind === "rename" ? editing.target : NEW_ID) : undefined;
+  const editingId = editing
+    ? editing.kind === "rename" ? editing.target
+    : editing.kind === "renameRoot" ? root
+    : NEW_ID
+    : undefined;
+  const editingInitial = editing?.kind === "rename" ? editing.initial
+    : editing?.kind === "renameRoot" ? (rootNode?.label ?? "")
+    : "";
 
   return (
     <div className="h-full" onKeyDown={handleClipKeys}>
       <TreeView
         roots={displayRoots}
         ariaLabel={ariaLabel}
-        expanded={expanded}
-        onExpandedChange={setExpanded}
+        expanded={treeExpanded}
+        onExpandedChange={handleExpandedChange}
         onActivate={(node) => {
           if (!node.data.isDir) onOpen?.(node.data.path);
         }}
         className="h-full"
         editingId={editingId}
-        editingInitial={editing?.kind === "rename" ? editing.initial : ""}
+        editingInitial={editingInitial}
         onEditCommit={(v) => void commitEdit(v)}
         onEditCancel={() => setEditing(null)}
         onSelectionChange={(node) => setActive(node?.data ?? null)}
@@ -525,6 +591,14 @@ function ActiveFileExplorer({
         onBackgroundContextMenu={openRootMenu}
         reveal={revealTarget ?? undefined}
         renderItem={(c) => {
+          if (rootNode && c.node.data.path === root) {
+            return (
+              <span className="flex min-w-0 items-center gap-1.5 font-semibold">
+                {(getIcon ?? defaultGetIcon)(c.node.data)}
+                <span className="truncate">{c.node.data.name}</span>
+              </span>
+            );
+          }
           const deco = getDecoration?.(c.node.data);
           return (
             <span className="flex min-w-0 items-center gap-1.5">

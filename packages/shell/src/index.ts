@@ -139,6 +139,8 @@ export { treeFilter } from "./tree/treeFilter";
 // Editor
 export { EditorTabs, tabVerbIds } from "./editor/EditorTabs";
 export type { EditorTab, EditorTabsProps, TabMenuVerb } from "./editor/EditorTabs";
+export { ImageView } from "./editor/ImageView";
+export type { ImageViewInfo, ImageViewProps } from "./editor/ImageView";
 export { CodeEditor, CARAPACE_DARK_THEME } from "./editor/CodeEditor";
 export type { CodeEditorProps } from "./editor/CodeEditor";
 export { configureMonacoOffline } from "./editor/monacoLoader";
