@@ -1,0 +1,120 @@
+name: release
+
+# Publish @carapace/shell and @carapace/primitives as prebuilt single-package tarballs attached to a
+# GitHub Release. Consumers (skyrat, lambert) depend on the asset URLs directly — carapace is NOT on
+# any npm registry and is NOT a git submodule; a packed .tgz is the distribution unit.
+#
+#   Cut a release:  gh workflow run release.yml -f version=0.1.0 -f publish=true
+#   or by hand:     bump packages/{shell,primitives}/package.json to X, then `git tag vX && git push --tags`
+#
+# Both packages are versioned in lockstep (one carapace version = one release = both tarballs). A
+# consumer pins e.g.
+#   https://github.com/archwyvern/carapace/releases/download/v0.1.0/carapace-shell-0.1.0.tgz
+# and gets a normal frozen-lockfile-safe install (no build-at-install, unlike a monorepo git dep).
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, e.g. 0.1.0 (bumps both packages, creates + pushes tag v0.1.0)"
+        required: true
+        type: string
+      publish:
+        description: "Publish the release now (unchecked = leave it as a draft)"
+        type: boolean
+        default: false
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write # create/push the tag + create/edit the release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # Resolve the version + tag. On dispatch, bump both packages in lockstep, commit + tag + push
+      # (a tag pushed with github.token does NOT re-trigger the push-tags path — GitHub's recursion
+      # guard). On a hand-pushed v* tag, take the version from the tag and trust the committed
+      # package.json versions.
+      - name: Resolve version
+        id: v
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+            TAG="v${VERSION}"
+            node -e '
+              const fs=require("fs"); const v=process.argv[1];
+              for (const p of ["packages/shell/package.json","packages/primitives/package.json"]) {
+                const j=JSON.parse(fs.readFileSync(p,"utf8")); j.version=v;
+                fs.writeFileSync(p, JSON.stringify(j,null,2)+"\n");
+              }
+            ' "$VERSION"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            if ! git diff --quiet; then
+              git add packages/shell/package.json packages/primitives/package.json
+              git commit -m "release: ${TAG}"
+              git push origin "HEAD:${{ github.ref_name }}"
+            fi
+            git tag -f "$TAG"
+            git push -f origin "$TAG"
+          else
+            TAG="${{ github.ref_name }}"
+            VERSION="${TAG#v}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shipped packages
+        run: pnpm --filter @carapace/shell --filter @carapace/primitives run build
+
+      - name: Pack tarballs
+        run: |
+          set -euo pipefail
+          rm -rf release && mkdir -p release
+          pnpm -C packages/shell pack --pack-destination "$PWD/release"
+          pnpm -C packages/primitives pack --pack-destination "$PWD/release"
+          ls -l release
+          # Fail loudly if the packed version does not match the tag — a mismatch would break the
+          # consumer URLs, which embed the version in the filename.
+          test -f "release/carapace-shell-${{ steps.v.outputs.version }}.tgz"
+          test -f "release/carapace-primitives-${{ steps.v.outputs.version }}.tgz"
+
+      - name: Create / update the release
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.v.outputs.tag }}"
+          DRAFT=""
+          # Draft on manual dispatch unless publish=true; a hand-pushed tag publishes directly.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.publish }}" != "true" ]; then
+            DRAFT="--draft"
+          fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" release/*.tgz --clobber
+          else
+            gh release create "$TAG" release/*.tgz \
+              --title "carapace $TAG" \
+              --notes "@carapace/shell and @carapace/primitives $TAG — prebuilt tarballs for consumers." \
+              $DRAFT
+          fi

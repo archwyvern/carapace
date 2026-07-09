@@ -5,8 +5,19 @@ supporting models (commands, resources, shaders) that desktop-style tools keep r
 Everything is designed for dark, dense, keyboard-driven editors — the kind you build in
 Electron or ship as a web app.
 
-Single-author toolkit, open source under MIT. Not published to npm — consume it as a git
-dependency or a `pnpm link` while iterating.
+Single-author toolkit, open source under MIT. Not published to npm. Each shipped package
+(`@carapace/shell`, `@carapace/primitives`) is built and packed as a single-package tarball
+attached to a GitHub Release (`gh workflow run release.yml -f version=X.Y.Z -f publish=true`);
+consumers pin the asset URL, e.g.
+
+```jsonc
+"@carapace/shell": "https://github.com/archwyvern/carapace/releases/download/v0.1.0/carapace-shell-0.1.0.tgz"
+```
+
+This installs cleanly under `--frozen-lockfile` (a prebuilt tarball, unlike a monorepo git
+dependency, which pnpm can't resolve+build on a fresh CI store). For live iteration, a consumer
+can alias the specifier to a sibling checkout's source in its dev server (see the skyrat / lambert
+vite configs) — no `pnpm link` / override required.
 
 ## Packages
 
