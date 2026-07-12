@@ -71,6 +71,10 @@ export type { GridSelection, GridSelectionOptions, GridSelectionMods } from "./h
 // Observable); this is just its React binding, structural so shell needn't depend on resources.
 export { useHistory } from "./history/useHistory";
 export type { HistoryState, HistoryLike } from "./history/useHistory";
+export { History } from "./history/History";
+export type { HistoryOptions, CommitOptions } from "./history/History";
+export { SessionHistory } from "./history/SessionHistory";
+export type { SessionHistoryOptions, SessionHistoryEntry } from "./history/SessionHistory";
 
 // Form controls
 export { FormEnum } from "./form/FormEnum";
