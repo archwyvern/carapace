@@ -1,33 +1,33 @@
 import { Inspector } from "@carapace/shell";
-import type { Resource } from "@carapace/resources";
+import type { PropertySource } from "./protocol";
 import { resourceToFields, resourceToSections, resolveResourceView, resourceCategories } from "./adapter";
 import type { ResourceAdapterOptions } from "./adapter";
 import { useResourceChanges } from "./useResourceChanges";
 
 export interface ResourceInspectorProps extends ResourceAdapterOptions {
-  resource: Resource;
+  source: PropertySource;
 }
 
 /**
- * Binds a live {@link Resource} to the shell {@link Inspector}: derives the field list each
- * render via {@link resourceToFields}, and re-renders whenever the resource (or any embedded
- * sub-resource — changes bubble up the ownership chain) changes. Field edits flow straight
- * to the resource's `Observable`s through the adapter's `setValue` handlers.
+ * Binds a live {@link PropertySource} to the shell {@link Inspector}: derives the field list each
+ * render via {@link resourceToFields}, and re-renders whenever the source (or any embedded
+ * sub-source — changes bubble up the ownership chain) changes. Field edits flow straight
+ * to the source through the adapter's `setValue` handlers.
  */
-export function ResourceInspector({ resource, override, pickType, renderResource }: ResourceInspectorProps) {
-  useResourceChanges(resource);
+export function ResourceInspector({ source, host, override, pickType, renderResource }: ResourceInspectorProps) {
+  useResourceChanges(source);
 
-  const opts: ResourceAdapterOptions = { override, pickType, renderResource };
-  // The resource owns its inspector layout: a host `renderResource` wins, else the view its type
-  // declares. The same resolution + category order is used for embedded sub-resources (mapResource).
-  const rootCustom = resolveResourceView(resource, renderResource);
-  const categories = resourceCategories(resource);
+  const opts: ResourceAdapterOptions = { host, override, pickType, renderResource };
+  // The source owns its inspector layout: a host `renderResource` wins, else the view its type
+  // declares. The same resolution + category order is used for embedded sub-sources (mapResource).
+  const rootCustom = resolveResourceView(source, opts);
+  const categories = resourceCategories(source);
   return (
     <>
       {rootCustom}
       <Inspector
-        fields={resourceToFields(resource, opts)}
-        sections={resourceToSections(resource)}
+        fields={resourceToFields(source, opts)}
+        sections={resourceToSections(source)}
         categories={categories}
       />
     </>

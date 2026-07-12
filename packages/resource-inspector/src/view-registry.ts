@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
-import type { Resource, FieldInfo } from "@carapace/resources";
+import type { PropertyDescriptor, PropertySource } from "./protocol";
 
 /**
- * Renders a resource type's custom inspector view. A resource declares it owns a view via
- * `registerResourceClass(name, cls, { view: "<key>" })`; the host registers the component for
- * that key here. The {@link ResourceInspector} then renders it above the generic field list.
+ * Renders a type's custom inspector view. The host's registry declares which view key a type
+ * owns (surfaced through `PropertyHost.viewOf`); the host registers the component for that key
+ * here. The {@link ResourceInspector} then renders it above the generic field list.
  */
-export type ResourceViewRenderer = (resource: Resource) => ReactNode;
+export type ResourceViewRenderer = (source: PropertySource) => ReactNode;
 
 const views = new Map<string, ResourceViewRenderer>();
 
@@ -22,11 +22,10 @@ export function getRegisteredView(key: string): ResourceViewRenderer | undefined
 
 /**
  * Renders a single field's custom inspector control. A field declares it owns a view via
- * `view: "<key>"` (e.g. `arrayTuple(..., { view })`); the host registers the component here. The
- * adapter then emits a custom field that defers to it — the resource owns the field's layout
- * (e.g. a Curve's Points group) rather than the generic per-kind widget.
+ * `view: "<key>"`; the host registers the component here. The adapter then emits a custom field
+ * that defers to it — the source owns the field's layout rather than the generic per-kind widget.
  */
-export type FieldViewRenderer = (resource: Resource, field: FieldInfo) => ReactNode;
+export type FieldViewRenderer = (source: PropertySource, field: PropertyDescriptor) => ReactNode;
 
 const fieldViews = new Map<string, FieldViewRenderer>();
 

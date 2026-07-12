@@ -4,7 +4,9 @@
   "description": "Glue binding the @carapace/resources model to the @carapace/shell Inspector: a FieldInfo->InspectorField adapter + a <ResourceInspector> component. The only package that knows both worlds.",
   "type": "module",
   "license": "MIT",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -19,8 +21,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@carapace/primitives": "workspace:*",
-    "@carapace/resources": "workspace:*",
     "@carapace/shell": "workspace:*"
   },
   "peerDependencies": {
