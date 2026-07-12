@@ -84,8 +84,9 @@ export function resourceToFields(source: PropertySource, opts: ResourceAdapterOp
     field.category = category;
     field.hidden = visibility[fi.name] === false;
     field.readOnly = fi.readonly;
-    field.modified = fi.isModified();
-    field.onReset = () => fi.reset();
+    // Read-only fields get no revert affordance — "no edit, no reset button".
+    field.modified = fi.readonly ? false : fi.isModified();
+    field.onReset = fi.readonly ? undefined : () => fi.reset();
     out.push(field);
   });
   return out;
