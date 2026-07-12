@@ -20,6 +20,8 @@ export interface CarapaceHost {
    */
   fs?: {
     read(path: string): Promise<string>;
+    /** Raw bytes — image previews, binary assets. Every real filesystem can serve bytes. */
+    readBinary(path: string): Promise<Uint8Array>;
     write(path: string, data: string | Uint8Array): Promise<void>;
     rename(from: string, to: string): Promise<void>;
     delete(path: string): Promise<void>;

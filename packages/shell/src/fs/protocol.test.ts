@@ -76,6 +76,7 @@ describe("fs protocol watch forwarding", () => {
     let fire: ((p: string, kind: ChangeKind) => void) | undefined;
     const stub: Parameters<typeof serveFs>[2] = {
       read: async () => "",
+      readBinary: async () => new Uint8Array(),
       write: async () => {},
       rename: async () => {},
       delete: async () => {},

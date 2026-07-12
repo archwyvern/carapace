@@ -34,6 +34,11 @@ export function createMemoryHost(seed: Record<string, string> = {}): CarapaceHos
         if (v === undefined) throw new Error(`ENOENT: ${path}`);
         return typeof v === "string" ? v : new TextDecoder().decode(v);
       },
+      async readBinary(path) {
+        const v = files.get(path);
+        if (v === undefined) throw new Error(`ENOENT: ${path}`);
+        return typeof v === "string" ? new TextEncoder().encode(v) : v;
+      },
       async write(path, data) {
         const existed = files.has(path);
         files.set(path, data);

@@ -29,6 +29,7 @@ export function createIpcFs(bridge: FsBridge): Fs {
   const call = (op: string, ...args: unknown[]) => bridge.invoke(op, args);
   return {
     read: (p) => call("read", p) as Promise<string>,
+    readBinary: async (p) => new Uint8Array(await (call("readBinary", p) as Promise<ArrayBuffer | Uint8Array>) as Uint8Array),
     write: (p, d) => call("write", p, d) as Promise<void>,
     rename: (f, t) => call("rename", f, t) as Promise<void>,
     delete: (p) => call("delete", p) as Promise<void>,

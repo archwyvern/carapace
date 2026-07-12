@@ -63,6 +63,7 @@ export function createNodeFs(options: NodeFsOptions = {}): Fs {
 
   return {
     read: (p) => fsp.readFile(toReal(p), "utf-8"),
+    readBinary: (p) => fsp.readFile(toReal(p)),
     write: (p, d) => fsp.writeFile(toReal(p), d),
     rename: (f, t) => fsp.rename(toReal(f), toReal(t)),
     delete: (p) => fsp.rm(toReal(p), { recursive: true, force: true }),
@@ -99,6 +100,7 @@ export function serveFs(ipcMain: IpcMainLike, webContents: WebContentsLike, fs: 
     const a = (args as unknown[]) ?? [];
     switch (op as string) {
       case "read": return fs.read(a[0] as string);
+      case "readBinary": return fs.readBinary(a[0] as string);
       case "write": return fs.write(a[0] as string, a[1] as string | Uint8Array);
       case "rename": return fs.rename(a[0] as string, a[1] as string);
       case "delete": return fs.delete(a[0] as string);
