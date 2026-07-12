@@ -146,10 +146,12 @@ function indexEntries(roots: TreeNode<DirEntry>[]): Map<string, DirEntry> {
   return map;
 }
 
-/** Default leading icon: Seti file-type glyph for files, nothing for folders. Size is left to the
- *  CSS default (1.5em of the row font), matching VSCode's Seti icon theme ("size": "150%"). */
+/** Default leading icon: Seti file-type glyph for files, nothing for folders (a bare twistie, no
+ *  icon slot — matching VSCode's Seti icon theme). Returning null here makes IconSlot render no
+ *  slot at all; a truthy element that merely renders to null would still reserve the slot's width.
+ *  Size is left to the CSS default (1.5em of the row font, Seti's "size": "150%"). */
 function defaultGetIcon(entry: DirEntry): ReactNode {
-  return <FileTypeIcon name={entry.name} isDir={entry.isDir} />;
+  return entry.isDir ? null : <FileTypeIcon name={entry.name} />;
 }
 
 /** Fixed-size icon slot: every icon (Seti glyph, consumer SVG, whatever) centers in the same
