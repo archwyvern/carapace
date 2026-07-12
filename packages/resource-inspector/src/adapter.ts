@@ -99,6 +99,14 @@ interface ArrayLikeValue {
   toArray(): number[];
 }
 
+/** A color value as [r,g,b,a]: typed values via toArray(), raw arrays as-is (a color column
+ *  without a fromArray factory stores number[] — render it rather than crash). */
+function colorAsArray(value: unknown): number[] {
+  if (typeof (value as ArrayLikeValue | undefined)?.toArray === "function") return (value as ArrayLikeValue).toArray();
+  if (Array.isArray(value)) return value as number[];
+  return [1, 1, 1, 1];
+}
+
 function mapField(fi: PropertyDescriptor, opts: ResourceAdapterOptions): InspectorField | null {
   const key = fi.name;
   const label = humanize(fi.name);
@@ -286,7 +294,7 @@ function mapStructBodyArray(
         return {
           ...base,
           kind: "color",
-          value: (value as ArrayLikeValue | undefined)?.toArray() ?? [1, 1, 1, 1],
+          value: colorAsArray(value),
           hasAlpha: true,
           onChange: (a: number[]) => setMember(row, m.name, m.fromArray?.(a) ?? a),
         };
