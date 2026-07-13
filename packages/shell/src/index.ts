@@ -247,6 +247,8 @@ export type { Chord, ChordStep, ChordMatch } from "./command/keybinding";
 // Overlay
 export { Modal } from "./overlay/Modal";
 export type { ModalProps } from "./overlay/Modal";
+export { TypePickerDialog } from "./overlay/TypePickerDialog";
+export type { TypePickerDialogProps, TypePickerItem } from "./overlay/TypePickerDialog";
 export { SettingsModal } from "./settings/SettingsModal";
 export type { SettingsModalProps, SettingsScreen } from "./settings/SettingsModal";
 export { ConfirmDialog } from "./overlay/ConfirmDialog";
