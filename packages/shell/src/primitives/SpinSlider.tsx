@@ -30,6 +30,9 @@ export interface SpinSliderProps {
   /** Opt in to wheel-to-step. Off by default so it never hijacks scroll. */
   wheel?: boolean;
   readOnly?: boolean;
+  /** Extra left padding in px (both display and edit modes) — room for an in-field adornment
+   *  like FormVec's axis letter, so adorned and bare fields keep identical outer geometry. */
+  paddingLeft?: number;
 }
 
 function format(value: number, integer?: boolean): string {
@@ -72,7 +75,7 @@ function evaluate(text: string): number | null {
 export function SpinSlider({
   value, onChange, onCommit,
   min, max, integer, step,
-  orGreater, orLess, exp, hideSlider, spinButtons, suffix, wheel, readOnly,
+  orGreater, orLess, exp, hideSlider, spinButtons, suffix, wheel, readOnly, paddingLeft,
 }: SpinSliderProps) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState("");
@@ -178,6 +181,7 @@ export function SpinSlider({
           if (e.key === "Escape") setEditing(false);
         }}
         className="h-[22px] w-full rounded-control border border-accent bg-surface-sunken px-1.5 font-mono text-base text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none"
+        style={paddingLeft !== undefined ? { paddingLeft } : undefined}
       />
     );
   }
@@ -199,6 +203,7 @@ export function SpinSlider({
       className={`relative flex h-[22px] w-full cursor-ew-resize select-none items-center gap-1 overflow-hidden rounded-control border border-border bg-surface-sunken px-1.5 font-mono text-base text-fg shadow-[inset_0_1px_2px_rgba(0,0,0,0.45)] outline-none hover:border-accent focus-visible:border-accent focus-visible:outline-none ${
         readOnly ? "opacity-60" : ""
       }`}
+      style={paddingLeft !== undefined ? { paddingLeft } : undefined}
     >
       {showBar && (
         <div

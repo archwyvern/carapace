@@ -55,16 +55,22 @@ export function FormVec({ label, layout, value, size, min, max, integer, step, l
     <div className={`flex gap-1 ${column ? "flex-col" : ""}`}>
       {Array.from({ length: size }, (_, i) => (
         <div key={i} className={`flex items-center gap-1 ${column ? "" : "min-w-0 flex-1"}`}>
-          {showAxisColor ? (
-            <span className="w-2.5 shrink-0 text-2xs font-semibold" style={{ color: AXIS_COLORS[i] }}>
-              {labelText[i]}
-            </span>
-          ) : (
+          {!showAxisColor && (
             <span className="w-14 shrink-0 truncate text-base text-fg-mid">{labelText[i]}</span>
           )}
           <div className="relative min-w-0 flex-1">
+            {/* Axis tick + letter live INSIDE the field (Godot-style) so adorned and bare number
+                fields share identical outer geometry — the inspector's input column stays aligned. */}
             {showAxisColor && (
-              <span className="pointer-events-none absolute inset-y-0 left-0 z-10 w-[3px] rounded-l-control" style={{ background: AXIS_COLORS[i] }} />
+              <>
+                <span className="pointer-events-none absolute inset-y-0 left-0 z-10 w-[3px] rounded-l-control" style={{ background: AXIS_COLORS[i] }} />
+                <span
+                  className="pointer-events-none absolute left-[7px] top-1/2 z-10 -translate-y-1/2 text-2xs font-semibold"
+                  style={{ color: AXIS_COLORS[i] }}
+                >
+                  {labelText[i]}
+                </span>
+              </>
             )}
             <SpinSlider
               value={value[i] ?? 0}
@@ -74,6 +80,7 @@ export function FormVec({ label, layout, value, size, min, max, integer, step, l
               max={max}
               integer={integer}
               step={step}
+              paddingLeft={showAxisColor ? 20 : undefined}
             />
           </div>
         </div>
