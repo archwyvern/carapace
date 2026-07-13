@@ -238,6 +238,9 @@ export function PanelGroup({
       if (rightNew > right.maxSize) { leftNew += rightNew - right.maxSize; rightNew = right.maxSize; }
       next[sashIndex] = Math.max(left.minSize, leftNew);
       next[sashIndex + 1] = Math.max(right.minSize, rightNew);
+      // Sync the ref NOW, not at render: several mousemoves can land within one frame, and each
+      // must chain off the previous one's result or their deltas overwrite each other (drag lag).
+      sizesRef.current = next;
       setSizes(next);
       emitSizes(next);
     },
@@ -263,6 +266,7 @@ export function PanelGroup({
         next[donor] = (next[donor] ?? 0) + (next[idx] ?? 0);
         next[idx] = 0;
       }
+      sizesRef.current = next;
       setCollapsed(nextCollapsed);
       setSizes(next);
       onCollapsedChange?.(nextCollapsed);
