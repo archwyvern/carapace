@@ -272,7 +272,8 @@ export function PanelGroup({
   );
 
   return (
-    <div ref={containerRef} className={`flex flex-1 overflow-hidden ${isHorizontal ? "flex-row" : "flex-col"}`}>
+    // h-full/w-full so a nested group fills a plain-block pane; flex-1 keeps the flex-parent case.
+    <div ref={containerRef} className={`flex h-full w-full flex-1 overflow-hidden ${isHorizontal ? "flex-row" : "flex-col"}`}>
       {panes.map((pane, i) => {
         const size = sizes[i] ?? 0;
         const isCollapsed = collapsed[pane.id] ?? false;
