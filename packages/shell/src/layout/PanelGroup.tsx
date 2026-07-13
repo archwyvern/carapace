@@ -224,21 +224,22 @@ export function PanelGroup({
 
   const handleDrag = useCallback(
     (sashIndex: number, delta: number) => {
-      setSizes((prev) => {
-        const next = [...prev];
-        const left = panes[sashIndex]!;
-        const right = panes[sashIndex + 1]!;
-        let leftNew = (next[sashIndex] ?? 0) + delta;
-        let rightNew = (next[sashIndex + 1] ?? 0) - delta;
-        if (leftNew < left.minSize) { rightNew += leftNew - left.minSize; leftNew = left.minSize; }
-        if (rightNew < right.minSize) { leftNew += rightNew - right.minSize; rightNew = right.minSize; }
-        if (leftNew > left.maxSize) { rightNew += leftNew - left.maxSize; leftNew = left.maxSize; }
-        if (rightNew > right.maxSize) { leftNew += rightNew - right.maxSize; rightNew = right.maxSize; }
-        next[sashIndex] = Math.max(left.minSize, leftNew);
-        next[sashIndex + 1] = Math.max(right.minSize, rightNew);
-        emitSizes(next);
-        return next;
-      });
+      // Compute OUTSIDE the state updater: React replays updaters during render, and emitting
+      // (a parent setState) from inside one is an update-during-render violation.
+      const prev = sizesRef.current;
+      const next = [...prev];
+      const left = panes[sashIndex]!;
+      const right = panes[sashIndex + 1]!;
+      let leftNew = (next[sashIndex] ?? 0) + delta;
+      let rightNew = (next[sashIndex + 1] ?? 0) - delta;
+      if (leftNew < left.minSize) { rightNew += leftNew - left.minSize; leftNew = left.minSize; }
+      if (rightNew < right.minSize) { leftNew += rightNew - right.minSize; rightNew = right.minSize; }
+      if (leftNew > left.maxSize) { rightNew += leftNew - left.maxSize; leftNew = left.maxSize; }
+      if (rightNew > right.maxSize) { leftNew += rightNew - right.maxSize; rightNew = right.maxSize; }
+      next[sashIndex] = Math.max(left.minSize, leftNew);
+      next[sashIndex + 1] = Math.max(right.minSize, rightNew);
+      setSizes(next);
+      emitSizes(next);
     },
     [panes, emitSizes],
   );
@@ -249,26 +250,23 @@ export function PanelGroup({
       const right = panes[sashIndex + 1]!;
       const target = right.collapsible ? right : left.collapsible ? left : null;
       if (!target) return;
-      setCollapsed((prev) => {
-        const next = { ...prev, [target.id]: !prev[target.id] };
-        onCollapsedChange?.(next);
-        return next;
-      });
-      setSizes((prev) => {
-        const next = [...prev];
-        const idx = panes.indexOf(target);
-        const donor = idx === 0 ? 1 : idx - 1;
-        if (collapsed[target.id]) {
-          const restore = target.defaultSize ?? target.minSize;
-          next[donor] = (next[donor] ?? 0) - restore;
-          next[idx] = restore;
-        } else {
-          next[donor] = (next[donor] ?? 0) + (next[idx] ?? 0);
-          next[idx] = 0;
-        }
-        emitSizes(next);
-        return next;
-      });
+      // Same rule as handleDrag: compute outside the updaters, emit as plain calls.
+      const nextCollapsed = { ...collapsed, [target.id]: !collapsed[target.id] };
+      const next = [...sizesRef.current];
+      const idx = panes.indexOf(target);
+      const donor = idx === 0 ? 1 : idx - 1;
+      if (collapsed[target.id]) {
+        const restore = target.defaultSize ?? target.minSize;
+        next[donor] = (next[donor] ?? 0) - restore;
+        next[idx] = restore;
+      } else {
+        next[donor] = (next[donor] ?? 0) + (next[idx] ?? 0);
+        next[idx] = 0;
+      }
+      setCollapsed(nextCollapsed);
+      setSizes(next);
+      onCollapsedChange?.(nextCollapsed);
+      emitSizes(next);
     },
     [panes, collapsed, emitSizes, onCollapsedChange],
   );
@@ -303,7 +301,9 @@ export function PanelGroup({
               </div>
             ) : (
               <div
-                className={`h-full overflow-hidden ${pane.defaultSize !== null ? "shrink-0" : "min-w-0 shrink"}`}
+                className={`${isHorizontal ? "h-full" : "w-full"} overflow-hidden ${
+                  pane.defaultSize !== null ? "shrink-0" : `${isHorizontal ? "min-w-0" : "min-h-0"} shrink`
+                }`}
                 style={sizeStyle}
               >
                 {pane.children}
