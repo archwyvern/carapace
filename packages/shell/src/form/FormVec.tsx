@@ -17,6 +17,10 @@ export interface FormVecProps {
   size: 2 | 3 | 4;
   min?: number;
   max?: number;
+  /** Soft bounds: the scrub range stays min/max but typing/spinning may go past (SpinSlider
+   *  orLess/orGreater) — e.g. a tilt slope whose usable bar is ±1 but steeper is legal. */
+  softMin?: boolean;
+  softMax?: boolean;
   integer?: boolean;
   /** Discrete arrow/spin/wheel increment for every axis (default 1; Shift = ×10). */
   step?: number;
@@ -41,7 +45,7 @@ export interface FormVecProps {
 /** Labelled multi-axis number field (vec2/3/4). Each axis is a full SpinSlider (drag-scrub,
  *  click-to-type, expression eval) — consistent with every other scalar field in the inspector.
  *  With `link`, a chain toggle locks the components' ratio so editing one scales the rest. */
-export function FormVec({ label, layout, value, size, min, max, integer, step, labels, link, defaultLinked, axes, onChange, onCommit }: FormVecProps) {
+export function FormVec({ label, layout, value, size, min, max, softMin, softMax, integer, step, labels, link, defaultLinked, axes, onChange, onCommit }: FormVecProps) {
   const [linked, setLinked] = useState(defaultLinked ?? false);
 
   const applyAxis = (index: number, v: number): number[] =>
@@ -78,6 +82,8 @@ export function FormVec({ label, layout, value, size, min, max, integer, step, l
               onCommit={onCommit ? (v) => onCommit(applyAxis(i, v)) : undefined}
               min={min}
               max={max}
+              orLess={softMin}
+              orGreater={softMax}
               integer={integer}
               step={step}
               paddingLeft={showAxisColor ? 20 : undefined}

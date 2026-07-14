@@ -81,6 +81,8 @@ export { FormEnum } from "./form/FormEnum";
 export type { FormEnumProps } from "./form/FormEnum";
 export { FormVec } from "./form/FormVec";
 export type { FormVecProps } from "./form/FormVec";
+export { PadInput } from "./form/PadInput";
+export type { PadInputProps } from "./form/PadInput";
 export { FormToggle } from "./form/FormToggle";
 export type { FormToggleProps } from "./form/FormToggle";
 export { FormSlider } from "./form/FormSlider";
@@ -298,6 +300,7 @@ export type {
   EnumField,
   ColorField,
   VecField,
+  PadField,
   ObjectField,
   ArrayField,
   CustomField,

@@ -114,6 +114,25 @@ test("custom field renders its node", () => {
   expect(screen.getByText("CUSTOM-WIDGET")).toBeInTheDocument();
 });
 
+test("pad field renders the XY pad + numeric inputs; arrow keys nudge and commit", async () => {
+  const onChange = vi.fn();
+  const onCommit = vi.fn();
+  const fields: InspectorField[] = [
+    { kind: "pad", key: "t", label: "Tilt", value: [0, 0], min: -1, max: 1, softMin: true, softMax: true, onChange, onCommit },
+  ];
+  render(<Inspector fields={fields} />);
+  const pad = screen.getByRole("slider", { name: "Tilt" });
+  pad.focus();
+  await userEvent.keyboard("{ArrowRight}");
+  expect(onChange).toHaveBeenLastCalledWith([0.05, 0]);
+  expect(onCommit).toHaveBeenLastCalledWith([0.05, 0]);
+  // double-click resets to center
+  await userEvent.dblClick(pad);
+  expect(onChange).toHaveBeenLastCalledWith([0, 0]);
+  // the paired numeric inputs exist (two SpinSliders alongside the pad)
+  expect(document.querySelectorAll('[tabindex="0"]').length).toBeGreaterThanOrEqual(3);
+});
+
 test("number softMax lets a typed value exceed max (-> SpinSlider orGreater)", async () => {
   const soft = vi.fn();
   render(<Inspector fields={[{ kind: "number", key: "s", label: "Slope", value: 0, min: -1, max: 1, softMax: true, onChange: soft }]} />);

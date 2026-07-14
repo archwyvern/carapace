@@ -7,6 +7,7 @@ import { FormString } from "../form/FormString";
 import { FormEnum } from "../form/FormEnum";
 import { FormColor } from "../form/FormColor";
 import { FormVec } from "../form/FormVec";
+import { PadInput } from "../form/PadInput";
 import { ratioLocked, setAxis } from "../form/ratioLock";
 import { AddIcon, ChevronRightIcon, CloseIcon, DeleteIcon, LinkIcon, ResetIcon, UnlinkIcon } from "../icons";
 import { StructCard } from "../primitives/StructCard";
@@ -188,6 +189,9 @@ function fieldMode(field: InspectorField): "inline" | "stacked" | "span" | "rows
   if (field.kind === "object" || field.kind === "array" || field.kind === "custom") return "span";
   if (field.layout) return field.layout;
   if (field.kind === "vec" && field.size >= 3) return "stacked";
+  // a pad is a 64px box + two numeric axes — the inline value column truncates the numbers,
+  // so take the full row width by default (a field can still force inline via `layout`)
+  if (field.kind === "pad") return "stacked";
   return "inline";
 }
 
@@ -290,9 +294,9 @@ function InspectorRow({ field, action }: { field: InspectorField; action?: React
     );
   }
 
-  // A vec2 stacks its inputs, so the control is multiple rows tall — top-align the row and
-  // centre the label/actions within the first input's height so they line up with axis X.
-  const tall = field.kind === "vec";
+  // A vec2 stacks its inputs (and a pad is a box), so the control is multiple rows tall —
+  // top-align the row and centre the label/actions within the first input's height.
+  const tall = field.kind === "vec" || field.kind === "pad";
   return (
     <div className={`group/row col-span-full grid grid-cols-subgrid ${tall ? "items-start" : "items-center"}`}>
       <span className={`truncate text-base text-fg-mid ${tall ? "flex min-h-[22px] items-center" : ""}`}>{ucwords(field.label)}</span>
@@ -338,6 +342,8 @@ function renderBareControl(field: InspectorField): ReactNode {
           size={field.size}
           min={field.min}
           max={field.max}
+          softMin={field.softMin}
+          softMax={field.softMax}
           integer={field.integer}
           step={field.step}
           labels={field.labels}
@@ -346,6 +352,32 @@ function renderBareControl(field: InspectorField): ReactNode {
           onChange={field.onChange}
           onCommit={field.onCommit}
         />
+      );
+    case "pad":
+      // the pad drives both axes at once; the numeric column keeps typed precision (and, with
+      // soft bounds, values past ±1 — the pad handle then clamps to the rim)
+      return (
+        <div className="flex items-start gap-1.5">
+          <PadInput
+            value={[field.value[0] ?? 0, field.value[1] ?? 0]}
+            onChange={field.onChange}
+            onCommit={field.onCommit}
+            ariaLabel={field.label}
+          />
+          <div className="min-w-0 flex-1">
+            <FormVec
+              value={field.value}
+              size={2}
+              min={field.min}
+              max={field.max}
+              softMin={field.softMin}
+              softMax={field.softMax}
+              step={field.step}
+              onChange={field.onChange}
+              onCommit={field.onCommit}
+            />
+          </div>
+        </div>
       );
     default:
       return null;

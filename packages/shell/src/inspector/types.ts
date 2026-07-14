@@ -142,6 +142,27 @@ export interface CustomField extends InspectorFieldBase {
   render: () => ReactNode;
 }
 
+/** A [-1,1]² XY pad (drag handle, double-click reset, arrow-key nudge) PAIRED with the numeric
+ *  X/Y inputs. For direction/tilt-style vec2 params where dragging a dot beats scrubbing two
+ *  axes. OPT-IN per field — deliberately not the default vec2 editor (that stays `vec`). The
+ *  pad itself always spans ±1; soft min/max let TYPED values exceed it (the handle then renders
+ *  clamped to the rim). */
+export interface PadField extends InspectorFieldBase {
+  kind: "pad";
+  /** [x, y]. */
+  value: number[];
+  min?: number;
+  max?: number;
+  /** Soft min/max (see NumberField): the numeric bar spans min..max but typing may exceed. */
+  softMin?: boolean;
+  softMax?: boolean;
+  /** Discrete arrow/spin/wheel increment for the numeric inputs (default 1; Shift = ×10). */
+  step?: number;
+  onChange: (v: number[]) => void;
+  /** Fired when a gesture settles (pad drag release / nudge / per-axis commit). */
+  onCommit?: (v: number[]) => void;
+}
+
 export type InspectorField =
   | NumberField
   | BoolField
@@ -149,6 +170,7 @@ export type InspectorField =
   | EnumField
   | ColorField
   | VecField
+  | PadField
   | ObjectField
   | ArrayField
   | CustomField;
