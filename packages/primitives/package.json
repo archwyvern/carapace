@@ -1,6 +1,6 @@
 {
   "name": "@carapace/primitives",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Immutable value-types (Vector2/3/4, Color, Rect2) — a TypeScript mirror of Archwyvern.Hardcoded.Numerics / .Primitives.",
   "type": "module",
   "license": "MIT",
