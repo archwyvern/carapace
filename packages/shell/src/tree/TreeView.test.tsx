@@ -75,6 +75,18 @@ test("ArrowRight expands the focused collapsed node", async () => {
   expect(screen.getByText("a.ts")).toBeInTheDocument();
 });
 
+test("disableArrowKeys: arrows neither navigate nor get consumed", async () => {
+  renderTree({ disableArrowKeys: true });
+  screen.getByRole("tree").focus();
+  await userEvent.keyboard("{ArrowRight}");
+  expect(screen.queryByText("a.ts")).not.toBeInTheDocument(); // no expand
+  fireEvent.click(screen.getByText("src"));
+  // fireEvent returns false when preventDefault was called — the host must
+  // still receive arrow keydowns (e.g. a canvas nudge handler on window).
+  expect(fireEvent.keyDown(screen.getByRole("tree"), { key: "ArrowDown" })).toBe(true);
+  expect(selectedItems()).toEqual([screen.getByText("src").closest("[role=treeitem]")]);
+});
+
 test("Ctrl+click toggles rows into a multi-selection", () => {
   const onSelectedChange = vi.fn();
   renderTree({ onSelectedChange });

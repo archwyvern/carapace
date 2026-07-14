@@ -49,6 +49,7 @@ export function TreeView<T>({
   onContextMenu,
   onBackgroundContextMenu,
   reveal,
+  disableArrowKeys = false,
   rowStyle,
   ariaLabel,
   className,
@@ -160,6 +161,9 @@ export function TreeView<T>({
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (flat.length === 0) return;
+    // Host owns the arrows (e.g. canvas nudge): don't navigate, don't consume —
+    // the untouched keydown bubbles on to the host's own handler.
+    if (disableArrowKeys && e.key.startsWith("Arrow")) return;
     const current = Math.min(Math.max(focusedIndex, 0), flat.length - 1);
     const cur = flat[current]!;
     // Ctrl/Cmd+A selects every visible row.

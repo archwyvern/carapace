@@ -106,6 +106,11 @@ export interface TreeViewProps<T = unknown> {
   /** Programmatic reveal: when `seq` bumps, single-select the node and scroll its row into view.
    *  The node must be VISIBLE — expand its ancestors (via `expanded`) in the same update. */
   reveal?: { id: string; seq: number };
+  /** Ignore arrow keys entirely — no focus/selection navigation, no expand/collapse,
+   *  and no preventDefault, so the keydown bubbles to the host. For trees living
+   *  next to a view that owns the arrows (e.g. a canvas nudging the selection).
+   *  Other keyboard verbs (Home/End/Enter/Delete/F2/Ctrl+A) keep working. */
+  disableArrowKeys?: boolean;
   rowStyle?: (ctx: TreeItemContext<T>) => CSSProperties;
   ariaLabel?: string;
   className?: string;
