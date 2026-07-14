@@ -1,6 +1,6 @@
 {
   "name": "@carapace/shell",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Batteries-included React editor-shell: theme, primitives, workbench shell, and a platform host seam.",
   "type": "module",
   "license": "MIT",
