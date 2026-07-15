@@ -389,7 +389,7 @@ function renderBareControl(field: InspectorField): ReactNode {
 function renderControl(field: InspectorField, action?: ReactNode): ReactNode {
   switch (field.kind) {
     case "object":
-      return field.variant === "struct" ? <StructControl field={field} action={action} /> : <ObjectControl field={field} />;
+      return field.variant === "struct" ? <StructControl field={field} action={action} /> : <ObjectControl field={field} action={action} />;
     case "array":
       return <ArrayControl field={field} />;
     case "custom":
@@ -407,7 +407,7 @@ const ICON_BTN = "text-fg-mid hover:text-fg text-base leading-none";
  * The framing makes it unmistakable that the nested fields belong to another object you're
  * editing in place — the carapace take on Godot's `sub_inspector_bg`.
  */
-function ObjectControl({ field }: { field: ObjectField }) {
+function ObjectControl({ field, action }: { field: ObjectField; action?: ReactNode }) {
   const [open, setOpen] = useState(true);
   const { bg, depth } = useNestedSurface();
   const has = field.fields !== null;
@@ -437,6 +437,7 @@ function ObjectControl({ field }: { field: ObjectField }) {
               <CloseIcon className="h-3.5 w-3.5" />
             </button>
           )}
+          {action}
         </div>
       </div>
       {hasBody && (
