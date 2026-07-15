@@ -1,11 +1,16 @@
 import type { ReactNode } from "react";
 import type { InspectorField, InspectorSectionInfo, ObjectField, ArrayField } from "@carapace/shell";
+import { ColorF, Vector2, Vector3, Vector4 } from "@carapace/primitives";
 import type { PropertyDescriptor, PropertyHost, PropertySource, TupleMemberDesc } from "./protocol";
 import { getRegisteredFieldView, getRegisteredView } from "./view-registry";
 
-/** The class-hierarchy categories for a source's fields — concrete type first, then the inherited
- *  base. Used at the root and in sub-inspectors so category order respects inheritance. */
+/** The class-hierarchy categories for a source's fields — concrete type first, then ancestors.
+ *  A source declaring its own chain (scene-graph objects) wins; otherwise the binary
+ *  typeName/"Resource" split. Used at the root and in sub-inspectors so category order respects
+ *  inheritance. */
 export function resourceCategories(source: PropertySource): string[] {
+  const declared = source.categories?.();
+  if (declared && declared.length > 0) return [...declared];
   return source.typeName === "Resource" ? ["Resource"] : [source.typeName, "Resource"];
 }
 
@@ -32,10 +37,11 @@ export interface ResourceAdapterOptions {
   override?: (source: PropertySource, field: PropertyDescriptor) => InspectorField | null;
   /**
    * Assign a value to a `resource`-kind field. The consumer drives type selection (e.g. a
-   * type picker), keeping the adapter data-model-policy-free. Return null to cancel. When
-   * omitted, creation falls back to `host.createInstance(baseType)`.
+   * type picker — may resolve asynchronously via a dialog), keeping the adapter
+   * data-model-policy-free. Resolve null to cancel. When omitted, creation falls back to
+   * `host.createInstance(baseType)`.
    */
-  pickType?: (baseType: string) => PropertySource | null;
+  pickType?: (baseType: string) => PropertySource | null | Promise<PropertySource | null>;
   /**
    * Render a bespoke whole-source editor for a given source (e.g. a gradient bar for
    * `Gradient`). Applied at the root AND recursively to every embedded sub-source. Return
@@ -64,7 +70,7 @@ export function resourceToFields(source: PropertySource, opts: ResourceAdapterOp
 
   const out: InspectorField[] = [];
   source.fields().forEach((fi, i) => {
-    const category = i < baseCount ? "Resource" : typeName;
+    const category = fi.category ?? (i < baseCount ? "Resource" : typeName);
     const overridden = opts.override?.(source, fi);
     if (overridden) {
       overridden.category = category;
@@ -143,32 +149,50 @@ function mapField(fi: PropertyDescriptor, opts: ResourceAdapterOptions): Inspect
   }
 }
 
+/** The primitive factory for a ctor name — the fallback when a descriptor omits `fromArray`. */
+function ctorFromArray(ctorName: string | undefined): ((nums: number[]) => unknown) | undefined {
+  switch (ctorName) {
+    case "Color": return (n) => ColorF.fromArray(n);
+    case "Vector2": return (n) => Vector2.fromArray(n);
+    case "Vector3": return (n) => Vector3.fromArray(n);
+    case "Vector4": return (n) => Vector4.fromArray(n);
+    default: return undefined;
+  }
+}
+
 function mapCtor(key: string, label: string, fi: PropertyDescriptor, value: unknown, set: (v: unknown) => void): InspectorField | null {
-  if (!fi.fromArray) return null;
+  const fromArray = fi.fromArray ?? ctorFromArray(fi.ctorName);
+  if (!fromArray) return null;
   const nums = (value as ArrayLikeValue).toArray();
   if (fi.ctorName === "Color") {
-    return { key, label, kind: "color", value: nums, hasAlpha: true, onChange: (a) => set(fi.fromArray!(a)) };
+    return { key, label, kind: "color", value: nums, hasAlpha: true, onChange: (a) => set(fromArray(a)) };
   }
   const size = VEC_SIZE[fi.ctorName ?? ""];
   if (size) {
-    return { key, label, kind: "vec", value: nums, size, onChange: (a) => set(fi.fromArray!(a)) };
+    return { key, label, kind: "vec", value: nums, size, onChange: (a) => set(fromArray(a)) };
   }
   return null;
 }
 
 function mapResource(key: string, label: string, fi: PropertyDescriptor, sub: PropertySource | null, opts: ResourceAdapterOptions): ObjectField {
   const baseType = fi.baseType ?? "Resource";
-  const onCreate = opts.pickType
-    ? () => {
-        const made = opts.pickType?.(baseType);
-        if (made) fi.setValue(made);
-      }
-    : opts.host?.canCreate(baseType)
+  // The create affordance is gated by the host's assignability answer either way; pickType only
+  // changes HOW a type is chosen (dialog vs unique-concrete resolution).
+  const creatable = opts.host ? opts.host.canCreate(baseType) : opts.pickType != null;
+  const onCreate = !creatable
+    ? undefined
+    : opts.pickType
       ? () => {
-          const made = opts.host!.createInstance(baseType);
-          if (made) fi.setValue(made);
+          void Promise.resolve(opts.pickType!(baseType)).then((made) => {
+            if (made) fi.setValue(made);
+          });
         }
-      : undefined;
+      : opts.host
+        ? () => {
+            const made = opts.host!.createInstance(baseType);
+            if (made) fi.setValue(made);
+          }
+        : undefined;
   return {
     key,
     label,

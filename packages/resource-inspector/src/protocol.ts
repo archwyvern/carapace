@@ -1,10 +1,11 @@
 /**
  * The inspector's input contract: a structural, Godot-inspired property-description protocol.
  * Any object satisfying these shapes is inspectable — carapace deliberately does NOT import an
- * object-model package (independence rule: the engine mirror and the shell never import each
- * other; they meet by shape, composed by host apps). Value-typed properties (colors, vectors)
- * cross this boundary as `number[]` via duck-typed `toArray()` on read and `fromArray` on write,
- * so the inspector never names a concrete value class.
+ * object-model package (the engine mirror and the shell never import each other; they meet by
+ * shape, composed by host apps). Value-typed properties (colors, vectors) cross this boundary
+ * as `number[]` via duck-typed `toArray()` on read and `fromArray` on write. Since the math
+ * primitives repatriated to `@carapace/primitives`, `fromArray` is optional plumbing: when a
+ * descriptor omits it, the adapter falls back to the primitive constructor named by `ctorName`.
  */
 
 /** A subscription handle; mirrors the object model's Observable contract structurally. */
@@ -54,6 +55,9 @@ export interface PropertyDescriptor {
   step?: number;
   enumOptions?: string[];
   readonly?: boolean;
+  /** Ancestor-category key: the name of the type declaring this property. When absent, the
+   *  source's `baseFieldCount` split decides (base fields → "Resource", the rest → typeName). */
+  category?: string;
   order: number;
 }
 
@@ -65,6 +69,9 @@ export interface PropertySource {
   sourcePath: string | null;
   fields(): readonly PropertyDescriptor[];
   findField(name: string): PropertyDescriptor | undefined;
+  /** Ordered class-hierarchy category names, concrete type first (e.g. Camera2D, Node2D, …).
+   *  Optional: sources without it get the binary typeName/"Resource" split. */
+  categories?(): readonly string[];
   groups(): readonly { name: string; fields: string[]; enabledBy?: string }[];
   visibility(): Record<string, boolean>;
   onChanged(fn: () => void): Subscription;

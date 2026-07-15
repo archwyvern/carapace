@@ -25,6 +25,9 @@ importers:
 
   packages/resource-inspector:
     dependencies:
+      '@carapace/primitives':
+        specifier: workspace:*
+        version: link:../primitives
       '@carapace/shell':
         specifier: workspace:*
         version: link:../shell

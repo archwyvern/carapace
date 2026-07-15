@@ -21,7 +21,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@carapace/shell": "workspace:*"
+    "@carapace/shell": "workspace:*",
+    "@carapace/primitives": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=19",
