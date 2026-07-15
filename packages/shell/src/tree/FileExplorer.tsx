@@ -41,6 +41,9 @@ export interface FileExplorerProps {
   onExternalDrop?: (dataTransfer: DataTransfer, targetDir: string) => void;
   /** Extra context-menu items appended for an entry (e.g. "Open in Text Editor"). */
   extraMenuItems?: (entry: DirEntry) => MenuItem[];
+  /** Extra CREATION verbs for a directory (and the background/root menu), rendered as their
+   *  own separator-delimited section after New File / New Folder — e.g. "New Resource…". */
+  newItems?: (dir: string) => MenuItem[];
   /**
    * Omit matching entries from the tree entirely. Returning true drops the entry and,
    * for a directory, stops the walk descending into it — keeps the eager tree tractable
@@ -191,7 +194,7 @@ interface ActiveProps extends FileExplorerProps {
 }
 
 function ActiveFileExplorer({
-  root, onOpen, getIcon, getDecoration, rowActions, onExternalDrop, extraMenuItems, exclude, showHidden = false, newFile, onNewFile, actionsRef, onDidRename, onDidDelete, storageKey, rootNode, ariaLabel = "Files", fs, clipboard, os,
+  root, onOpen, getIcon, getDecoration, rowActions, onExternalDrop, extraMenuItems, newItems, exclude, showHidden = false, newFile, onNewFile, actionsRef, onDidRename, onDidDelete, storageKey, rootNode, ariaLabel = "Files", fs, clipboard, os,
 }: ActiveProps) {
   const confirm = useOptionalConfirm();
   const ctx = useContextMenu();
@@ -505,6 +508,8 @@ function ActiveFileExplorer({
     if (entry.isDir) {
       items.push({ id: "newFile", label: `New ${newFile?.label ?? "File"}…`, run: () => startNew("newFile", entry.path) });
       items.push({ id: "newFolder", label: "New Folder…", run: () => startNew("newFolder", entry.path) });
+      const create = newItems?.(entry.path) ?? [];
+      if (create.length) items.push({ separator: true }, ...create);
     }
     const extra = extraMenuItems?.(entry) ?? [];
     if (extra.length) items.push(...extra);
@@ -562,10 +567,12 @@ function ActiveFileExplorer({
       { id: "newFile", label: `New ${newFile?.label ?? "File"}…`, run: () => startNew("newFile", root) },
       { id: "newFolder", label: "New Folder…", run: () => startNew("newFolder", root) },
     ];
+    const create = newItems?.(root) ?? [];
+    if (create.length) items.push({ separator: true }, ...create);
     if (clip) items.push({ separator: true }, { id: "paste", label: "Paste", run: () => void doPaste(root) });
     setMenuItems(items);
     ctx.open(e);
-  }, [root, ctx, newFile, startNew, clip, doPaste]);
+  }, [root, ctx, newFile, startNew, clip, doPaste, newItems]);
 
   const editingId = editing
     ? editing.kind === "rename" ? editing.target
