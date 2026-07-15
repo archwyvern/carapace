@@ -54,6 +54,9 @@ export interface PropertyDescriptor {
   max?: number;
   step?: number;
   enumOptions?: string[];
+  /** For enum fields, the qualified enum type name (e.g. "Control.SizeFlags") — lets the
+   *  view registry resolve per-enum-TYPE widgets ("enum:<name>"). */
+  enumType?: string;
   readonly?: boolean;
   /** Ancestor-category key: the name of the type declaring this property. When absent, the
    *  source's `baseFieldCount` split decides (base fields → "Resource", the rest → typeName). */

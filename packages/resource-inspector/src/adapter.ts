@@ -83,10 +83,22 @@ export function resourceToFields(source: PropertySource, opts: ResourceAdapterOp
       out.push(overridden);
       return;
     }
-    if (fi.view) {
-      const render = getRegisteredFieldView(fi.view);
+    // A field's explicit view wins; enum fields also resolve a per-enum-TYPE view
+    // ("enum:Control.SizeFlags") so bespoke widgets (Godot's size-flags editor) apply
+    // wherever that enum appears, with no per-field stamping.
+    const viewKey = fi.view ?? (fi.kind === "enum" && fi.enumType ? `enum:${fi.enumType}` : undefined);
+    if (viewKey) {
+      const render = getRegisteredFieldView(viewKey);
       if (render) {
-        out.push({ key: fi.name, label: humanize(fi.name), kind: "custom", category, render: () => render(source, fi) });
+        out.push({
+          key: fi.name,
+          label: humanize(fi.name),
+          kind: "custom",
+          category,
+          group: groupOf.get(fi.name.toLowerCase()),
+          hidden: visibility[fi.name] === false,
+          render: () => render(source, fi),
+        });
         return;
       }
     }
