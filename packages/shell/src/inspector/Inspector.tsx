@@ -207,12 +207,10 @@ function InspectorSection({ node, depth }: { node: SectionNode; depth: number })
           <Chevron open={open} />
         </button>
         {gate && (
-          <input
-            type="checkbox"
-            checked={enabled}
-            aria-label={`Enable ${node.label}`}
-            onChange={(e) => gate.onChange(e.target.checked)}
-            className="accent-accent"
+          <FormToggle
+            ariaLabel={`Enable ${node.label}`}
+            value={enabled}
+            onChange={(v) => gate.onChange(v)}
           />
         )}
         <span className="flex-1 cursor-pointer text-base font-semibold text-fg" onClick={() => setOpen(!open)}>

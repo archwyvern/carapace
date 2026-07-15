@@ -66,9 +66,9 @@ test("enabledBy gate hides members until the bool is on", async () => {
     { kind: "string", key: "amt", label: "Amount", value: "", onChange: vi.fn(), group: "Warp" },
   ];
   const { rerender } = render(<Inspector fields={fields} sections={[{ name: "Warp", enabledBy: "en" }]} />);
-  // gate off → member hidden, but the gate checkbox shows in the header
+  // gate off → member hidden, but the gate switch shows in the header
   expect(screen.queryByRole("textbox", { name: "Amount" })).not.toBeInTheDocument();
-  await userEvent.click(screen.getByRole("checkbox", { name: "Enable Warp" }));
+  await userEvent.click(screen.getByRole("switch", { name: "Enable Warp" }));
   expect(onGate).toHaveBeenCalledWith(true);
   // simulate the provider flipping the value
   fields[0] = { ...fields[0], value: true } as InspectorField;
