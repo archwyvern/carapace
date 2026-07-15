@@ -112,15 +112,65 @@ function Chevron({ open }: { open: boolean }) {
   return <ChevronRightIcon aria-hidden className={`h-3.5 w-3.5 shrink-0 text-fg-mid transition-transform ${open ? "rotate-90" : ""}`} />;
 }
 
-/** The ungrouped fields + collapsible sections for one bucket of fields. */
-function FieldGroups({ fields, sections }: { fields: InspectorField[]; sections: InspectorSectionInfo[] }) {
+/** One node of the section TREE. Group names are PATHS ("Layout/Anchor Points") — the
+ *  inspector is a tree, so subgroups nest inside their parent fold, Godot-style. */
+interface SectionNode {
+  path: string;
+  label: string;
+  info?: InspectorSectionInfo;
+  fields: InspectorField[];
+  children: SectionNode[];
+}
+
+function buildSectionTree(
+  fields: InspectorField[],
+  sections: InspectorSectionInfo[],
+): { ungrouped: InspectorField[]; roots: SectionNode[] } {
   const ungrouped = fields.filter((f) => !f.group);
 
-  // Section order: declared sections first, then any group names that appear on fields.
+  // Section order: declared sections first, then any group paths that appear on fields.
   const order: string[] = sections.map((s) => s.name);
   for (const f of fields) if (f.group && !order.includes(f.group)) order.push(f.group);
   const infoByName = new Map(sections.map((s) => [s.name, s]));
 
+  const nodes = new Map<string, SectionNode>();
+  const roots: SectionNode[] = [];
+  const ensure = (path: string): SectionNode => {
+    const existing = nodes.get(path);
+    if (existing) return existing;
+    const parts = path.split("/");
+    const node: SectionNode = {
+      path,
+      label: parts[parts.length - 1] ?? path,
+      info: infoByName.get(path),
+      fields: [],
+      children: [],
+    };
+    nodes.set(path, node);
+    if (parts.length > 1) ensure(parts.slice(0, -1).join("/")).children.push(node);
+    else roots.push(node);
+    return node;
+  };
+  for (const path of order) ensure(path);
+  for (const f of fields) if (f.group) ensure(f.group).fields.push(f);
+  return { ungrouped, roots };
+}
+
+/** A section (or any ancestor with a visible descendant) is worth rendering. */
+function sectionVisible(node: SectionNode): boolean {
+  return node.fields.some((f) => !f.hidden) || node.children.some(sectionVisible);
+}
+
+function sectionChanges(node: SectionNode): number {
+  return (
+    node.fields.filter((f) => f.modified && !f.hidden).length +
+    node.children.reduce((n, c) => n + sectionChanges(c), 0)
+  );
+}
+
+/** The ungrouped fields + the collapsible section tree for one bucket of fields. */
+function FieldGroups({ fields, sections }: { fields: InspectorField[]; sections: InspectorSectionInfo[] }) {
+  const { ungrouped, roots } = buildSectionTree(fields, sections);
   return (
     <>
       {ungrouped.length > 0 && (
@@ -130,27 +180,29 @@ function FieldGroups({ fields, sections }: { fields: InspectorField[]; sections:
           ))}
         </FieldGrid>
       )}
-      {order.map((name) => {
-        const members = fields.filter((f) => f.group === name);
-        if (members.length === 0) return null;
-        return <InspectorSection key={name} name={name} info={infoByName.get(name)} fields={members} />;
-      })}
+      {roots.filter(sectionVisible).map((node) => (
+        <InspectorSection key={node.path} node={node} depth={0} />
+      ))}
     </>
   );
 }
 
-function InspectorSection({ name, info, fields }: { name: string; info?: InspectorSectionInfo; fields: InspectorField[] }) {
+function InspectorSection({ node, depth }: { node: SectionNode; depth: number }) {
   const [open, setOpen] = useState(true);
-  const gate = info?.enabledBy
-    ? (fields.find((f) => f.key === info.enabledBy && f.kind === "bool") as BoolField | undefined)
+  const gate = node.info?.enabledBy
+    ? (node.fields.find((f) => f.key === node.info!.enabledBy && f.kind === "bool") as BoolField | undefined)
     : undefined;
   const enabled = gate ? gate.value : true;
-  const members = fields.filter((f) => f !== gate);
-  const changes = members.filter((f) => f.modified && !f.hidden).length;
+  const members = node.fields.filter((f) => f !== gate);
+  const changes = sectionChanges(node);
+  const indent = depth * 12;
 
   return (
-    <div className="border-t border-border">
-      <div className="group/sec flex items-center gap-1.5 px-2 py-1.5 select-none hover:bg-surface">
+    <div className={depth === 0 ? "border-t border-border" : ""}>
+      <div
+        className="group/sec flex items-center gap-1.5 px-2 py-1.5 select-none hover:bg-surface"
+        style={indent ? { paddingLeft: 8 + indent } : undefined}
+      >
         <button type="button" aria-label={open ? "Collapse" : "Expand"} onClick={() => setOpen(!open)} className="flex items-center">
           <Chevron open={open} />
         </button>
@@ -158,13 +210,13 @@ function InspectorSection({ name, info, fields }: { name: string; info?: Inspect
           <input
             type="checkbox"
             checked={enabled}
-            aria-label={`Enable ${name}`}
+            aria-label={`Enable ${node.label}`}
             onChange={(e) => gate.onChange(e.target.checked)}
             className="accent-accent"
           />
         )}
         <span className="flex-1 cursor-pointer text-base font-semibold text-fg" onClick={() => setOpen(!open)}>
-          {ucwords(name)}
+          {ucwords(node.label)}
         </span>
         {!open && changes > 0 && (
           <span className="text-base text-fg-mid">
@@ -173,11 +225,20 @@ function InspectorSection({ name, info, fields }: { name: string; info?: Inspect
         )}
       </div>
       {open && enabled && (
-        <FieldGrid className="px-2 pb-2 pt-1">
-          {members.map((f) => (
-            <InspectorRow key={f.key} field={f} />
+        <>
+          {members.some((f) => !f.hidden) && (
+            <div style={indent ? { paddingLeft: indent } : undefined}>
+              <FieldGrid className="px-2 pb-2 pt-1">
+                {members.map((f) => (
+                  <InspectorRow key={f.key} field={f} />
+                ))}
+              </FieldGrid>
+            </div>
+          )}
+          {node.children.filter(sectionVisible).map((child) => (
+            <InspectorSection key={child.path} node={child} depth={depth + 1} />
           ))}
-        </FieldGrid>
+        </>
       )}
     </div>
   );

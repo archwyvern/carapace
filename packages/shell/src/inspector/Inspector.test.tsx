@@ -32,6 +32,33 @@ test("groups fields into collapsible sections and hides body when collapsed", as
   expect(screen.getByRole("textbox", { name: "Top" })).toBeInTheDocument(); // ungrouped stays
 });
 
+test("path groups nest: subgroup folds render inside their parent and collapse with it", async () => {
+  const fields: InspectorField[] = [
+    { kind: "string", key: "a", label: "Direct", value: "", onChange: vi.fn(), group: "Layout" },
+    { kind: "string", key: "b", label: "AnchorL", value: "", onChange: vi.fn(), group: "Layout/Anchor Points" },
+  ];
+  render(<Inspector fields={fields} sections={[{ name: "Layout" }, { name: "Layout/Anchor Points" }]} />);
+  // The subgroup header shows its LEAF label, not a prefixed path.
+  expect(screen.getByText("Anchor Points")).toBeInTheDocument();
+  expect(screen.queryByText("Layout/Anchor Points")).not.toBeInTheDocument();
+  expect(screen.getByRole("textbox", { name: "AnchorL" })).toBeInTheDocument();
+  // Collapsing the PARENT hides the nested subgroup entirely.
+  const collapses = screen.getAllByRole("button", { name: "Collapse" });
+  await userEvent.click(collapses[0]!);
+  expect(screen.queryByText("Anchor Points")).not.toBeInTheDocument();
+  expect(screen.queryByRole("textbox", { name: "AnchorL" })).not.toBeInTheDocument();
+});
+
+test("sections whose fields are all hidden disappear", () => {
+  const fields: InspectorField[] = [
+    { kind: "string", key: "a", label: "Shown", value: "", onChange: vi.fn(), group: "Visible" },
+    { kind: "string", key: "b", label: "Gone", value: "", onChange: vi.fn(), group: "Hidden", hidden: true },
+  ];
+  render(<Inspector fields={fields} sections={[{ name: "Visible" }, { name: "Hidden" }]} />);
+  expect(screen.getByText("Visible")).toBeInTheDocument();
+  expect(screen.queryByText("Hidden")).not.toBeInTheDocument();
+});
+
 test("enabledBy gate hides members until the bool is on", async () => {
   const onGate = vi.fn();
   const fields: InspectorField[] = [

@@ -36,6 +36,12 @@ export interface ResourceAdapterOptions {
    */
   override?: (source: PropertySource, field: PropertyDescriptor) => InspectorField | null;
   /**
+   * Editor-supplied visibility, merged OVER the source's own `visibility()` (false hides).
+   * For editor-state-dependent rules the data model can't know — e.g. hiding anchor fields
+   * while an Anchors Preset is active.
+   */
+  extraVisibility?: Record<string, boolean>;
+  /**
    * Assign a value to a `resource`-kind field. The consumer drives type selection (e.g. a
    * type picker — may resolve asynchronously via a dialog), keeping the adapter
    * data-model-policy-free. Resolve null to cancel. When omitted, creation falls back to
@@ -64,7 +70,7 @@ export function resourceToSections(source: PropertySource): InspectorSectionInfo
 export function resourceToFields(source: PropertySource, opts: ResourceAdapterOptions = {}): InspectorField[] {
   const groupOf = new Map<string, string>();
   for (const g of source.groups()) for (const fname of g.fields) groupOf.set(fname.toLowerCase(), g.name);
-  const visibility = source.visibility();
+  const visibility = { ...source.visibility(), ...opts.extraVisibility };
   const baseCount = source.baseFieldCount;
   const typeName = source.typeName;
 

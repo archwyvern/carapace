@@ -22,10 +22,10 @@ export interface ResourceInspectorProps extends ResourceAdapterOptions {
  * sub-source — changes bubble up the ownership chain) changes. Field edits flow straight
  * to the source through the adapter's `setValue` handlers.
  */
-export function ResourceInspector({ source, host, override, pickType, renderResource, extraFields }: ResourceInspectorProps) {
+export function ResourceInspector({ source, host, override, pickType, renderResource, extraFields, extraVisibility }: ResourceInspectorProps) {
   useResourceChanges(source);
 
-  const opts: ResourceAdapterOptions = { host, override, pickType, renderResource };
+  const opts: ResourceAdapterOptions = { host, override, pickType, renderResource, extraVisibility };
   // The source owns its inspector layout: a host `renderResource` wins, else the view its type
   // declares. The same resolution + category order is used for embedded sub-sources (mapResource).
   const rootCustom = resolveResourceView(source, opts);
