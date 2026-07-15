@@ -134,6 +134,19 @@ test("expandOnReselect: first click only selects; re-click toggles expansion", (
   expect(screen.queryByText("a.ts")).not.toBeInTheDocument();
 });
 
+test("expandOnRowClick=false: row clicks never toggle; the twistie still does", () => {
+  renderTree({ expandOnRowClick: false });
+  expect(screen.queryByText("a.ts")).not.toBeInTheDocument();
+  // Plain clicks select but never fold — no matter how many times.
+  fireEvent.click(screen.getByText("src"));
+  fireEvent.click(screen.getByText("src"));
+  expect(selectedItems()).toHaveLength(1);
+  expect(screen.queryByText("a.ts")).not.toBeInTheDocument();
+  // The twistie is the only mouse path to expansion.
+  fireEvent.click(screen.getByLabelText("Expand"));
+  expect(screen.getByText("a.ts")).toBeInTheDocument();
+});
+
 test("editingId renders an inline input that commits on Enter and cancels on Escape", () => {
   const onEditCommit = vi.fn();
   const onEditCancel = vi.fn();

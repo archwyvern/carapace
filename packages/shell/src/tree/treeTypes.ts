@@ -83,6 +83,10 @@ export interface TreeViewProps<T = unknown> {
    *  file-explorer / VS Code convention). Use for trees where selecting and
    *  expanding are distinct intents — e.g. a layer tree. */
   expandOnReselect?: boolean;
+  /** When false, a plain row click NEVER toggles expansion — only the twistie does
+   *  (Godot scene-tree convention: rows are for selecting, the chevron is for folding).
+   *  Default true (the file-explorer convention). Overrides `expandOnReselect`. */
+  expandOnRowClick?: boolean;
   /** A drop from OUTSIDE the tree (no internal drag in progress) — e.g. dragging an
    *  item in from another view. Fires with the native event (read its dataTransfer) and
    *  the target node (null = background/root). Providing this makes rows accept external
